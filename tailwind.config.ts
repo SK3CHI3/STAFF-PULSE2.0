@@ -81,7 +81,11 @@ export default {
 				'gradient-primary': 'var(--gradient-primary)',
 				'gradient-secondary': 'var(--gradient-secondary)',
 				'gradient-hero': 'var(--gradient-hero)',
-				'gradient-card': 'var(--gradient-card)'
+				'gradient-card': 'var(--gradient-card)',
+				'gradient-page': 'var(--gradient-page)',
+				'gradient-dashboard': 'var(--gradient-dashboard)',
+				'gradient-modern-card': 'var(--gradient-modern-card)',
+				'gradient-glass': 'var(--gradient-glass)'
 			},
 			boxShadow: {
 				'soft': 'var(--shadow-soft)',
