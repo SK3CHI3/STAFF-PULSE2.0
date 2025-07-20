@@ -184,13 +184,18 @@ const AdminDashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
+    <div className="min-h-screen bg-gradient-dashboard p-6">
+      <div className="max-w-7xl mx-auto space-y-8">
         {/* Header */}
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
-          <div>
-            <h1 className="text-3xl font-bold">Admin Dashboard</h1>
-            <p className="text-muted-foreground">Platform overview and management</p>
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-6 lg:space-y-0 bg-gradient-glass rounded-2xl p-8 border-0 shadow-soft">
+          <div className="space-y-2">
+            <h1 className="text-4xl font-bold bg-gradient-primary bg-clip-text text-transparent">Admin Dashboard</h1>
+            <p className="text-xl text-muted-foreground">StaffPulse Kenya - Platform Overview & Management</p>
+            <div className="flex items-center space-x-4 text-sm text-muted-foreground">
+              <span>🇰🇪 Serving Kenya</span>
+              <span>•</span>
+              <span>Real-time data</span>
+            </div>
           </div>
           
           <div className="flex items-center space-x-4">
@@ -210,8 +215,8 @@ const AdminDashboard = () => {
         </div>
 
         {/* Key Platform Metrics */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
-          <Card className="bg-gradient-card border-0 shadow-soft">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
+          <Card className="bg-gradient-modern-card border-0 shadow-soft hover:shadow-strong transition-all duration-300 group">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Organizations</CardTitle>
               <Building className="h-4 w-4 text-muted-foreground" />

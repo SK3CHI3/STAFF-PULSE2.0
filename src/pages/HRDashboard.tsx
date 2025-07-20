@@ -130,13 +130,18 @@ const HRDashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
+    <div className="min-h-screen bg-gradient-dashboard p-6">
+      <div className="max-w-7xl mx-auto space-y-8">
         {/* Header */}
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
-          <div>
-            <h1 className="text-3xl font-bold">HR Dashboard</h1>
-            <p className="text-muted-foreground">Monitor team wellness and engagement</p>
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-6 lg:space-y-0 bg-gradient-glass rounded-2xl p-8 border-0 shadow-soft">
+          <div className="space-y-2">
+            <h1 className="text-4xl font-bold bg-gradient-primary bg-clip-text text-transparent">HR Dashboard</h1>
+            <p className="text-xl text-muted-foreground">Monitor your Kenyan team's wellness and engagement</p>
+            <div className="flex items-center space-x-4 text-sm text-muted-foreground">
+              <span>🇰🇪 Nairobi Office</span>
+              <span>•</span>
+              <span>Last updated: Just now</span>
+            </div>
           </div>
           
           <div className="flex items-center space-x-4">
@@ -156,76 +161,97 @@ const HRDashboard = () => {
         </div>
 
         {/* Key Metrics */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <Card className="bg-gradient-card border-0 shadow-soft">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Employees</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <Card className="bg-gradient-modern-card border-0 shadow-soft hover:shadow-strong transition-all duration-300 group">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+              <CardTitle className="text-sm font-medium group-hover:text-primary transition-colors">Total Employees</CardTitle>
+              <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-cyan-600 rounded-xl flex items-center justify-center shadow-medium">
+                <Users className="h-5 w-5 text-white" />
+              </div>
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">78</div>
-              <p className="text-xs text-muted-foreground">
+            <CardContent className="space-y-2">
+              <div className="text-3xl font-bold">78</div>
+              <p className="text-sm text-success flex items-center">
+                <TrendingUp className="w-4 h-4 mr-1" />
                 +12% from last month
               </p>
+              <p className="text-xs text-muted-foreground">Across 3 departments</p>
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-card border-0 shadow-soft">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Average Mood</CardTitle>
-              <Heart className="h-4 w-4 text-muted-foreground" />
+          <Card className="bg-gradient-modern-card border-0 shadow-soft hover:shadow-strong transition-all duration-300 group">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+              <CardTitle className="text-sm font-medium group-hover:text-primary transition-colors">Average Mood</CardTitle>
+              <div className="w-10 h-10 bg-gradient-to-r from-green-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-medium">
+                <Heart className="h-5 w-5 text-white" />
+              </div>
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">7.4</div>
-              <p className="text-xs text-success">
+            <CardContent className="space-y-2">
+              <div className="text-3xl font-bold">7.4/10</div>
+              <p className="text-sm text-success flex items-center">
+                <TrendingUp className="w-4 h-4 mr-1" />
                 +0.3 from last week
               </p>
+              <p className="text-xs text-muted-foreground">Above industry average</p>
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-card border-0 shadow-soft">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Response Rate</CardTitle>
-              <Activity className="h-4 w-4 text-muted-foreground" />
+          <Card className="bg-gradient-modern-card border-0 shadow-soft hover:shadow-strong transition-all duration-300 group">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+              <CardTitle className="text-sm font-medium group-hover:text-primary transition-colors">Response Rate</CardTitle>
+              <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-violet-600 rounded-xl flex items-center justify-center shadow-medium">
+                <Activity className="h-5 w-5 text-white" />
+              </div>
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">86%</div>
-              <p className="text-xs text-success">
+            <CardContent className="space-y-2">
+              <div className="text-3xl font-bold">86%</div>
+              <p className="text-sm text-success flex items-center">
+                <TrendingUp className="w-4 h-4 mr-1" />
                 +4% from last week
               </p>
+              <p className="text-xs text-muted-foreground">67 of 78 responded</p>
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-card border-0 shadow-soft">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Active Alerts</CardTitle>
-              <AlertTriangle className="h-4 w-4 text-muted-foreground" />
+          <Card className="bg-gradient-modern-card border-0 shadow-soft hover:shadow-strong transition-all duration-300 group">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+              <CardTitle className="text-sm font-medium group-hover:text-primary transition-colors">Active Alerts</CardTitle>
+              <div className="w-10 h-10 bg-gradient-to-r from-orange-500 to-red-600 rounded-xl flex items-center justify-center shadow-medium">
+                <AlertTriangle className="h-5 w-5 text-white" />
+              </div>
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">3</div>
-              <p className="text-xs text-warning">
+            <CardContent className="space-y-2">
+              <div className="text-3xl font-bold">3</div>
+              <p className="text-sm text-warning flex items-center">
+                <AlertTriangle className="w-4 h-4 mr-1" />
                 Needs attention
               </p>
+              <p className="text-xs text-muted-foreground">2 low mood, 1 absence</p>
             </CardContent>
           </Card>
         </div>
 
         {/* Main Content Tabs */}
-        <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="analytics">Analytics</TabsTrigger>
-            <TabsTrigger value="teams">Teams</TabsTrigger>
-            <TabsTrigger value="feedback">Feedback</TabsTrigger>
+        <Tabs defaultValue="overview" className="space-y-8">
+          <TabsList className="grid w-full grid-cols-4 bg-gradient-glass border-0 shadow-soft p-1">
+            <TabsTrigger value="overview" className="data-[state=active]:bg-gradient-primary data-[state=active]:text-white shadow-none">Overview</TabsTrigger>
+            <TabsTrigger value="analytics" className="data-[state=active]:bg-gradient-primary data-[state=active]:text-white shadow-none">Analytics</TabsTrigger>
+            <TabsTrigger value="teams" className="data-[state=active]:bg-gradient-primary data-[state=active]:text-white shadow-none">Teams</TabsTrigger>
+            <TabsTrigger value="feedback" className="data-[state=active]:bg-gradient-primary data-[state=active]:text-white shadow-none">Feedback</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="overview" className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <TabsContent value="overview" className="space-y-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               {/* Mood Trend Chart */}
-              <Card className="bg-gradient-card border-0 shadow-soft">
-                <CardHeader>
-                  <CardTitle>Mood Trend</CardTitle>
-                  <CardDescription>Team mood over the last 7 days</CardDescription>
+              <Card className="bg-gradient-modern-card border-0 shadow-soft hover:shadow-medium transition-all duration-300">
+                <CardHeader className="space-y-3">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-cyan-600 rounded-lg flex items-center justify-center">
+                      <TrendingUp className="w-4 h-4 text-white" />
+                    </div>
+                    <CardTitle className="text-xl">Team Mood Trend</CardTitle>
+                  </div>
+                  <CardDescription className="text-base">Wellness patterns over the last 7 days in your Nairobi office</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={300}>
@@ -254,10 +280,15 @@ const HRDashboard = () => {
               </Card>
 
               {/* Department Mood */}
-              <Card className="bg-gradient-card border-0 shadow-soft">
-                <CardHeader>
-                  <CardTitle>Department Mood</CardTitle>
-                  <CardDescription>Average mood by department</CardDescription>
+              <Card className="bg-gradient-modern-card border-0 shadow-soft hover:shadow-medium transition-all duration-300">
+                <CardHeader className="space-y-3">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-violet-600 rounded-lg flex items-center justify-center">
+                      <Users className="w-4 h-4 text-white" />
+                    </div>
+                    <CardTitle className="text-xl">Department Wellness</CardTitle>
+                  </div>
+                  <CardDescription className="text-base">Average mood scores across all departments</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={300}>
@@ -279,12 +310,17 @@ const HRDashboard = () => {
               </Card>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               {/* Mood Distribution */}
-              <Card className="bg-gradient-card border-0 shadow-soft">
-                <CardHeader>
-                  <CardTitle>Mood Distribution</CardTitle>
-                  <CardDescription>How your team is feeling</CardDescription>
+              <Card className="bg-gradient-modern-card border-0 shadow-soft hover:shadow-medium transition-all duration-300">
+                <CardHeader className="space-y-3">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-8 h-8 bg-gradient-to-r from-green-500 to-emerald-600 rounded-lg flex items-center justify-center">
+                      <Heart className="w-4 h-4 text-white" />
+                    </div>
+                    <CardTitle className="text-xl">Mood Distribution</CardTitle>
+                  </div>
+                  <CardDescription className="text-base">How your team is feeling today</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={250}>
@@ -308,10 +344,15 @@ const HRDashboard = () => {
               </Card>
 
               {/* Response Rate */}
-              <Card className="bg-gradient-card border-0 shadow-soft lg:col-span-2">
-                <CardHeader>
-                  <CardTitle>Response Rate Trend</CardTitle>
-                  <CardDescription>Employee participation over time</CardDescription>
+              <Card className="bg-gradient-modern-card border-0 shadow-soft hover:shadow-medium transition-all duration-300 lg:col-span-2">
+                <CardHeader className="space-y-3">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-8 h-8 bg-gradient-to-r from-orange-500 to-red-600 rounded-lg flex items-center justify-center">
+                      <Activity className="w-4 h-4 text-white" />
+                    </div>
+                    <CardTitle className="text-xl">Response Rate Trend</CardTitle>
+                  </div>
+                  <CardDescription className="text-base">Employee participation across weekly check-ins</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={250}>
