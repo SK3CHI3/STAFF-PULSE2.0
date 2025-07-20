@@ -5,6 +5,7 @@ import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious
 import { ArrowRight, BarChart3, MessageSquare, Users, Shield, TrendingUp, CheckCircle, Star, Play, Zap, Target, Clock, Award, Globe2, UserPlus, DollarSign } from "lucide-react";
 import { Link } from "react-router-dom";
 import Autoplay from "embla-carousel-autoplay";
+import { ThemeToggle } from "@/components/theme/ThemeToggle";
 
 const Index = () => {
   const features = [
@@ -138,33 +139,65 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-gradient-page">
       {/* Navigation */}
-      <nav className="sticky top-0 z-50 bg-gradient-glass backdrop-blur-md border-b border-border/50 shadow-soft">
+      <nav className="sticky top-0 z-50 bg-background/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-border/50 shadow-lg">
         <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-gradient-primary rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">SP</span>
+            {/* Logo Section */}
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center shadow-lg">
+                <span className="text-white font-bold text-lg">SP</span>
               </div>
-              <span className="text-xl font-bold text-foreground">StaffPulse</span>
+              <div>
+                <span className="text-2xl font-black bg-gradient-to-r from-blue-600 to-cyan-600 dark:from-blue-400 dark:to-cyan-400 bg-clip-text text-transparent">
+                  StaffPulse
+                </span>
+                <div className="flex items-center space-x-1">
+                  <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
+                  <span className="text-xs text-muted-foreground font-medium">Kenya</span>
+                </div>
+              </div>
             </div>
-            
+
+            {/* Navigation Links */}
             <div className="hidden md:flex items-center space-x-8">
-              <a href="#features" className="text-muted-foreground hover:text-foreground transition-colors">Features</a>
-              <a href="#pricing" className="text-muted-foreground hover:text-foreground transition-colors">Pricing</a>
-              <a href="#testimonials" className="text-muted-foreground hover:text-foreground transition-colors">Testimonials</a>
-              <Button variant="outline" size="sm">Login</Button>
-              <Button variant="hero" size="sm">
-                Start Free Trial
-                <ArrowRight className="w-4 h-4" />
-              </Button>
+              <a href="#features" className="text-muted-foreground hover:text-foreground transition-colors font-medium hover:scale-105 transform duration-200">
+                Features
+              </a>
+              <a href="#pricing" className="text-muted-foreground hover:text-foreground transition-colors font-medium hover:scale-105 transform duration-200">
+                Pricing
+              </a>
+              <a href="#testimonials" className="text-muted-foreground hover:text-foreground transition-colors font-medium hover:scale-105 transform duration-200">
+                Testimonials
+              </a>
+              <ThemeToggle />
+              <Link to="/auth">
+                <Button variant="outline" size="sm" className="hover:bg-accent/50 transition-all duration-300">
+                  Login
+                </Button>
+              </Link>
+              <Link to="/auth">
+                <Button variant="hero" size="sm" className="group shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
+                  Start Free Trial
+                  <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform duration-300" />
+                </Button>
+              </Link>
             </div>
           </div>
         </div>
       </nav>
 
-      {/* Hero Section with Carousel */}
-      <section className="relative py-24 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-hero opacity-15"></div>
+      {/* Enhanced Hero Section with Carousel */}
+      <section className="relative py-24 lg:py-32 overflow-hidden">
+        {/* Enhanced Background */}
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-50/50 via-cyan-50/30 to-green-50/50 dark:from-slate-900/50 dark:via-slate-800/30 dark:to-slate-900/50"></div>
+        <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-bl from-blue-500/20 to-transparent rounded-full blur-3xl"></div>
+        <div className="absolute bottom-0 left-0 w-96 h-96 bg-gradient-to-tr from-green-500/20 to-transparent rounded-full blur-3xl"></div>
+        <div className="absolute inset-0 opacity-40">
+          <div className="absolute inset-0" style={{
+            backgroundImage: `radial-gradient(circle at 25% 25%, rgba(59, 130, 246, 0.1) 0%, transparent 50%), radial-gradient(circle at 75% 75%, rgba(34, 197, 94, 0.1) 0%, transparent 50%)`
+          }}></div>
+        </div>
+
         <div className="container mx-auto px-6 relative z-10">
           <div className="max-w-6xl mx-auto">
             <Carousel
@@ -178,45 +211,79 @@ const Index = () => {
               <CarouselContent>
                 {heroSlides.map((slide, index) => (
                   <CarouselItem key={index}>
-                    <div className="text-center space-y-8 py-12 animate-fade-in">
-                      <div className="space-y-6">
-                        <Badge variant="secondary" className="bg-gradient-glass border-primary/20">
-                          <Globe2 className="w-4 h-4 mr-2" />
-                          Built for Kenya 🇰🇪
-                        </Badge>
-                        <h1 className="text-5xl lg:text-7xl font-bold leading-tight">
-                          {slide.title.split(' ').slice(0, -1).join(' ')}
-                          <span className="bg-gradient-primary bg-clip-text text-transparent">
-                            {' ' + slide.title.split(' ').slice(-1)[0]}
-                          </span>
-                        </h1>
-                        <h2 className="text-2xl lg:text-3xl text-muted-foreground font-medium">
-                          {slide.subtitle}
-                        </h2>
-                        <p className="text-xl text-muted-foreground leading-relaxed max-w-3xl mx-auto">
-                          {slide.description}
-                        </p>
+                    <div className="text-center space-y-10 py-12 animate-fade-in">
+                      {/* Enhanced Header Section */}
+                      <div className="space-y-8">
+                        {/* Status Badge */}
+                        <div className="flex justify-center">
+                          <div className="inline-flex items-center space-x-3 px-6 py-3 bg-gradient-to-r from-background/80 to-background/60 dark:from-slate-800/80 dark:to-slate-800/60 rounded-2xl border border-border/50 backdrop-blur-sm shadow-lg">
+                            <div className="w-8 h-8 bg-gradient-to-r from-green-500 to-blue-500 rounded-xl flex items-center justify-center">
+                              <span className="text-white font-bold text-sm">🇰🇪</span>
+                            </div>
+                            <div className="text-left">
+                              <p className="text-sm font-semibold text-foreground">Built for Kenya</p>
+                              <p className="text-xs text-muted-foreground">Proudly Kenyan</p>
+                            </div>
+                            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                          </div>
+                        </div>
+
+                        {/* Main Title */}
+                        <div className="space-y-4">
+                          <h1 className="text-6xl lg:text-8xl font-black leading-tight tracking-tight">
+                            {slide.title.split(' ').slice(0, -1).join(' ')}
+                            <span className="bg-gradient-to-r from-blue-600 via-cyan-600 to-green-600 dark:from-blue-400 dark:via-cyan-400 dark:to-green-400 bg-clip-text text-transparent block lg:inline">
+                              {' ' + slide.title.split(' ').slice(-1)[0]}
+                            </span>
+                          </h1>
+
+                          <h2 className="text-2xl lg:text-4xl text-foreground/80 dark:text-foreground/90 font-bold leading-relaxed">
+                            {slide.subtitle}
+                          </h2>
+
+                          <p className="text-xl lg:text-2xl text-muted-foreground leading-relaxed max-w-4xl mx-auto font-medium">
+                            {slide.description}
+                          </p>
+                        </div>
+
+                        {/* Feature Highlights */}
+                        <div className="flex flex-wrap justify-center gap-6 lg:gap-8">
+                          <div className="flex items-center space-x-3 px-4 py-2 bg-background/60 dark:bg-slate-800/60 rounded-xl border border-border/50 backdrop-blur-sm">
+                            <CheckCircle className="w-5 h-5 text-green-500" />
+                            <span className="text-sm font-medium text-foreground">No employee accounts needed</span>
+                          </div>
+                          <div className="flex items-center space-x-3 px-4 py-2 bg-background/60 dark:bg-slate-800/60 rounded-xl border border-border/50 backdrop-blur-sm">
+                            <CheckCircle className="w-5 h-5 text-green-500" />
+                            <span className="text-sm font-medium text-foreground">WhatsApp & SMS ready</span>
+                          </div>
+                          <div className="flex items-center space-x-3 px-4 py-2 bg-background/60 dark:bg-slate-800/60 rounded-xl border border-border/50 backdrop-blur-sm">
+                            <CheckCircle className="w-5 h-5 text-green-500" />
+                            <span className="text-sm font-medium text-foreground">Real-time analytics</span>
+                          </div>
+                        </div>
                       </div>
-                      
-                      <div className="flex flex-col sm:flex-row gap-6 justify-center">
-                        <Button variant="hero" size="lg" className="text-lg px-8 shadow-strong">
+
+                      {/* Enhanced Action Buttons */}
+                      <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
+                        <Button variant="hero" size="lg" className="group text-xl px-10 py-4 shadow-2xl hover:shadow-3xl transition-all duration-300 transform hover:scale-105">
                           {slide.cta}
-                          <ArrowRight className="w-5 h-5" />
+                          <ArrowRight className="w-6 h-6 ml-2 group-hover:translate-x-1 transition-transform duration-300" />
                         </Button>
-                        <Button variant="outline" size="lg" className="text-lg px-8 bg-gradient-glass border-primary/20">
-                          <Play className="w-5 h-5 mr-2" />
+                        <Button variant="outline" size="lg" className="group text-xl px-10 py-4 bg-background/60 dark:bg-slate-800/60 border-border/50 backdrop-blur-sm hover:bg-accent/50 transition-all duration-300">
+                          <Play className="w-6 h-6 mr-3 group-hover:scale-110 transition-transform duration-300" />
                           Watch Demo
                         </Button>
                       </div>
 
-                      <div className="flex flex-wrap justify-center gap-8 text-sm text-muted-foreground">
-                        <div className="flex items-center space-x-2">
-                          <CheckCircle className="w-5 h-5 text-success" />
-                          <span>No employee accounts needed</span>
+                      {/* Trust Indicators */}
+                      <div className="flex flex-wrap justify-center gap-6 lg:gap-8">
+                        <div className="flex items-center space-x-3 px-4 py-2 bg-green-50 dark:bg-green-900/20 rounded-xl border border-green-200 dark:border-green-800">
+                          <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400" />
+                          <span className="text-sm font-medium text-green-700 dark:text-green-300">14-day free trial</span>
                         </div>
-                        <div className="flex items-center space-x-2">
-                          <CheckCircle className="w-5 h-5 text-success" />
-                          <span>14-day free trial</span>
+                        <div className="flex items-center space-x-3 px-4 py-2 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800">
+                          <CheckCircle className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                          <span className="text-sm font-medium text-blue-700 dark:text-blue-300">No setup fees</span>
                         </div>
                         <div className="flex items-center space-x-2">
                           <CheckCircle className="w-5 h-5 text-success" />
