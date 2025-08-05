@@ -69,6 +69,13 @@ import {
 const AdminDashboard = () => {
   const [selectedPeriod, setSelectedPeriod] = useState("30d");
   const [activeSection, setActiveSection] = useState("overview");
+  const [viewedSections, setViewedSections] = useState<Set<string>>(new Set());
+
+  // Handle section change and mark as viewed
+  const handleSectionChange = (sectionId: string) => {
+    setActiveSection(sectionId);
+    setViewedSections(prev => new Set([...prev, sectionId]));
+  };
   const [timeline, setTimeline] = useState<TimelineOption>('1m');
 
   // Real data hooks
@@ -128,7 +135,7 @@ const AdminDashboard = () => {
 
     // If we have recent activity but no historical data, show as "new"
     if (nonZeroData.length === 1) {
-      const hasRecentActivity = allData.slice(-7).some(item => item[key] > 0); // Last 7 days
+      const hasRecentActivity = allData.slice(-30).some(item => item[key] > 0); // Last 30 days
       return hasRecentActivity ? { trend: 'new', percentage: 0 } : { trend: 'neutral', percentage: 0 };
     }
 
@@ -164,7 +171,7 @@ const AdminDashboard = () => {
         id: "organizations",
         label: "Organizations",
         icon: Building,
-        badge: systemMetrics.totalOrganizations?.toString() || "0",
+        badge: !viewedSections.has("organizations") && systemMetrics.totalOrganizations > 0 ? "New" : undefined,
         active: activeSection === "organizations"
       },
       {
@@ -177,7 +184,7 @@ const AdminDashboard = () => {
         id: "feedback",
         label: "Feedback",
         icon: MessageSquare,
-        badge: platformFeedback.length?.toString() || "0",
+        badge: !viewedSections.has("feedback") && platformFeedback.length > 0 ? platformFeedback.length.toString() : undefined,
         active: activeSection === "feedback"
       },
       {
@@ -1297,7 +1304,7 @@ const AdminDashboard = () => {
       <ModernSidebar
         items={getDynamicAdminDashboardItems()}
         activeItem={activeSection}
-        onItemClick={setActiveSection}
+        onItemClick={handleSectionChange}
         userInfo={{
           name: adminProfile.name || "Admin User",
           email: adminProfile.email || "admin@staffpulse.com",
