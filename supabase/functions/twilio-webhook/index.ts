@@ -34,6 +34,40 @@ async function validateTwilioSignature(
   }
 }
 
+// Parse check-in response from message body
+function parseCheckInResponse(messageBody: string) {
+  const body = messageBody.toLowerCase().trim()
+
+  // Look for numeric mood score (1-10)
+  let mood = 5 // default
+  const moodMatch = body.match(/\b([1-9]|10)\b/)
+  if (moodMatch) {
+    mood = parseInt(moodMatch[1])
+  } else {
+    // Look for mood keywords if no number found
+    if (body.includes('great') || body.includes('excellent') || body.includes('amazing') || body.includes('fantastic')) mood = 9
+    else if (body.includes('good') || body.includes('fine') || body.includes('ok') || body.includes('well')) mood = 7
+    else if (body.includes('bad') || body.includes('terrible') || body.includes('awful') || body.includes('horrible')) mood = 3
+    else if (body.includes('stressed') || body.includes('overwhelmed') || body.includes('anxious')) mood = 4
+  }
+
+  // Look for stress indicators
+  let stress = 3 // default
+  if (body.includes('stressed') || body.includes('overwhelmed') || body.includes('pressure') || body.includes('anxious')) stress = 8
+  else if (body.includes('calm') || body.includes('relaxed') || body.includes('peaceful') || body.includes('chill')) stress = 2
+
+  // Look for workload indicators
+  let workload = 5 // default
+  if (body.includes('busy') || body.includes('swamped') || body.includes('overloaded') || body.includes('hectic')) workload = 8
+  else if (body.includes('light') || body.includes('manageable') || body.includes('easy') || body.includes('quiet')) workload = 3
+
+  return {
+    mood,
+    stress,
+    workload
+  }
+}
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -132,58 +166,119 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? Deno.env.get('SUPABASE_ANON_KEY')!
     const supabase = createClient(supabaseUrl, supabaseKey)
 
-    // Call the database function to process the SMS response
-    const { data, error } = await supabase.rpc('process_sms_response', {
-      from_phone: from,
-      message_body: body,
-      twilio_message_sid: messageSid
-    })
+    // First, log the incoming message
+    try {
+      const messageData = {
+        message_sid: messageSid,
+        from_number: from,
+        to_number: to,
+        message_body: body,
+        media_count: parseInt(numMedia) || 0,
+        profile_name: profileName || null,
+        direction: 'inbound',
+        status: 'received',
+        received_at: new Date().toISOString()
+      }
 
-    if (error) {
-      console.error('Error processing SMS response:', error)
-    } else {
-      console.log('SMS response processed successfully:', data)
+      await supabase
+        .from('twilio_messages')
+        .insert(messageData)
 
-      // If the response was processed successfully and we have thank you message data,
-      // send the thank you message using Edge Function's access to environment variables
-      if (data?.success && data?.thank_you_message && data?.employee_name) {
-        try {
-          const twilioAccountSid = Deno.env.get('TWILIO_ACCOUNT_SID')
-          const twilioAuthToken = Deno.env.get('TWILIO_AUTH_TOKEN')
-          const twilioPhoneNumber = Deno.env.get('TWILIO_PHONE_NUMBER')
+      console.log('📨 Incoming message logged:', messageSid)
+    } catch (messageLogError) {
+      console.error('Error logging message:', messageLogError)
+    }
 
-          if (twilioAccountSid && twilioAuthToken && twilioPhoneNumber) {
-            const whatsappFrom = `whatsapp:${twilioPhoneNumber}`
-            const whatsappTo = from // Already in whatsapp:+number format
+    // Process the WhatsApp response manually
+    try {
+      // Clean the phone number (remove whatsapp: prefix)
+      const cleanNumber = from.replace('whatsapp:', '')
 
-            const twilioResponse = await fetch(
-              `https://api.twilio.com/2010-04-01/Accounts/${twilioAccountSid}/Messages.json`,
-              {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/x-www-form-urlencoded',
-                  'Authorization': `Basic ${btoa(`${twilioAccountSid}:${twilioAuthToken}`)}`
-                },
-                body: new URLSearchParams({
-                  From: whatsappFrom,
-                  To: whatsappTo,
-                  Body: data.thank_you_message
-                })
-              }
-            )
+      // Find employee by phone number
+      const { data: employees, error: employeeError } = await supabase
+        .from('employees')
+        .select('*')
+        .eq('phone', cleanNumber)
+        .limit(1)
 
-            if (twilioResponse.ok) {
-              console.log(`Thank you WhatsApp sent to ${data.employee_name}`)
-            } else {
-              console.error('Failed to send thank you WhatsApp:', await twilioResponse.text())
+      if (employeeError) {
+        console.error('Error finding employee:', employeeError)
+        return new Response('<?xml version="1.0" encoding="UTF-8"?><Response></Response>', {
+          headers: { ...corsHeaders, 'Content-Type': 'application/xml' }
+        })
+      }
+
+      if (!employees || employees.length === 0) {
+        console.log('No employee found for phone number:', cleanNumber)
+        return new Response('<?xml version="1.0" encoding="UTF-8"?><Response></Response>', {
+          headers: { ...corsHeaders, 'Content-Type': 'application/xml' }
+        })
+      }
+
+      const employee = employees[0]
+      console.log('Found employee:', employee.name)
+
+      // Parse the response
+      const parsedResponse = parseCheckInResponse(body)
+
+      // Store the check-in response
+      const checkInData = {
+        employee_id: employee.id,
+        organization_id: employee.organization_id,
+        mood_score: parsedResponse.mood,
+        stress_level: parsedResponse.stress,
+        workload_level: parsedResponse.workload,
+        feedback: body, // Store the full message as feedback
+        response_method: 'whatsapp',
+        submitted_at: new Date().toISOString()
+      }
+
+      const { data: checkInResult, error: checkInError } = await supabase
+        .from('check_ins')
+        .insert(checkInData)
+        .select()
+
+      if (checkInError) {
+        console.error('Error storing check-in:', checkInError)
+      } else {
+        console.log('✅ Check-in response stored for:', employee.name)
+
+        // Send thank you message
+        const twilioAccountSid = Deno.env.get('TWILIO_ACCOUNT_SID')
+        const twilioAuthToken = Deno.env.get('TWILIO_AUTH_TOKEN')
+        const twilioPhoneNumber = Deno.env.get('TWILIO_PHONE_NUMBER')
+
+        if (twilioAccountSid && twilioAuthToken && twilioPhoneNumber) {
+          const thankYouMessage = `Thank you ${employee.name}! 🙏 We've received your check-in and appreciate you taking the time to share how you're feeling. Your wellbeing matters to us! 💙`
+
+          const whatsappFrom = `whatsapp:${twilioPhoneNumber}`
+          const whatsappTo = from // Already in whatsapp:+number format
+
+          const twilioResponse = await fetch(
+            `https://api.twilio.com/2010-04-01/Accounts/${twilioAccountSid}/Messages.json`,
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'Authorization': `Basic ${btoa(`${twilioAccountSid}:${twilioAuthToken}`)}`
+              },
+              body: new URLSearchParams({
+                From: whatsappFrom,
+                To: whatsappTo,
+                Body: thankYouMessage
+              })
             }
+          )
+
+          if (twilioResponse.ok) {
+            console.log(`Thank you WhatsApp sent to ${employee.name}`)
           } else {
-            console.warn('Twilio credentials not configured in Edge Function environment')
+            console.error('Failed to send thank you WhatsApp:', await twilioResponse.text())
           }
-        } catch (thankYouError) {
-          console.error('Error sending thank you message:', thankYouError)
         }
       }
+    } catch (processingError) {
+      console.error('Error processing WhatsApp response:', processingError)
     }
 
     // Return empty TwiML response (no reply needed as thank you is sent separately)

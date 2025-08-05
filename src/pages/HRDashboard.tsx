@@ -115,7 +115,7 @@ const HRDashboard = () => {
   const [selectedTargetType, setSelectedTargetType] = useState('all');
   const [selectedDepartments, setSelectedDepartments] = useState<string[]>([]);
   const [selectedEmployees, setSelectedEmployees] = useState<string[]>([]);
-  const [checkInMessage, setCheckInMessage] = useState('Hi {employee_name}, how are you feeling today? Please reply with your mood (1-10) and any comments. Example: "7 - Busy but good day!"');
+  const [checkInMessage, setCheckInMessage] = useState('Hi {employee_name}, hope you\'re having a good day! 😊 We genuinely care about your wellbeing at {company_name}. Taking a moment to check in with yourself is so important. How are you feeling today? Please reply with:\n\n1️⃣ Your mood (1-10 scale)\n2️⃣ Any comments or thoughts (optional)\n\nExample: "8 - Having a great week, thanks for checking in!"\n\nYour wellbeing matters to us! 💙');
   const [isSending, setIsSending] = useState(false);
   const [sendResult, setSendResult] = useState<any>(null);
 
@@ -2149,7 +2149,7 @@ const HRDashboard = () => {
 
         // Reset form
         setSelectedMessageType('professional_psychological');
-        setCheckInMessage('Hi {employee_name}, how are you feeling today? Please reply with your mood (1-10) and any comments. Example: "7 - Busy but good day!"');
+        setCheckInMessage('Hi {employee_name}, hope you\'re having a good day! 😊 We genuinely care about your wellbeing at {company_name}. Taking a moment to check in with yourself is so important. How are you feeling today? Please reply with:\n\n1️⃣ Your mood (1-10 scale)\n2️⃣ Any comments or thoughts (optional)\n\nExample: "8 - Having a great week, thanks for checking in!"\n\nYour wellbeing matters to us! 💙');
         setSelectedTargetType('all');
         setSelectedDepartments([]);
         setSelectedEmployees([]);
@@ -2576,6 +2576,8 @@ const HRDashboard = () => {
                       setSelectedMessageType(type.id);
                       if (type.id === 'custom') {
                         setCheckInMessage('Hi {employee_name}, how are you feeling today? Please reply with your mood (1-10) and any comments. Example: "7 - Busy but good day!"');
+                      } else if (type.id === 'professional_psychological') {
+                        setCheckInMessage('Hi {employee_name}, hope you\'re having a good day! 😊 We genuinely care about your wellbeing at {company_name}. Taking a moment to check in with yourself is so important. How are you feeling today? Please reply with:\n\n1️⃣ Your mood (1-10 scale)\n2️⃣ Any comments or thoughts (optional)\n\nExample: "8 - Having a great week, thanks for checking in!"\n\nYour wellbeing matters to us! 💙');
                       }
                     }}
                   >
@@ -2762,6 +2764,8 @@ const HRDashboard = () => {
                           setSelectedMessageType(type.id);
                           if (type.id === 'custom') {
                             setCheckInMessage('Hi {employee_name}, how are you feeling today? Please reply with your mood (1-10) and any comments. Example: "7 - Busy but good day!"');
+                          } else if (type.id === 'professional_psychological') {
+                            setCheckInMessage('Hi {employee_name}, hope you\'re having a good day! 😊 We genuinely care about your wellbeing at {company_name}. Taking a moment to check in with yourself is so important. How are you feeling today? Please reply with:\n\n1️⃣ Your mood (1-10 scale)\n2️⃣ Any comments or thoughts (optional)\n\nExample: "8 - Having a great week, thanks for checking in!"\n\nYour wellbeing matters to us! 💙');
                           }
                         }}
                       >
@@ -2980,6 +2984,8 @@ const HRDashboard = () => {
                           setSelectedMessageType(type.id);
                           if (type.id === 'custom') {
                             setCheckInMessage('Hi {employee_name}, how are you feeling today? Please reply with your mood (1-10) and any comments. Example: "7 - Busy but good day!"');
+                          } else if (type.id === 'professional_psychological') {
+                            setCheckInMessage('Hi {employee_name}, hope you\'re having a good day! 😊 We genuinely care about your wellbeing at {company_name}. Taking a moment to check in with yourself is so important. How are you feeling today? Please reply with:\n\n1️⃣ Your mood (1-10 scale)\n2️⃣ Any comments or thoughts (optional)\n\nExample: "8 - Having a great week, thanks for checking in!"\n\nYour wellbeing matters to us! 💙');
                           }
                         }}
                       >

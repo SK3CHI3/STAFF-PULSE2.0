@@ -350,8 +350,20 @@ export class TwilioService {
       try {
         // Personalize the message
         const personalizedMessage = message
+          .replace(/\{employee_name\}/g, employee.name)
           .replace(/\{name\}/g, employee.name)
+          .replace(/\{company_name\}/g, 'StaffPulse')
+          .replace(/\{organization_name\}/g, 'StaffPulse')
           .replace(/\{department\}/g, employee.department || 'your department')
+
+        // Debug logging to check placeholder replacement
+        console.log('🔍 Message personalization debug:', {
+          originalMessage: message.substring(0, 100) + '...',
+          employeeName: employee.name,
+          personalizedMessage: personalizedMessage.substring(0, 100) + '...',
+          hasEmployeeName: personalizedMessage.includes(employee.name),
+          hasCompanyName: personalizedMessage.includes('StaffPulse')
+        })
 
         const result = await this.sendWhatsAppMessage(employee.phone, personalizedMessage)
 
@@ -472,32 +484,20 @@ export class TwilioService {
     })
   }
 
-  // Get message templates
+  // Get message templates - Only the two types we support
   getMessageTemplates(): Array<{ id: string; name: string; template: string; description: string }> {
     return [
       {
-        id: 'daily_checkin',
-        name: 'Daily Check-in',
-        template: 'Hi {name}! 👋\n\nHow are you feeling today? Please take a moment to share your mood and any thoughts with us.\n\nReply to this message or use our app to check in.\n\nThanks!\nYour HR Team',
-        description: 'Standard daily wellness check-in'
-      },
-      {
-        id: 'weekly_pulse',
-        name: 'Weekly Pulse',
-        template: 'Hello {name}! 🌟\n\nIt\'s time for your weekly pulse check! How has your week been so far?\n\nWe\'d love to hear about:\n• Your overall mood\n• Any challenges you\'re facing\n• Wins or achievements\n\nYour feedback helps us support you better.\n\nBest regards,\n{department} Team',
-        description: 'Weekly comprehensive check-in'
-      },
-      {
-        id: 'project_feedback',
-        name: 'Project Feedback',
-        template: 'Hi {name}! 💼\n\nWe\'d appreciate your feedback on the current project you\'re working on.\n\nPlease share:\n• How you\'re feeling about the project\n• Any support you might need\n• Your stress levels (1-10)\n\nYour input is valuable to us!\n\nThanks,\nProject Management Team',
-        description: 'Project-specific wellness check'
+        id: 'professional_psychological',
+        name: 'Professional & Human',
+        template: 'Hi {employee_name}, hope you\'re having a good day! 😊 We genuinely care about your wellbeing at {company_name}. Taking a moment to check in with yourself is so important. How are you feeling today? Please reply with:\n\n1️⃣ Your mood (1-10 scale)\n2️⃣ Any comments or thoughts (optional)\n\nExample: "8 - Having a great week, thanks for checking in!"\n\nYour wellbeing matters to us! 💙',
+        description: 'Thoughtfully crafted message that balances professionalism with genuine care'
       },
       {
         id: 'custom',
         name: 'Custom Message',
-        template: 'Hi {name}!\n\n[Your custom message here]\n\nBest regards,\nYour Team',
-        description: 'Customizable template'
+        template: 'Hi {employee_name}, how are you feeling today? Please reply with your mood (1-10) and any comments. Example: "7 - Busy but good day!"',
+        description: 'Create your own personalized message with editable placeholders'
       }
     ]
   }
