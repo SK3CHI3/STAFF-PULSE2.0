@@ -8,7 +8,10 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useToast } from "@/hooks/use-toast";
 import { ModernSidebar, adminDashboardItems } from "@/components/layout/ModernSidebar";
+import { supabase } from "@/lib/supabase";
 import { TimelineSelector, TimelineOption } from "@/components/charts/TimelineSelector";
 import {
   usePlatformGrowth,
@@ -70,11 +73,65 @@ const AdminDashboard = () => {
   const [selectedPeriod, setSelectedPeriod] = useState("30d");
   const [activeSection, setActiveSection] = useState("overview");
   const [viewedSections, setViewedSections] = useState<Set<string>>(new Set());
+  const [viewModalOpen, setViewModalOpen] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [selectedOrg, setSelectedOrg] = useState<any>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const { toast } = useToast();
 
   // Handle section change and mark as viewed
   const handleSectionChange = (sectionId: string) => {
     setActiveSection(sectionId);
     setViewedSections(prev => new Set([...prev, sectionId]));
+  };
+
+  // Handle view organization
+  const handleViewOrganization = (org: any) => {
+    setSelectedOrg(org);
+    setViewModalOpen(true);
+  };
+
+  // Handle delete organization
+  const handleDeleteOrganization = (org: any) => {
+    setSelectedOrg(org);
+    setDeleteModalOpen(true);
+  };
+
+  // Confirm delete organization
+  const confirmDeleteOrganization = async () => {
+    if (!selectedOrg) return;
+
+    setIsDeleting(true);
+    try {
+      // Delete organization from database
+      const { error } = await supabase
+        .from('organizations')
+        .delete()
+        .eq('id', selectedOrg.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Organization Deleted",
+        description: `"${selectedOrg.name}" has been deleted successfully.`,
+        variant: "default",
+      });
+
+      // Close modal and refresh
+      setDeleteModalOpen(false);
+      setSelectedOrg(null);
+      window.location.reload();
+    } catch (error) {
+      console.error('Error deleting organization:', error);
+      toast({
+        title: "Delete Failed",
+        description: "Failed to delete organization. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDeleting(false);
+    }
   };
   const [timeline, setTimeline] = useState<TimelineOption>('1m');
 
@@ -629,11 +686,20 @@ const AdminDashboard = () => {
                     {getStatusBadge(org.status)}
                   </div>
                   <div className="flex items-center space-x-2">
-                    <Button variant="outline" size="sm">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleViewOrganization(org)}
+                    >
                       <Eye className="w-4 h-4" />
                     </Button>
-                    <Button variant="outline" size="sm">
-                      <Edit className="w-4 h-4" />
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDeleteOrganization(org)}
+                      className="text-red-600 hover:text-red-700 hover:border-red-300"
+                    >
+                      <Trash2 className="w-4 h-4" />
                     </Button>
                   </div>
                 </div>
@@ -1320,6 +1386,150 @@ const AdminDashboard = () => {
           </div>
         </div>
       </div>
+
+      {/* View Organization Modal */}
+      <Dialog open={viewModalOpen} onOpenChange={setViewModalOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center space-x-2">
+              <Building className="w-5 h-5 text-blue-500" />
+              <span>Organization Details</span>
+            </DialogTitle>
+            <DialogDescription>
+              Detailed information about {selectedOrg?.name}
+            </DialogDescription>
+          </DialogHeader>
+
+          {selectedOrg && (
+            <div className="space-y-6">
+              {/* Organization Header */}
+              <div className="flex items-center space-x-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg">
+                <Avatar className="h-16 w-16">
+                  <AvatarFallback className="bg-gradient-primary text-white text-lg">
+                    {selectedOrg.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2)}
+                  </AvatarFallback>
+                </Avatar>
+                <div>
+                  <h3 className="text-xl font-bold">{selectedOrg.name}</h3>
+                  <p className="text-muted-foreground">{selectedOrg.industry}</p>
+                  <div className="flex items-center space-x-2 mt-1">
+                    {getPlanBadge(selectedOrg.plan)}
+                    {getStatusBadge(selectedOrg.status)}
+                  </div>
+                </div>
+              </div>
+
+              {/* Metrics Grid */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="text-center p-3 bg-background/50 rounded-lg border">
+                  <div className="text-2xl font-bold text-blue-600">{selectedOrg.employees}</div>
+                  <div className="text-sm text-muted-foreground">Employees</div>
+                </div>
+                <div className="text-center p-3 bg-background/50 rounded-lg border">
+                  <div className="text-2xl font-bold text-green-600">{selectedOrg.avgMood}/10</div>
+                  <div className="text-sm text-muted-foreground">Avg Mood</div>
+                </div>
+                <div className="text-center p-3 bg-background/50 rounded-lg border">
+                  <div className="text-2xl font-bold text-purple-600">{selectedOrg.responseRate}%</div>
+                  <div className="text-sm text-muted-foreground">Response Rate</div>
+                </div>
+                <div className="text-center p-3 bg-background/50 rounded-lg border">
+                  <div className="text-2xl font-bold text-orange-600">${selectedOrg.mrr}</div>
+                  <div className="text-sm text-muted-foreground">Monthly Revenue</div>
+                </div>
+              </div>
+
+              {/* Additional Info */}
+              <div className="space-y-3">
+                <div className="flex justify-between items-center py-2 border-b">
+                  <span className="font-medium">Organization ID:</span>
+                  <span className="text-muted-foreground font-mono text-sm">{selectedOrg.id}</span>
+                </div>
+                <div className="flex justify-between items-center py-2 border-b">
+                  <span className="font-medium">Last Active:</span>
+                  <span className="text-muted-foreground">{selectedOrg.lastActive}</span>
+                </div>
+                <div className="flex justify-between items-center py-2 border-b">
+                  <span className="font-medium">Created:</span>
+                  <span className="text-muted-foreground">
+                    {new Date(selectedOrg.createdAt).toLocaleDateString('en-US', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric'
+                    })}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setViewModalOpen(false)}>
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Organization Modal */}
+      <Dialog open={deleteModalOpen} onOpenChange={setDeleteModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center space-x-2 text-red-600">
+              <AlertTriangle className="w-5 h-5" />
+              <span>Delete Organization</span>
+            </DialogTitle>
+            <DialogDescription>
+              This action cannot be undone. This will permanently delete the organization and all associated data.
+            </DialogDescription>
+          </DialogHeader>
+
+          {selectedOrg && (
+            <div className="space-y-4">
+              <div className="p-4 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
+                <div className="flex items-center space-x-3">
+                  <Avatar className="h-10 w-10">
+                    <AvatarFallback className="bg-red-100 text-red-600">
+                      {selectedOrg.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <h4 className="font-semibold">{selectedOrg.name}</h4>
+                    <p className="text-sm text-muted-foreground">{selectedOrg.industry}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="text-sm text-muted-foreground">
+                <p><strong>This will delete:</strong></p>
+                <ul className="list-disc list-inside mt-2 space-y-1">
+                  <li>{selectedOrg.employees} employee records</li>
+                  <li>All check-in data and mood scores</li>
+                  <li>Subscription and billing information</li>
+                  <li>All organization settings and preferences</li>
+                </ul>
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setDeleteModalOpen(false)}
+              disabled={isDeleting}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={confirmDeleteOrganization}
+              disabled={isDeleting}
+            >
+              {isDeleting ? "Deleting..." : "Delete Organization"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
