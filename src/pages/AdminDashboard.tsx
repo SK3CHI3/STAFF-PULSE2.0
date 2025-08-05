@@ -117,18 +117,30 @@ const AdminDashboard = () => {
 
   // Helper function to calculate trend (appreciation/depreciation)
   const calculateTrend = (data: any[], key: string) => {
-    if (!data || data.length < 2) return { trend: 'neutral', percentage: 0 };
+    if (!data || data.length < 2) return { trend: 'new', percentage: 0 };
 
-    const validData = data.filter(item => item[key] !== undefined && item[key] !== null && item[key] > 0);
-    if (validData.length < 2) return { trend: 'neutral', percentage: 0 };
+    // Get all data points (including zeros for better trend analysis)
+    const allData = data.filter(item => item[key] !== undefined && item[key] !== null);
+    if (allData.length < 2) return { trend: 'new', percentage: 0 };
 
-    const firstValue = validData[0][key];
-    const lastValue = validData[validData.length - 1][key];
+    // Find first and last non-zero values for meaningful comparison
+    const nonZeroData = allData.filter(item => item[key] > 0);
+
+    // If we have recent activity but no historical data, show as "new"
+    if (nonZeroData.length === 1) {
+      const hasRecentActivity = allData.slice(-7).some(item => item[key] > 0); // Last 7 days
+      return hasRecentActivity ? { trend: 'new', percentage: 0 } : { trend: 'neutral', percentage: 0 };
+    }
+
+    if (nonZeroData.length < 2) return { trend: 'neutral', percentage: 0 };
+
+    const firstValue = nonZeroData[0][key];
+    const lastValue = nonZeroData[nonZeroData.length - 1][key];
 
     if (firstValue === 0) return { trend: 'neutral', percentage: 0 };
 
     const percentage = ((lastValue - firstValue) / firstValue) * 100;
-    const trend = percentage > 0 ? 'up' : percentage < 0 ? 'down' : 'neutral';
+    const trend = percentage > 5 ? 'up' : percentage < -5 ? 'down' : 'neutral'; // 5% threshold for meaningful change
 
     return { trend, percentage: Math.abs(percentage) };
   };
@@ -228,7 +240,7 @@ const AdminDashboard = () => {
   const renderOverviewContent = () => (
     <div className="space-y-8">
       {/* Compact Professional Header */}
-      <div className="bg-gradient-to-r from-background to-background/95 dark:from-slate-900 dark:to-slate-800 rounded-2xl border border-border/50 shadow-lg p-6">
+      <div className="bg-gradient-to-r from-white via-blue-50/50 to-indigo-50/50 dark:from-slate-900 dark:via-blue-900/50 dark:to-indigo-900/50 rounded-2xl border border-border/50 shadow-lg p-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
           {/* Title Section */}
           <div className="flex items-center space-x-3">
@@ -277,8 +289,11 @@ const AdminDashboard = () => {
                   <>
                     {trend.trend === 'up' && <TrendingUp className="h-3 w-3 text-green-500" />}
                     {trend.trend === 'down' && <TrendingDown className="h-3 w-3 text-red-500" />}
-                    <p className={`text-xs ${trend.trend === 'up' ? 'text-green-500' : trend.trend === 'down' ? 'text-red-500' : 'text-muted-foreground'}`}>
-                      {trend.trend === 'neutral' ? 'No change' : `${trend.percentage.toFixed(1)}% ${trend.trend === 'up' ? 'increase' : 'decrease'}`}
+                    {trend.trend === 'new' && <TrendingUp className="h-3 w-3 text-blue-500" />}
+                    <p className={`text-xs ${trend.trend === 'up' ? 'text-green-500' : trend.trend === 'down' ? 'text-red-500' : trend.trend === 'new' ? 'text-blue-500' : 'text-muted-foreground'}`}>
+                      {trend.trend === 'neutral' ? 'No change' :
+                       trend.trend === 'new' ? 'New activity' :
+                       `${trend.percentage.toFixed(1)}% ${trend.trend === 'up' ? 'increase' : 'decrease'}`}
                     </p>
                   </>
                 );
@@ -301,8 +316,11 @@ const AdminDashboard = () => {
                   <>
                     {trend.trend === 'up' && <TrendingUp className="h-3 w-3 text-green-500" />}
                     {trend.trend === 'down' && <TrendingDown className="h-3 w-3 text-red-500" />}
-                    <p className={`text-xs ${trend.trend === 'up' ? 'text-green-500' : trend.trend === 'down' ? 'text-red-500' : 'text-muted-foreground'}`}>
-                      {trend.trend === 'neutral' ? 'No change' : `${trend.percentage.toFixed(1)}% ${trend.trend === 'up' ? 'increase' : 'decrease'}`}
+                    {trend.trend === 'new' && <TrendingUp className="h-3 w-3 text-blue-500" />}
+                    <p className={`text-xs ${trend.trend === 'up' ? 'text-green-500' : trend.trend === 'down' ? 'text-red-500' : trend.trend === 'new' ? 'text-blue-500' : 'text-muted-foreground'}`}>
+                      {trend.trend === 'neutral' ? 'No change' :
+                       trend.trend === 'new' ? 'New activity' :
+                       `${trend.percentage.toFixed(1)}% ${trend.trend === 'up' ? 'increase' : 'decrease'}`}
                     </p>
                   </>
                 );
@@ -325,8 +343,11 @@ const AdminDashboard = () => {
                   <>
                     {trend.trend === 'up' && <TrendingUp className="h-3 w-3 text-green-500" />}
                     {trend.trend === 'down' && <TrendingDown className="h-3 w-3 text-red-500" />}
-                    <p className={`text-xs ${trend.trend === 'up' ? 'text-green-500' : trend.trend === 'down' ? 'text-red-500' : 'text-muted-foreground'}`}>
-                      {trend.trend === 'neutral' ? 'No change' : `${trend.percentage.toFixed(1)}% ${trend.trend === 'up' ? 'increase' : 'decrease'}`}
+                    {trend.trend === 'new' && <TrendingUp className="h-3 w-3 text-blue-500" />}
+                    <p className={`text-xs ${trend.trend === 'up' ? 'text-green-500' : trend.trend === 'down' ? 'text-red-500' : trend.trend === 'new' ? 'text-blue-500' : 'text-muted-foreground'}`}>
+                      {trend.trend === 'neutral' ? 'No change' :
+                       trend.trend === 'new' ? 'New activity' :
+                       `${trend.percentage.toFixed(1)}% ${trend.trend === 'up' ? 'increase' : 'decrease'}`}
                     </p>
                   </>
                 );
@@ -341,7 +362,7 @@ const AdminDashboard = () => {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">KES {getTotalRevenue(platformGrowth).toLocaleString()}</div>
+            <div className="text-2xl font-bold">KES {(systemMetrics.totalRevenue || 0).toLocaleString()}</div>
             <div className="flex items-center space-x-1 mt-1">
               {(() => {
                 const trend = calculateTrend(platformGrowth, 'revenue');
@@ -349,14 +370,17 @@ const AdminDashboard = () => {
                   <>
                     {trend.trend === 'up' && <TrendingUp className="h-3 w-3 text-green-500" />}
                     {trend.trend === 'down' && <TrendingDown className="h-3 w-3 text-red-500" />}
-                    <p className={`text-xs ${trend.trend === 'up' ? 'text-green-500' : trend.trend === 'down' ? 'text-red-500' : 'text-muted-foreground'}`}>
-                      {trend.trend === 'neutral' ? 'No change' : `${trend.percentage.toFixed(1)}% ${trend.trend === 'up' ? 'increase' : 'decrease'}`}
+                    {trend.trend === 'new' && <TrendingUp className="h-3 w-3 text-blue-500" />}
+                    <p className={`text-xs ${trend.trend === 'up' ? 'text-green-500' : trend.trend === 'down' ? 'text-red-500' : trend.trend === 'new' ? 'text-blue-500' : 'text-muted-foreground'}`}>
+                      {trend.trend === 'neutral' ? 'No change' :
+                       trend.trend === 'new' ? 'First revenue!' :
+                       `${trend.percentage.toFixed(1)}% ${trend.trend === 'up' ? 'increase' : 'decrease'}`}
                     </p>
                   </>
                 );
               })()}
             </div>
-            <p className="text-xs text-muted-foreground">Uptime this month</p>
+
           </CardContent>
         </Card>
       </div>
@@ -1170,28 +1194,7 @@ const AdminDashboard = () => {
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-card border-0 shadow-soft">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm">Server Uptime</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{systemMetrics.serverUptime || 0}%</div>
-            <div className="flex items-center space-x-1 mt-1">
-              {(() => {
-                const uptime = systemMetrics.serverUptime || 0;
-                const isGood = uptime > 99;
-                return (
-                  <>
-                    {isGood ? <TrendingUp className="h-3 w-3 text-green-500" /> : <TrendingDown className="h-3 w-3 text-red-500" />}
-                    <p className={`text-xs ${isGood ? 'text-green-500' : 'text-red-500'}`}>
-                      {isGood ? 'Excellent' : 'Below target'}
-                    </p>
-                  </>
-                );
-              })()}
-            </div>
-          </CardContent>
-        </Card>
+
 
         <Card className="bg-gradient-card border-0 shadow-soft">
           <CardHeader className="pb-2">
@@ -1289,7 +1292,7 @@ const AdminDashboard = () => {
   );
 
   return (
-    <div className="flex h-screen bg-gradient-dashboard">
+    <div className="flex h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-900 dark:via-blue-900 dark:to-indigo-900">
       {/* Modern Sidebar */}
       <ModernSidebar
         items={getDynamicAdminDashboardItems()}
@@ -1303,7 +1306,7 @@ const AdminDashboard = () => {
       />
 
       {/* Main Content */}
-      <div className="flex-1 overflow-auto">
+      <div className="flex-1 overflow-auto bg-gradient-to-b from-transparent via-blue-50/30 to-indigo-50/50 dark:via-blue-900/20 dark:to-indigo-900/30">
         <div className="p-6">
           <div className="max-w-7xl mx-auto">
             {renderContent()}

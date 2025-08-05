@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { supabaseConfig } from '../lib/supabase'
+import { supabaseConfig, supabase } from '../lib/supabase'
 
 interface AdminDataState<T> {
   data: T
@@ -20,21 +20,12 @@ export const usePlatformGrowth = (timeline: string = '1m') => {
       setState(prev => ({ ...prev, loading: true, error: null }))
 
       try {
-        const response = await fetch(`${supabaseConfig.url}/rest/v1/rpc/get_platform_growth`, {
-          method: 'POST',
-          headers: {
-            'apikey': supabaseConfig.anonKey,
-            'Authorization': `Bearer ${supabaseConfig.anonKey}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ timeline: timeline })
-        })
+        // Use direct RPC call via supabase client
+        const { data, error } = await supabase
+          .rpc('get_platform_growth', { timeline: timeline })
 
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`)
-        }
+        if (error) throw error
 
-        const data = await response.json()
         setState({ data: data || [], loading: false, error: null })
       } catch (error) {
         setState(prev => ({
@@ -325,20 +316,11 @@ export const useSystemMetrics = () => {
       setState(prev => ({ ...prev, loading: true, error: null }))
 
       try {
-        const response = await fetch(`${supabaseConfig.url}/rest/v1/rpc/get_system_metrics`, {
-          method: 'POST',
-          headers: {
-            'apikey': supabaseConfig.anonKey,
-            'Authorization': `Bearer ${supabaseConfig.anonKey}`,
-            'Content-Type': 'application/json'
-          }
-        })
+        // Use direct RPC call via supabase client
+        const { data, error } = await supabase.rpc('get_system_metrics')
 
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`)
-        }
+        if (error) throw error
 
-        const data = await response.json()
         setState({ data: data || {}, loading: false, error: null })
       } catch (error) {
         setState(prev => ({

@@ -979,18 +979,30 @@ const HRDashboard = () => {
 
   // Helper function to calculate trend (appreciation/depreciation)
   const calculateTrend = (data: any[], key: string) => {
-    if (!data || data.length < 2) return { trend: 'neutral', percentage: 0 };
+    if (!data || data.length < 2) return { trend: 'new', percentage: 0 };
 
-    const validData = data.filter(item => item[key] !== undefined && item[key] !== null && item[key] > 0);
-    if (validData.length < 2) return { trend: 'neutral', percentage: 0 };
+    // Get all data points (including zeros for better trend analysis)
+    const allData = data.filter(item => item[key] !== undefined && item[key] !== null);
+    if (allData.length < 2) return { trend: 'new', percentage: 0 };
 
-    const firstValue = validData[0][key];
-    const lastValue = validData[validData.length - 1][key];
+    // Find first and last non-zero values for meaningful comparison
+    const nonZeroData = allData.filter(item => item[key] > 0);
+
+    // If we have recent activity but no historical data, show as "new"
+    if (nonZeroData.length === 1) {
+      const hasRecentActivity = allData.slice(-7).some(item => item[key] > 0); // Last 7 days
+      return hasRecentActivity ? { trend: 'new', percentage: 0 } : { trend: 'neutral', percentage: 0 };
+    }
+
+    if (nonZeroData.length < 2) return { trend: 'neutral', percentage: 0 };
+
+    const firstValue = nonZeroData[0][key];
+    const lastValue = nonZeroData[nonZeroData.length - 1][key];
 
     if (firstValue === 0) return { trend: 'neutral', percentage: 0 };
 
     const percentage = ((lastValue - firstValue) / firstValue) * 100;
-    const trend = percentage > 0 ? 'up' : percentage < 0 ? 'down' : 'neutral';
+    const trend = percentage > 5 ? 'up' : percentage < -5 ? 'down' : 'neutral'; // 5% threshold for meaningful change
 
     return { trend, percentage: Math.abs(percentage) };
   };
@@ -1425,8 +1437,11 @@ const HRDashboard = () => {
                       <>
                         {trend.trend === 'up' && <TrendingUp className="h-3 w-3 text-green-500" />}
                         {trend.trend === 'down' && <TrendingDown className="h-3 w-3 text-red-500" />}
-                        <p className={`text-xs ${trend.trend === 'up' ? 'text-green-500' : trend.trend === 'down' ? 'text-red-500' : 'text-muted-foreground'}`}>
-                          {trend.trend === 'neutral' ? 'Stable' : `${trend.percentage.toFixed(1)}% ${trend.trend === 'up' ? 'increase' : 'decrease'}`}
+                        {trend.trend === 'new' && <TrendingUp className="h-3 w-3 text-blue-500" />}
+                        <p className={`text-xs ${trend.trend === 'up' ? 'text-green-500' : trend.trend === 'down' ? 'text-red-500' : trend.trend === 'new' ? 'text-blue-500' : 'text-muted-foreground'}`}>
+                          {trend.trend === 'neutral' ? 'Stable' :
+                           trend.trend === 'new' ? 'New activity' :
+                           `${trend.percentage.toFixed(1)}% ${trend.trend === 'up' ? 'increase' : 'decrease'}`}
                         </p>
                       </>
                     );
@@ -1455,8 +1470,11 @@ const HRDashboard = () => {
                       <>
                         {trend.trend === 'up' && <TrendingUp className="h-3 w-3 text-green-500" />}
                         {trend.trend === 'down' && <TrendingDown className="h-3 w-3 text-red-500" />}
-                        <p className={`text-xs ${trend.trend === 'up' ? 'text-green-500' : trend.trend === 'down' ? 'text-red-500' : 'text-muted-foreground'}`}>
-                          {trend.trend === 'neutral' ? 'Stable' : `${trend.percentage.toFixed(1)}% ${trend.trend === 'up' ? 'improvement' : 'decline'}`}
+                        {trend.trend === 'new' && <TrendingUp className="h-3 w-3 text-blue-500" />}
+                        <p className={`text-xs ${trend.trend === 'up' ? 'text-green-500' : trend.trend === 'down' ? 'text-red-500' : trend.trend === 'new' ? 'text-blue-500' : 'text-muted-foreground'}`}>
+                          {trend.trend === 'neutral' ? 'Stable' :
+                           trend.trend === 'new' ? 'New data' :
+                           `${trend.percentage.toFixed(1)}% ${trend.trend === 'up' ? 'improvement' : 'decline'}`}
                         </p>
                       </>
                     );
@@ -1485,8 +1503,11 @@ const HRDashboard = () => {
                       <>
                         {trend.trend === 'up' && <TrendingUp className="h-3 w-3 text-green-500" />}
                         {trend.trend === 'down' && <TrendingDown className="h-3 w-3 text-red-500" />}
-                        <p className={`text-xs ${trend.trend === 'up' ? 'text-green-500' : trend.trend === 'down' ? 'text-red-500' : 'text-muted-foreground'}`}>
-                          {trend.trend === 'neutral' ? 'Stable' : `${trend.percentage.toFixed(1)}% ${trend.trend === 'up' ? 'increase' : 'decrease'}`}
+                        {trend.trend === 'new' && <TrendingUp className="h-3 w-3 text-blue-500" />}
+                        <p className={`text-xs ${trend.trend === 'up' ? 'text-green-500' : trend.trend === 'down' ? 'text-red-500' : trend.trend === 'new' ? 'text-blue-500' : 'text-muted-foreground'}`}>
+                          {trend.trend === 'neutral' ? 'Stable' :
+                           trend.trend === 'new' ? 'New activity' :
+                           `${trend.percentage.toFixed(1)}% ${trend.trend === 'up' ? 'increase' : 'decrease'}`}
                         </p>
                       </>
                     );
@@ -1515,8 +1536,11 @@ const HRDashboard = () => {
                       <>
                         {trend.trend === 'up' && <TrendingUp className="h-3 w-3 text-green-500" />}
                         {trend.trend === 'down' && <TrendingDown className="h-3 w-3 text-red-500" />}
-                        <p className={`text-xs ${trend.trend === 'up' ? 'text-green-500' : trend.trend === 'down' ? 'text-red-500' : 'text-muted-foreground'}`}>
-                          {trend.trend === 'neutral' ? 'Stable' : `${trend.percentage.toFixed(1)}% ${trend.trend === 'up' ? 'increase' : 'decrease'}`}
+                        {trend.trend === 'new' && <TrendingUp className="h-3 w-3 text-blue-500" />}
+                        <p className={`text-xs ${trend.trend === 'up' ? 'text-green-500' : trend.trend === 'down' ? 'text-red-500' : trend.trend === 'new' ? 'text-blue-500' : 'text-muted-foreground'}`}>
+                          {trend.trend === 'neutral' ? 'Stable' :
+                           trend.trend === 'new' ? 'New activity' :
+                           `${trend.percentage.toFixed(1)}% ${trend.trend === 'up' ? 'increase' : 'decrease'}`}
                         </p>
                       </>
                     );
@@ -1684,8 +1708,11 @@ const HRDashboard = () => {
                   <>
                     {trend.trend === 'up' && <TrendingUp className="h-3 w-3 text-green-500" />}
                     {trend.trend === 'down' && <TrendingDown className="h-3 w-3 text-red-500" />}
-                    <p className={`text-xs ${trend.trend === 'up' ? 'text-green-500' : trend.trend === 'down' ? 'text-red-500' : 'text-muted-foreground'}`}>
-                      {trend.trend === 'neutral' ? 'Stable' : `${trend.percentage.toFixed(1)}% ${trend.trend === 'up' ? 'improvement' : 'decline'}`}
+                    {trend.trend === 'new' && <TrendingUp className="h-3 w-3 text-blue-500" />}
+                    <p className={`text-xs ${trend.trend === 'up' ? 'text-green-500' : trend.trend === 'down' ? 'text-red-500' : trend.trend === 'new' ? 'text-blue-500' : 'text-muted-foreground'}`}>
+                      {trend.trend === 'neutral' ? 'Stable' :
+                       trend.trend === 'new' ? 'New data' :
+                       `${trend.percentage.toFixed(1)}% ${trend.trend === 'up' ? 'improvement' : 'decline'}`}
                     </p>
                   </>
                 );
@@ -1708,10 +1735,13 @@ const HRDashboard = () => {
                 const trend = calculateTrend(engagementChartData.data || [], 'responseRate');
                 return (
                   <>
-                    {trend.trend === 'up' && <TrendingUp className="h-3 w-3 text-green-500" />}
+                    {trend.trend === 'up' && <TrendingUp className="h-3 w-3 text-blue-500" />}
                     {trend.trend === 'down' && <TrendingDown className="h-3 w-3 text-red-500" />}
-                    <p className={`text-xs ${trend.trend === 'up' ? 'text-green-500' : trend.trend === 'down' ? 'text-red-500' : 'text-muted-foreground'}`}>
-                      {trend.trend === 'neutral' ? 'Stable' : `${trend.percentage.toFixed(1)}% ${trend.trend === 'up' ? 'increase' : 'decrease'}`}
+                    {trend.trend === 'new' && <TrendingUp className="h-3 w-3 text-blue-500" />}
+                    <p className={`text-xs ${trend.trend === 'up' ? 'text-green-500' : trend.trend === 'down' ? 'text-red-500' : trend.trend === 'new' ? 'text-blue-500' : 'text-muted-foreground'}`}>
+                      {trend.trend === 'neutral' ? 'Stable' :
+                       trend.trend === 'new' ? 'New activity' :
+                       `${trend.percentage.toFixed(1)}% ${trend.trend === 'up' ? 'increase' : 'decrease'}`}
                     </p>
                   </>
                 );

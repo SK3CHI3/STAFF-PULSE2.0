@@ -81,19 +81,19 @@ export const useRevenueData = (timeline: TimelineOption) => {
         const { startDate, endDate } = getDateRange(timeline)
         const grouping = getDateGrouping(timeline)
 
-        // Get organizations with their creation dates
-        // Note: In a real app, you'd have a subscriptions table with plan info
-        const { data: orgsData, error } = await supabase
-          .from('organizations')
-          .select('created_at')
+        // Get actual completed payments for real revenue calculation
+        const { data: paymentsData, error } = await supabase
+          .from('payments')
+          .select('amount, currency, created_at, status')
+          .eq('status', 'completed')
           .gte('created_at', formatDateForQuery(startDate))
           .lte('created_at', formatDateForQuery(endDate))
 
         if (error) throw error
 
-        // Calculate revenue based on organization count (mock pricing)
-        const revenueData = calculateRevenueData(orgsData || [], grouping)
-        
+        // Calculate revenue based on actual payments
+        const revenueData = calculateRealRevenueData(paymentsData || [], grouping)
+
         setState({
           data: revenueData,
           loading: false,
@@ -249,16 +249,16 @@ const processGrowthData = (orgsData: any[], employeesData: any[], grouping: 'day
     .sort((a, b) => a.date.localeCompare(b.date))
 }
 
-const calculateRevenueData = (orgsData: any[], grouping: 'day' | 'week' | 'month') => {
+const calculateRealRevenueData = (paymentsData: any[], grouping: 'day' | 'week' | 'month') => {
   const grouped: { [key: string]: number } = {}
 
-  // Mock pricing: $50 per organization per month
-  const monthlyPrice = 50
-
-  orgsData.forEach(org => {
-    const key = getDateKey(new Date(org.created_at), grouping)
+  paymentsData.forEach(payment => {
+    const key = getDateKey(new Date(payment.created_at), grouping)
     if (!grouped[key]) grouped[key] = 0
-    grouped[key] += monthlyPrice
+
+    // Convert amount to number and add to revenue
+    const amount = parseFloat(payment.amount) || 0
+    grouped[key] += amount
   })
 
   return Object.entries(grouped)
