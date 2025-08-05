@@ -1,1 +1,93 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1200" fill="none"><rect width="1200" height="1200" fill="#EAEAEA" rx="3"/><g opacity=".5"><g opacity=".5"><path fill="#FAFAFA" d="M600.709 736.5c-75.454 0-136.621-61.167-136.621-136.62 0-75.454 61.167-136.621 136.621-136.621 75.453 0 136.62 61.167 136.62 136.621 0 75.453-61.167 136.62-136.62 136.62Z"/><path stroke="#C9C9C9" stroke-width="2.418" d="M600.709 736.5c-75.454 0-136.621-61.167-136.621-136.62 0-75.454 61.167-136.621 136.621-136.621 75.453 0 136.62 61.167 136.62 136.621 0 75.453-61.167 136.62-136.62 136.62Z"/></g><path stroke="url(#a)" stroke-width="2.418" d="M0-1.209h553.581" transform="scale(1 -1) rotate(45 1163.11 91.165)"/><path stroke="url(#b)" stroke-width="2.418" d="M404.846 598.671h391.726"/><path stroke="url(#c)" stroke-width="2.418" d="M599.5 795.742V404.017"/><path stroke="url(#d)" stroke-width="2.418" d="m795.717 796.597-391.441-391.44"/><path fill="#fff" d="M600.709 656.704c-31.384 0-56.825-25.441-56.825-56.824 0-31.384 25.441-56.825 56.825-56.825 31.383 0 56.824 25.441 56.824 56.825 0 31.383-25.441 56.824-56.824 56.824Z"/><g clip-path="url(#e)"><path fill="#666" fill-rule="evenodd" d="M616.426 586.58h-31.434v16.176l3.553-3.554.531-.531h9.068l.074-.074 8.463-8.463h2.565l7.18 7.181V586.58Zm-15.715 14.654 3.698 3.699 1.283 1.282-2.565 2.565-1.282-1.283-5.2-5.199h-6.066l-5.514 5.514-.073.073v2.876a2.418 2.418 0 0 0 2.418 2.418h26.598a2.418 2.418 0 0 0 2.418-2.418v-8.317l-8.463-8.463-7.181 7.181-.071.072Zm-19.347 5.442v4.085a6.045 6.045 0 0 0 6.046 6.045h26.598a6.044 6.044 0 0 0 6.045-6.045v-7.108l1.356-1.355-1.282-1.283-.074-.073v-17.989h-38.689v23.43l-.146.146.146.147Z" clip-rule="evenodd"/></g><path stroke="#C9C9C9" stroke-width="2.418" d="M600.709 656.704c-31.384 0-56.825-25.441-56.825-56.824 0-31.384 25.441-56.825 56.825-56.825 31.383 0 56.824 25.441 56.824 56.825 0 31.383-25.441 56.824-56.824 56.824Z"/></g><defs><linearGradient id="a" x1="554.061" x2="-.48" y1=".083" y2=".087" gradientUnits="userSpaceOnUse"><stop stop-color="#C9C9C9" stop-opacity="0"/><stop offset=".208" stop-color="#C9C9C9"/><stop offset=".792" stop-color="#C9C9C9"/><stop offset="1" stop-color="#C9C9C9" stop-opacity="0"/></linearGradient><linearGradient id="b" x1="796.912" x2="404.507" y1="599.963" y2="599.965" gradientUnits="userSpaceOnUse"><stop stop-color="#C9C9C9" stop-opacity="0"/><stop offset=".208" stop-color="#C9C9C9"/><stop offset=".792" stop-color="#C9C9C9"/><stop offset="1" stop-color="#C9C9C9" stop-opacity="0"/></linearGradient><linearGradient id="c" x1="600.792" x2="600.794" y1="403.677" y2="796.082" gradientUnits="userSpaceOnUse"><stop stop-color="#C9C9C9" stop-opacity="0"/><stop offset=".208" stop-color="#C9C9C9"/><stop offset=".792" stop-color="#C9C9C9"/><stop offset="1" stop-color="#C9C9C9" stop-opacity="0"/></linearGradient><linearGradient id="d" x1="404.85" x2="796.972" y1="403.903" y2="796.02" gradientUnits="userSpaceOnUse"><stop stop-color="#C9C9C9" stop-opacity="0"/><stop offset=".208" stop-color="#C9C9C9"/><stop offset=".792" stop-color="#C9C9C9"/><stop offset="1" stop-color="#C9C9C9" stop-opacity="0"/></linearGradient><clipPath id="e"><path fill="#fff" d="M581.364 580.535h38.689v38.689h-38.689z"/></clipPath></defs></svg>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1200" viewBox="0 0 1200 1200" fill="none">
+  <defs>
+    <!-- Background gradient -->
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#F8FAFC;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#E2E8F0;stop-opacity:1" />
+    </linearGradient>
+
+    <!-- StaffPulse brand gradient -->
+    <linearGradient id="brandGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#3B82F6;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#06B6D4;stop-opacity:1" />
+    </linearGradient>
+
+    <!-- Pulse line gradient -->
+    <linearGradient id="pulseGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#10B981;stop-opacity:0.3" />
+      <stop offset="50%" style="stop-color:#10B981;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#10B981;stop-opacity:0.3" />
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="1200" fill="url(#bgGradient)" rx="24"/>
+
+  <!-- Full background pattern -->
+  <rect x="0" y="0" width="1200" height="400" fill="url(#brandGradient)" opacity="0.1"/>
+  <rect x="0" y="800" width="1200" height="400" fill="url(#brandGradient)" opacity="0.1"/>
+
+  <!-- Large StaffPulse logo -->
+  <circle cx="600" cy="300" r="120" fill="url(#brandGradient)" />
+  <text x="600" y="330" font-family="Arial, sans-serif" font-size="72" font-weight="bold" text-anchor="middle" fill="white">SP</text>
+
+  <!-- Full-width pulse line -->
+  <path d="M 0 600 L 200 600 L 240 520 L 280 680 L 320 450 L 360 750 L 400 600 L 600 600 L 640 520 L 680 680 L 720 450 L 760 750 L 800 600 L 1200 600"
+        stroke="url(#pulseGradient)"
+        stroke-width="8"
+        fill="none"
+        stroke-linecap="round"
+        stroke-linejoin="round"/>
+
+  <!-- Distributed wellness icons across full width -->
+  <!-- Left side icons -->
+  <circle cx="150" cy="200" r="25" fill="#10B981" opacity="0.8"/>
+  <circle cx="143" cy="193" r="3" fill="white"/>
+  <circle cx="157" cy="193" r="3" fill="white"/>
+  <path d="M 138 207 Q 150 215 162 207" stroke="white" stroke-width="3" fill="none" stroke-linecap="round"/>
+
+  <rect x="100" y="450" width="40" height="25" rx="6" fill="#3B82F6" opacity="0.8"/>
+  <path d="M 110 470 L 125 478 L 140 470" stroke="#3B82F6" stroke-width="3" fill="none" opacity="0.8"/>
+
+  <!-- Center top icons -->
+  <circle cx="500" cy="150" r="12" fill="#06B6D4" opacity="0.8"/>
+  <circle cx="520" cy="160" r="12" fill="#06B6D4" opacity="0.6"/>
+  <circle cx="480" cy="160" r="12" fill="#06B6D4" opacity="0.6"/>
+
+  <rect x="680" y="120" width="6" height="30" fill="#8B5CF6" opacity="0.8"/>
+  <rect x="690" y="105" width="6" height="45" fill="#8B5CF6" opacity="0.8"/>
+  <rect x="700" y="90" width="6" height="60" fill="#8B5CF6" opacity="0.8"/>
+  <rect x="710" y="110" width="6" height="40" fill="#8B5CF6" opacity="0.8"/>
+
+  <!-- Right side icons -->
+  <path d="M 1050 200 C 1043 193, 1027 193, 1027 207 C 1027 221, 1050 235, 1050 235 C 1050 235, 1073 221, 1073 207 C 1073 193, 1057 193, 1050 200 Z"
+        fill="#EF4444" opacity="0.8"/>
+
+  <rect x="1000" y="450" width="30" height="45" rx="12" fill="#25D366" opacity="0.8"/>
+  <rect x="1008" y="460" width="14" height="20" rx="3" fill="white" opacity="0.9"/>
+
+  <!-- Bottom distributed icons -->
+  <circle cx="200" cy="900" r="20" fill="#F59E0B" opacity="0.7"/>
+  <circle cx="400" cy="950" r="15" fill="#EF4444" opacity="0.7"/>
+  <circle cx="600" cy="900" r="18" fill="#10B981" opacity="0.7"/>
+  <circle cx="800" cy="950" r="16" fill="#8B5CF6" opacity="0.7"/>
+  <circle cx="1000" cy="900" r="22" fill="#06B6D4" opacity="0.7"/>
+
+  <!-- Large title text -->
+  <text x="600" y="520" font-family="Arial, sans-serif" font-size="48" font-weight="bold" text-anchor="middle" fill="#1E293B">
+    StaffPulse
+  </text>
+  <text x="600" y="570" font-family="Arial, sans-serif" font-size="32" font-weight="600" text-anchor="middle" fill="#64748B">
+    Employee Wellness Platform
+  </text>
+
+  <!-- Full-width decorative elements -->
+  <rect x="0" y="680" width="1200" height="2" fill="url(#pulseGradient)" opacity="0.3"/>
+  <rect x="0" y="720" width="1200" height="1" fill="url(#brandGradient)" opacity="0.2"/>
+
+  <!-- Corner accent elements -->
+  <circle cx="50" cy="50" r="8" fill="#3B82F6" opacity="0.4"/>
+  <circle cx="1150" cy="50" r="8" fill="#06B6D4" opacity="0.4"/>
+  <circle cx="50" cy="1150" r="8" fill="#10B981" opacity="0.4"/>
+  <circle cx="1150" cy="1150" r="8" fill="#8B5CF6" opacity="0.4"/>
+</svg>
