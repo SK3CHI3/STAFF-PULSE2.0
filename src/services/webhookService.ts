@@ -2,11 +2,11 @@ import { supabaseConfig } from '../lib/supabase'
 
 // Webhook endpoints for Twilio callbacks
 export const WEBHOOK_ENDPOINTS = {
-  SMS_STATUS: '/api/webhooks/twilio/sms-status',
-  SMS_INCOMING: '/api/webhooks/twilio/sms-incoming', 
-  WHATSAPP_STATUS: '/api/webhooks/twilio/whatsapp-status',
-  WHATSAPP_INCOMING: '/api/webhooks/twilio/whatsapp-incoming',
-  MESSAGE_STATUS: '/api/webhooks/twilio/message-status'
+  SMS_STATUS: '/api/whatsapp/webhook',
+  SMS_INCOMING: '/api/whatsapp/webhook',
+  WHATSAPP_STATUS: '/api/whatsapp/webhook',
+  WHATSAPP_INCOMING: '/api/whatsapp/webhook',
+  MESSAGE_STATUS: '/api/whatsapp/webhook'
 }
 
 // Get full webhook URLs for your domain

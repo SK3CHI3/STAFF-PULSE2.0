@@ -161,8 +161,8 @@ export class TwilioService {
       // Create basic auth header
       const credentials = btoa(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`)
 
-      // Get webhook URLs (you'll need to replace with your actual domain)
-      const baseUrl = window.location.origin // or your production domain
+      // Get webhook URLs - use production domain for Twilio callbacks
+      const baseUrl = 'https://staff-pulse.netlify.app'
       const webhooks = getWebhookUrls(baseUrl)
 
       const response = await fetch(TWILIO_MESSAGES_ENDPOINT, {
