@@ -155,12 +155,165 @@ export type Database = {
           is_anonymous?: boolean
         }
       }
+      subscriptions: {
+        Row: {
+          id: string
+          organization_id: string
+          plan_name: 'startup' | 'business' | 'enterprise'
+          status: 'active' | 'cancelled' | 'expired'
+          started_at: string
+          expires_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          plan_name: 'startup' | 'business' | 'enterprise'
+          status?: 'active' | 'cancelled' | 'expired'
+          started_at?: string
+          expires_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          organization_id?: string
+          plan_name?: 'startup' | 'business' | 'enterprise'
+          status?: 'active' | 'cancelled' | 'expired'
+          started_at?: string
+          expires_at?: string | null
+          updated_at?: string
+        }
+      }
+      payments: {
+        Row: {
+          id: string
+          organization_id: string
+          subscription_id: string | null
+          amount: number
+          currency: string
+          payment_ref: string
+          provider: string
+          status: 'completed' | 'pending' | 'failed'
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          subscription_id?: string | null
+          amount: number
+          currency?: string
+          payment_ref: string
+          provider?: string
+          status?: 'completed' | 'pending' | 'failed'
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          organization_id?: string
+          subscription_id?: string | null
+          amount?: number
+          currency?: string
+          payment_ref?: string
+          provider?: string
+          status?: 'completed' | 'pending' | 'failed'
+        }
+      }
+      subscription_events: {
+        Row: {
+          id: string
+          organization_id: string
+          subscription_id: string | null
+          event_type: 'created' | 'upgraded' | 'downgraded' | 'renewed' | 'cancelled' | 'expired' | 'reactivated'
+          from_plan: string | null
+          to_plan: string | null
+          amount: number | null
+          currency: string | null
+          details: any | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          subscription_id?: string | null
+          event_type: 'created' | 'upgraded' | 'downgraded' | 'renewed' | 'cancelled' | 'expired' | 'reactivated'
+          from_plan?: string | null
+          to_plan?: string | null
+          amount?: number | null
+          currency?: string | null
+          details?: any | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          organization_id?: string
+          subscription_id?: string | null
+          event_type?: 'created' | 'upgraded' | 'downgraded' | 'renewed' | 'cancelled' | 'expired' | 'reactivated'
+          from_plan?: string | null
+          to_plan?: string | null
+          amount?: number | null
+          currency?: string | null
+          details?: any | null
+        }
+      }
+      usage_tracking: {
+        Row: {
+          id: string
+          organization_id: string
+          feature_type: 'check_in_sent' | 'employee_added' | 'ai_insight_generated' | 'report_generated' | 'api_call'
+          quantity: number
+          metadata: any | null
+          billing_period: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          feature_type: 'check_in_sent' | 'employee_added' | 'ai_insight_generated' | 'report_generated' | 'api_call'
+          quantity?: number
+          metadata?: any | null
+          billing_period?: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          organization_id?: string
+          feature_type?: 'check_in_sent' | 'employee_added' | 'ai_insight_generated' | 'report_generated' | 'api_call'
+          quantity?: number
+          metadata?: any | null
+          billing_period?: string
+        }
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_current_plan: {
+        Args: {
+          org_id: string
+        }
+        Returns: Json
+      }
+      activate_plan: {
+        Args: {
+          org_id: string
+          plan_name: string
+          payment_ref: string
+          amount: number
+          is_prorated?: boolean
+        }
+        Returns: Json
+      }
+      cancel_subscription: {
+        Args: {
+          org_id: string
+          reason?: string
+          immediate?: boolean
+        }
+        Returns: Json
+      }
     }
     Enums: {
       user_role: 'hr_manager' | 'super_admin'
@@ -173,3 +326,7 @@ export type Organization = Database['public']['Tables']['organizations']['Row']
 export type UserProfile = Database['public']['Tables']['user_profiles']['Row']
 export type Employee = Database['public']['Tables']['employees']['Row']
 export type CheckIn = Database['public']['Tables']['check_ins']['Row']
+export type Subscription = Database['public']['Tables']['subscriptions']['Row']
+export type Payment = Database['public']['Tables']['payments']['Row']
+export type SubscriptionEvent = Database['public']['Tables']['subscription_events']['Row']
+export type UsageTracking = Database['public']['Tables']['usage_tracking']['Row']

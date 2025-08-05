@@ -136,8 +136,28 @@ export const useDepartmentWellnessData = (timeline: TimelineOption) => {
 
         const data = await response.json()
 
+        // Validate and clean department wellness data
+        const cleanedData = Array.isArray(data) ? data.filter(item =>
+          item &&
+          typeof item === 'object' &&
+          item.department &&
+          typeof item.department === 'string' &&
+          item.department.trim() !== '' &&
+          typeof item.mood === 'number' &&
+          !isNaN(item.mood)
+        ) : []
+
+        // Log data for debugging if there were issues
+        if (data && data.length !== cleanedData.length) {
+          console.warn('Department wellness data cleaned:', {
+            original: data.length,
+            cleaned: cleanedData.length,
+            removed: data.length - cleanedData.length
+          })
+        }
+
         setState({
-          data: data || [],
+          data: cleanedData,
           loading: false,
           error: null
         })
@@ -550,16 +570,12 @@ export const useEmployeesList = () => {
       setState(prev => ({ ...prev, loading: true, error: null }))
 
       try {
-        const response = await fetch(`${supabaseConfig.url}/rest/v1/rpc/get_employees_list`, {
-          method: 'POST',
+        // Use direct query instead of stored procedure for better control
+        const response = await fetch(`${supabaseConfig.url}/rest/v1/employees?organization_id=eq.${profile.organization_id}&select=id,name,email,phone,department,position,is_active,created_at&order=created_at.desc`, {
           headers: {
             'apikey': supabaseConfig.anonKey,
-            'Authorization': `Bearer ${supabaseConfig.anonKey}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            org_id: profile.organization_id
-          })
+            'Authorization': `Bearer ${supabaseConfig.anonKey}`
+          }
         })
 
         if (!response.ok) {
@@ -568,8 +584,16 @@ export const useEmployeesList = () => {
 
         const data = await response.json()
 
+        // Add initials field for each employee
+        const processedData = (data || []).map((employee: any) => ({
+          ...employee,
+          initials: employee.name
+            ? employee.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()
+            : '??'
+        }))
+
         setState({
-          data: data || [],
+          data: processedData,
           loading: false,
           error: null
         })
@@ -608,26 +632,50 @@ export const useDepartmentsList = () => {
       setState(prev => ({ ...prev, loading: true, error: null }))
 
       try {
-        const response = await fetch(`${supabaseConfig.url}/rest/v1/rpc/get_departments_list`, {
-          method: 'POST',
+        // First get departments
+        const deptResponse = await fetch(`${supabaseConfig.url}/rest/v1/departments?organization_id=eq.${profile.organization_id}&select=id,name,description,created_at&order=created_at.desc`, {
           headers: {
             'apikey': supabaseConfig.anonKey,
-            'Authorization': `Bearer ${supabaseConfig.anonKey}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            org_id: profile.organization_id
-          })
+            'Authorization': `Bearer ${supabaseConfig.anonKey}`
+          }
         })
 
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`)
+        if (!deptResponse.ok) {
+          throw new Error(`HTTP error! status: ${deptResponse.status}`)
         }
 
-        const data = await response.json()
+        const departments = await deptResponse.json()
+
+        // Then get employee counts for each department
+        const employeeResponse = await fetch(`${supabaseConfig.url}/rest/v1/employees?organization_id=eq.${profile.organization_id}&is_active=eq.true&select=department`, {
+          headers: {
+            'apikey': supabaseConfig.anonKey,
+            'Authorization': `Bearer ${supabaseConfig.anonKey}`
+          }
+        })
+
+        if (!employeeResponse.ok) {
+          throw new Error(`HTTP error! status: ${employeeResponse.status}`)
+        }
+
+        const employees = await employeeResponse.json()
+
+        // Count employees by department
+        const employeeCounts = employees.reduce((acc: any, emp: any) => {
+          if (emp.department) {
+            acc[emp.department] = (acc[emp.department] || 0) + 1
+          }
+          return acc
+        }, {})
+
+        // Add employee counts to departments
+        const departmentsWithCounts = departments.map((dept: any) => ({
+          ...dept,
+          employee_count: employeeCounts[dept.name] || 0
+        }))
 
         setState({
-          data: data || [],
+          data: departmentsWithCounts || [],
           loading: false,
           error: null
         })

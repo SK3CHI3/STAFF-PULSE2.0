@@ -1,73 +1,117 @@
-# Welcome to your Lovable project
+# 📊 Staff Pulse - Employee Wellness Management Platform
 
-## Project info
+A comprehensive employee wellness and engagement platform built with React, TypeScript, and Vite. Staff Pulse helps organizations monitor employee wellbeing, conduct check-ins, and gain insights into team health.
 
-**URL**: https://lovable.dev/projects/a774d286-6acb-4832-895b-b6e75d8ca59f
+## ✨ Features
 
-## How can I edit this code?
+### 🏢 **Organization Management**
+- **Employee Directory** - Manage employee profiles, departments, and contact information
+- **Department Management** - Create and organize departments with employee counts
+- **Role-based Access** - Secure access control for different user types
 
-There are several ways of editing your application.
+### 📱 **Communication & Check-ins**
+- **WhatsApp/SMS Integration** - Send check-in messages via Twilio
+- **Automated Campaigns** - Schedule and automate wellness check-ins
+- **Multi-channel Support** - WhatsApp and SMS messaging options
 
-**Use Lovable**
+### 📊 **Analytics & Insights**
+- **Real-time Dashboard** - Monitor employee engagement and wellness metrics
+- **Mood Tracking** - Track team mood trends over time
+- **AI-powered Insights** - Get intelligent recommendations using OpenRouter AI
+- **Response Analytics** - Analyze check-in responses and feedback
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/a774d286-6acb-4832-895b-b6e75d8ca59f) and start prompting.
+### 💳 **Subscription Management**
+- **Tiered Plans** - Startup, Business, and Enterprise plans
+- **Payment Integration** - Secure payments via IntaSend
+- **Usage Tracking** - Monitor plan limits and usage
 
-Changes made via Lovable will be committed automatically to this repo.
+### 🎨 **User Experience**
+- **Modern UI** - Clean, responsive design with dark/light mode
+- **Mobile-first** - Optimized for all device sizes
+- **Accessibility** - WCAG compliant interface
+- **Real-time Updates** - Live data synchronization
 
-**Use your preferred IDE**
+## 🛠 **Tech Stack**
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+- **Frontend**: React 18, TypeScript, Vite
+- **Styling**: Tailwind CSS, Shadcn/ui components
+- **Database**: Supabase (PostgreSQL)
+- **Authentication**: Supabase Auth
+- **Messaging**: Twilio (WhatsApp/SMS)
+- **AI**: OpenRouter API
+- **Payments**: IntaSend
+- **Deployment**: Netlify
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+## 🚀 **Quick Start**
 
-Follow these steps:
+### Prerequisites
+- Node.js 18+
+- npm or yarn
+- Supabase account
+- Twilio account (for messaging)
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+### Installation
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+1. **Clone the repository**
+```bash
+git clone <repository-url>
+cd staff-pulse
+```
 
-# Step 3: Install the necessary dependencies.
-npm i
+2. **Install dependencies**
+```bash
+npm install
+```
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+3. **Environment Setup**
+```bash
+cp .env.example .env
+```
+
+4. **Configure environment variables** (see `.env` file)
+
+5. **Start development server**
+```bash
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+## 📁 **Project Structure**
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+```
+src/
+├── components/          # Reusable UI components
+├── hooks/              # Custom React hooks
+├── lib/                # Utility libraries and configurations
+├── pages/              # Main application pages
+├── services/           # API services and external integrations
+├── types/              # TypeScript type definitions
+└── utils/              # Helper functions
 
-**Use GitHub Codespaces**
+public/
+├── _redirects          # Netlify redirects for SPA
+└── assets/             # Static assets
+```
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## 🔧 **Configuration**
 
-## What technologies are used for this project?
+### Environment Variables
+See `.env` for all required environment variables:
+- Supabase configuration
+- Twilio credentials
+- OpenRouter API key
+- IntaSend payment keys
 
-This project is built with:
+## 🚀 **Deployment**
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+This project is optimized for Netlify deployment. See [DEPLOYMENT.md](./DEPLOYMENT.md) for detailed instructions.
 
-## How can I deploy this project?
+### Quick Deploy to Netlify
+1. Connect your repository to Netlify
+2. Set environment variables in Netlify dashboard
+3. Deploy with build command: `npm run build`
 
-Simply open [Lovable](https://lovable.dev/projects/a774d286-6acb-4832-895b-b6e75d8ca59f) and click on Share -> Publish.
+## 📄 **License**
 
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+This project is licensed under the MIT License.
 
 Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)

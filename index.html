@@ -58,17 +58,14 @@
 
     <!-- Favicon and Icons -->
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
-    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
-    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
-    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
-    <link rel="icon" type="image/png" sizes="192x192" href="/android-chrome-192x192.png" />
-    <link rel="icon" type="image/png" sizes="512x512" href="/android-chrome-512x512.png" />
     <link rel="manifest" href="/site.webmanifest" />
 
     <!-- Preconnect to External Domains -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="preconnect" href="https://kietxkkxhdwhkdiemuor.supabase.co" />
+    <link rel="preconnect" href="https://sandbox.intasend.com" />
+    <link rel="preconnect" href="https://payment.intasend.com" />
     <link rel="dns-prefetch" href="https://www.google-analytics.com" />
     <link rel="dns-prefetch" href="https://www.clarity.ms" />
 
@@ -151,9 +148,9 @@
     <!-- <link rel="modulepreload" href="/src/main.tsx" /> -->
 
     <!-- Security Headers -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.google-analytics.com https://www.googletagmanager.com https://www.clarity.ms https://unpkg.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https: blob:; connect-src 'self' https://*.supabase.co https://kietxkkxhdwhkdiemuor.supabase.co https://www.google-analytics.com https://www.clarity.ms wss://*.supabase.co; frame-src 'self';" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.google-analytics.com https://www.googletagmanager.com https://www.clarity.ms https://unpkg.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https: blob:; connect-src 'self' https://*.supabase.co https://kietxkkxhdwhkdiemuor.supabase.co https://www.google-analytics.com https://www.clarity.ms https://sandbox.intasend.com https://payment.intasend.com https://*.intasend.com https://api.twilio.com wss://*.supabase.co; frame-src 'self' https://sandbox.intasend.com https://payment.intasend.com https://*.intasend.com;" />
     <meta http-equiv="X-Content-Type-Options" content="nosniff" />
-    <meta http-equiv="X-Frame-Options" content="DENY" />
+    <!-- X-Frame-Options should be set via HTTP headers, not meta tags -->
     <meta http-equiv="X-XSS-Protection" content="1; mode=block" />
     <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin" />
 
@@ -169,14 +166,16 @@
       });
     </script>
 
-    <!-- Microsoft Clarity -->
+    <!-- Microsoft Clarity - Disabled until project ID is configured -->
+    <!--
     <script type="text/javascript">
       (function(c,l,a,r,i,t,y){
         c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
         t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
         y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
-      })(window, document, "clarity", "script", "CLARITY_PROJECT_ID");
+      })(window, document, "clarity", "script", "YOUR_CLARITY_PROJECT_ID");
     </script>
+    -->
   </head>
 
   <body>

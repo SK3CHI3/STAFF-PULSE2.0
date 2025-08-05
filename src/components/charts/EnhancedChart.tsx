@@ -201,54 +201,83 @@ export const DepartmentWellnessChart: React.FC<{
   error: string | null
   title?: string
   description?: string
-}> = ({ data, loading, error, title = "Department Wellness", description = "Average wellness scores by department" }) => (
-  <EnhancedChart
-    title={title}
-    description={description}
-    data={data}
-    loading={loading}
-    error={error}
-    type="bar"
-    icon={<TrendingUp className="w-5 h-5 text-blue-500" />}
-  >
-    <BarChart data={data} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-      <XAxis
-        dataKey="department"
-        stroke="hsl(var(--muted-foreground))"
-        tick={{ fontSize: 12 }}
-        interval={0}
-        angle={data.length > 4 ? -45 : 0}
-        textAnchor={data.length > 4 ? 'end' : 'middle'}
-        height={data.length > 4 ? 60 : 40}
-        tickLine={false}
-        axisLine={false}
-      />
-      <YAxis 
-        domain={[0, 10]} 
-        stroke="hsl(var(--muted-foreground))"
-        fontSize={12}
-        tickLine={false}
-        axisLine={false}
-      />
-      <Tooltip
-        contentStyle={{
-          backgroundColor: "hsl(var(--card))",
-          border: "1px solid hsl(var(--border))",
-          borderRadius: "8px",
-          fontSize: "12px"
-        }}
-        labelStyle={{ color: "hsl(var(--foreground))" }}
-        formatter={(value, name) => [`${value}/10`, 'Mood Score']}
-      />
-      <Bar
-        dataKey="mood"
-        fill="#3b82f6"
-        radius={[4, 4, 0, 0]}
-      />
-    </BarChart>
-  </EnhancedChart>
-)
+}> = ({ data, loading, error, title = "Department Wellness", description = "Average wellness scores by department" }) => {
+  // Clean and deduplicate data to prevent duplicate keys
+  const cleanData = React.useMemo(() => {
+    if (!data || !Array.isArray(data)) return []
+
+    // Filter out invalid entries and deduplicate by department name
+    const validData = data.filter(item =>
+      item &&
+      typeof item === 'object' &&
+      item.department &&
+      typeof item.department === 'string' &&
+      item.department.trim() !== '' &&
+      typeof item.mood === 'number' &&
+      !isNaN(item.mood)
+    )
+
+    // Deduplicate by department name, keeping the last occurrence
+    const departmentMap = new Map()
+    validData.forEach(item => {
+      departmentMap.set(item.department.trim(), {
+        ...item,
+        department: item.department.trim()
+      })
+    })
+
+    return Array.from(departmentMap.values())
+  }, [data])
+
+  return (
+    <EnhancedChart
+      title={title}
+      description={description}
+      data={cleanData}
+      loading={loading}
+      error={error}
+      type="bar"
+      icon={<TrendingUp className="w-5 h-5 text-blue-500" />}
+    >
+      <BarChart data={cleanData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+        <XAxis
+          dataKey="department"
+          stroke="hsl(var(--muted-foreground))"
+          tick={{ fontSize: 12 }}
+          interval={0}
+          angle={cleanData.length > 4 ? -45 : 0}
+          textAnchor={cleanData.length > 4 ? 'end' : 'middle'}
+          height={cleanData.length > 4 ? 60 : 40}
+          tickLine={false}
+          axisLine={false}
+        />
+        <YAxis
+          domain={[0, 10]}
+          stroke="hsl(var(--muted-foreground))"
+          fontSize={12}
+          tickLine={false}
+          axisLine={false}
+        />
+        <Tooltip
+          contentStyle={{
+            backgroundColor: "hsl(var(--card))",
+            border: "1px solid hsl(var(--border))",
+            borderRadius: "8px",
+            fontSize: "12px"
+          }}
+          labelStyle={{ color: "hsl(var(--foreground))" }}
+          formatter={(value, name) => [`${value}/10`, 'Mood Score']}
+        />
+        <Bar
+          dataKey="mood"
+          fill="#3b82f6"
+          radius={[4, 4, 0, 0]}
+        />
+      </BarChart>
+    </EnhancedChart>
+  )
+}
 
 export const EngagementChart: React.FC<{
   data: any[]

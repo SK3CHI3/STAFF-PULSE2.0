@@ -55,6 +55,8 @@ export class SchedulingService {
 
   private async getCampaignsReadyToSend(): Promise<ScheduledCampaign[]> {
     try {
+      console.log('🔍 Checking for campaigns ready to send...')
+
       const response = await fetch(`${supabaseConfig.url}/rest/v1/rpc/get_campaigns_ready_to_send`, {
         method: 'POST',
         headers: {
@@ -65,12 +67,16 @@ export class SchedulingService {
       })
 
       if (!response.ok) {
+        const errorText = await response.text()
+        console.error(`❌ Failed to fetch ready campaigns: ${response.status} - ${errorText}`)
         throw new Error(`Failed to fetch ready campaigns: ${response.status}`)
       }
 
-      return await response.json()
+      const campaigns = await response.json()
+      console.log(`📋 Found ${campaigns.length} campaigns ready to send`)
+      return campaigns
     } catch (error) {
-      console.error('Failed to get campaigns ready to send:', error)
+      console.error('❌ Failed to get campaigns ready to send:', error)
       return []
     }
   }
@@ -117,15 +123,19 @@ export class SchedulingService {
 
   private async getTargetEmployees(campaign: ScheduledCampaign): Promise<Employee[]> {
     try {
-      let query = `${supabaseConfig.url}/rest/v1/employees?organization_id=eq.${campaign.organization_id}&select=id,name,phone,department`
+      let query = `${supabaseConfig.url}/rest/v1/employees?organization_id=eq.${campaign.organization_id}&select=id,name,phone,department&is_active=eq.true`
 
-      if (campaign.target_type === 'department' && campaign.target_departments) {
-        const deptFilter = campaign.target_departments.map(dept => `department.eq.${dept}`).join(',')
+      if (campaign.target_type === 'department' && campaign.target_departments && campaign.target_departments.length > 0) {
+        // For department targeting, filter by department IDs
+        const deptFilter = campaign.target_departments.map(deptId => `department.eq.${deptId}`).join(',')
         query += `&or=(${deptFilter})`
-      } else if (campaign.target_type === 'individual' && campaign.target_employees) {
-        const empFilter = campaign.target_employees.map(emp => `id.eq.${emp}`).join(',')
+      } else if (campaign.target_type === 'individual' && campaign.target_employees && campaign.target_employees.length > 0) {
+        // For individual targeting, filter by employee IDs
+        const empFilter = campaign.target_employees.map(empId => `id.eq.${empId}`).join(',')
         query += `&or=(${empFilter})`
       }
+
+      console.log(`🔍 Fetching employees with query: ${query}`)
 
       const response = await fetch(query, {
         headers: {
@@ -139,7 +149,10 @@ export class SchedulingService {
       }
 
       const employees = await response.json()
-      return employees.filter((emp: any) => emp.phone && emp.phone.trim() !== '')
+      const validEmployees = employees.filter((emp: any) => emp.phone && emp.phone.trim() !== '')
+
+      console.log(`📋 Found ${validEmployees.length} valid employees for campaign ${campaign.name}`)
+      return validEmployees
     } catch (error) {
       console.error('Failed to get target employees:', error)
       return []

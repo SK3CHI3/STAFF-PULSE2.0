@@ -1,4 +1,5 @@
 import { supabaseConfig } from '../lib/supabase'
+import { getWebhookUrls } from './webhookService'
 
 // Twilio configuration from environment variables
 const TWILIO_ACCOUNT_SID = import.meta.env.VITE_TWILIO_ACCOUNT_SID
@@ -160,6 +161,10 @@ export class TwilioService {
       // Create basic auth header
       const credentials = btoa(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`)
 
+      // Get webhook URLs (you'll need to replace with your actual domain)
+      const baseUrl = window.location.origin // or your production domain
+      const webhooks = getWebhookUrls(baseUrl)
+
       const response = await fetch(TWILIO_MESSAGES_ENDPOINT, {
         method: 'POST',
         headers: {
@@ -169,7 +174,8 @@ export class TwilioService {
         body: new URLSearchParams({
           From: whatsappFrom,
           To: whatsappTo,
-          Body: message.trim()
+          Body: message.trim(),
+          StatusCallback: webhooks.messageStatus
         })
       })
 

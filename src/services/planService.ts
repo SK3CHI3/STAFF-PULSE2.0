@@ -4,13 +4,20 @@ export interface PlanLimits {
   maxEmployees: number
   checkInFrequency: 'monthly' | 'weekly' | 'daily'
   analyticsLevel: 'basic' | 'advanced' | 'custom'
-  aiInsights: boolean
-  individualInsights: boolean
+  aiInsights: boolean // Organization-level AI insights
+  employeeInsights: boolean // Individual employee AI insights
   departmentInsights: boolean
   apiAccess: boolean
   customBranding: boolean
   prioritySupport: boolean
   dedicatedManager: boolean
+}
+
+export interface PlanFeature {
+  name: string
+  included: boolean
+  value?: string
+  description?: string
 }
 
 export interface Plan {
@@ -21,9 +28,22 @@ export interface Plan {
   priceUSD: number
   description: string
   features: string[]
+  detailedFeatures: {
+    employees: PlanFeature
+    checkIns: PlanFeature
+    analytics: PlanFeature
+    aiInsights: PlanFeature
+    individualInsights: PlanFeature
+    departmentInsights: PlanFeature
+    customBranding: PlanFeature
+    apiAccess: PlanFeature
+    support: PlanFeature
+    dedicatedManager: PlanFeature
+  }
   limits: PlanLimits
   popular?: boolean
   savings?: string
+  trial?: boolean
 }
 
 export const PLANS: Record<string, Plan> = {
@@ -41,12 +61,24 @@ export const PLANS: Record<string, Plan> = {
       'WhatsApp & SMS integration',
       'Email support'
     ],
+    detailedFeatures: {
+      employees: { name: 'Employee Limit', included: true, value: 'Up to 25 employees' },
+      checkIns: { name: 'Check-in Frequency', included: true, value: 'Monthly check-ins' },
+      analytics: { name: 'Analytics Dashboard', included: true, value: 'Basic analytics & reports' },
+      aiInsights: { name: 'Organization AI Insights', included: false, description: 'Upgrade to Business for team-level AI insights' },
+      individualInsights: { name: 'Employee AI Insights', included: false, description: 'Upgrade to Enterprise for individual employee insights' },
+      departmentInsights: { name: 'Department Analytics', included: false, description: 'Upgrade to Business for department insights' },
+      customBranding: { name: 'Custom Branding', included: false, description: 'Upgrade to Business for custom branding' },
+      apiAccess: { name: 'API Access', included: false, description: 'Available in Enterprise plan' },
+      support: { name: 'Support', included: true, value: 'Email support' },
+      dedicatedManager: { name: 'Dedicated Success Manager', included: false, description: 'Available in Enterprise plan' }
+    },
     limits: {
       maxEmployees: 25,
       checkInFrequency: 'monthly',
       analyticsLevel: 'basic',
-      aiInsights: false,
-      individualInsights: false,
+      aiInsights: false, // No AI insights
+      employeeInsights: false, // No individual employee insights
       departmentInsights: false,
       apiAccess: false,
       customBranding: false,
@@ -70,12 +102,24 @@ export const PLANS: Record<string, Plan> = {
       'Priority support',
       'Custom branding'
     ],
+    detailedFeatures: {
+      employees: { name: 'Employee Limit', included: true, value: 'Up to 100 employees' },
+      checkIns: { name: 'Check-in Frequency', included: true, value: 'Weekly check-ins' },
+      analytics: { name: 'Analytics Dashboard', included: true, value: 'Advanced analytics & custom reports' },
+      aiInsights: { name: 'Organization AI Insights', included: true, value: 'Team-level AI insights and recommendations' },
+      individualInsights: { name: 'Employee AI Insights', included: false, description: 'Upgrade to Enterprise for individual employee insights' },
+      departmentInsights: { name: 'Department Analytics', included: true, value: 'Department-level insights & trends' },
+      customBranding: { name: 'Custom Branding', included: true, value: 'Custom logo & company colors' },
+      apiAccess: { name: 'API Access', included: false, description: 'Available in Enterprise plan' },
+      support: { name: 'Support', included: true, value: 'Priority email & chat support' },
+      dedicatedManager: { name: 'Dedicated Success Manager', included: false, description: 'Available in Enterprise plan' }
+    },
     limits: {
       maxEmployees: 100,
       checkInFrequency: 'weekly',
       analyticsLevel: 'advanced',
-      aiInsights: true,
-      individualInsights: false,
+      aiInsights: true, // Organization-level AI insights only
+      employeeInsights: false, // No individual employee insights
       departmentInsights: true,
       apiAccess: false,
       customBranding: true,
@@ -100,12 +144,24 @@ export const PLANS: Record<string, Plan> = {
       'Dedicated success manager',
       'On-site training'
     ],
+    detailedFeatures: {
+      employees: { name: 'Employee Limit', included: true, value: 'Unlimited employees' },
+      checkIns: { name: 'Check-in Frequency', included: true, value: 'Daily check-ins' },
+      analytics: { name: 'Analytics Dashboard', included: true, value: 'Custom analytics & white-label reports' },
+      aiInsights: { name: 'Organization AI Insights', included: true, value: 'Advanced team-level AI insights' },
+      individualInsights: { name: 'Employee AI Insights', included: true, value: 'Personal wellness & performance insights for each employee' },
+      departmentInsights: { name: 'Department Analytics', included: true, value: 'Advanced department analytics' },
+      customBranding: { name: 'Custom Branding', included: true, value: 'Full white-label customization' },
+      apiAccess: { name: 'API Access', included: true, value: 'Full REST API access' },
+      support: { name: 'Support', included: true, value: '24/7 priority support' },
+      dedicatedManager: { name: 'Dedicated Success Manager', included: true, value: 'Personal success manager & on-site training' }
+    },
     limits: {
       maxEmployees: -1, // unlimited
       checkInFrequency: 'daily',
       analyticsLevel: 'custom',
-      aiInsights: true,
-      individualInsights: true,
+      aiInsights: true, // Organization-level AI insights
+      employeeInsights: true, // Individual employee AI insights
       departmentInsights: true,
       apiAccess: true,
       customBranding: true,

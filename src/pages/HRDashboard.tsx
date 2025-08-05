@@ -18,6 +18,9 @@ import {
 import { useMoodTrendData, useDepartmentWellnessData, useEngagementData, useDashboardStats, useRecentResponses, useMoodDistribution, useEmployeeStats, useEmployeesList, useDepartmentsList, useAIInsights, useCheckInCampaigns, useCheckInTargets } from '@/hooks/useChartData';
 import { usePlan } from '@/hooks/usePlan';
 import { usePaymentHistory } from '@/hooks/usePaymentHistory';
+import { useTrialStatus, TrialStatusBanner } from '@/components/TrialStatusBanner';
+import { EnhancedPlanCards } from '@/components/EnhancedPlanCards';
+import { UpgradeNotice, useUpgradeNotice } from '@/components/UpgradeNotice';
 import { PLANS } from '@/services/planService';
 
 // IntaSend type declaration
@@ -80,7 +83,8 @@ import {
   Play,
   Pause,
   User,
-  Globe
+  Globe,
+  Lock
 } from "lucide-react";
 
 const HRDashboard = () => {
@@ -88,17 +92,34 @@ const HRDashboard = () => {
   const [activeSection, setActiveSection] = useState("overview");
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedDepartment, setSelectedDepartment] = useState("all");
+  const [selectedEmployeeDepartment, setSelectedEmployeeDepartment] = useState("all");
+  const [employeeSearchTerm, setEmployeeSearchTerm] = useState("");
+  const [employeePage, setEmployeePage] = useState(1);
   const [showAddEmployeeModal, setShowAddEmployeeModal] = useState(false);
   const [showAddDepartmentModal, setShowAddDepartmentModal] = useState(false);
+  const [showViewEmployeeModal, setShowViewEmployeeModal] = useState(false);
+  const [showEditEmployeeModal, setShowEditEmployeeModal] = useState(false);
+  const [showViewDepartmentModal, setShowViewDepartmentModal] = useState(false);
+  const [showEditDepartmentModal, setShowEditDepartmentModal] = useState(false);
+  const [selectedEmployee, setSelectedEmployee] = useState<any>(null);
+  const [selectedDepartmentData, setSelectedDepartmentData] = useState<any>(null);
+  const [showDeleteEmployeeModal, setShowDeleteEmployeeModal] = useState(false);
+  const [showDeleteDepartmentModal, setShowDeleteDepartmentModal] = useState(false);
+  const [employeeToDelete, setEmployeeToDelete] = useState<any>(null);
+  const [departmentToDelete, setDepartmentToDelete] = useState<any>(null);
   const [timeline, setTimeline] = useState<TimelineOption>('7d');
 
   // Check-ins state
+  const [selectedMessageType, setSelectedMessageType] = useState('professional_psychological');
   const [selectedTargetType, setSelectedTargetType] = useState('all');
   const [selectedDepartments, setSelectedDepartments] = useState<string[]>([]);
   const [selectedEmployees, setSelectedEmployees] = useState<string[]>([]);
-  const [checkInMessage, setCheckInMessage] = useState('Hi {name}! 👋 How are you feeling today? Please share your mood and any feedback with us. Your wellbeing matters! 💙');
+  const [checkInMessage, setCheckInMessage] = useState('Hi {employee_name}, how are you feeling today? Please reply with your mood (1-10) and any comments. Example: "7 - Busy but good day!"');
   const [isSending, setIsSending] = useState(false);
   const [sendResult, setSendResult] = useState<any>(null);
+
+  // Form state for adding/editing
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Enhanced check-ins state
   const [sendMode, setSendMode] = useState<'now' | 'schedule' | 'automate'>('now');
@@ -109,31 +130,22 @@ const HRDashboard = () => {
   const [automationTime, setAutomationTime] = useState('09:00');
   const [isTestingConnection, setIsTestingConnection] = useState(false);
 
-  // Message templates
-  const messageTemplates = [
+  // Message types - only 2 types as requested
+  const messageTypes = [
     {
-      id: 'daily_checkin',
-      name: 'Daily Check-in',
-      template: 'Hi {name}! 👋\n\nHow are you feeling today? Please take a moment to share your mood and any thoughts with us.\n\nReply to this message or use our app to check in.\n\nThanks!\nYour HR Team',
-      description: 'Standard daily wellness check-in'
-    },
-    {
-      id: 'weekly_pulse',
-      name: 'Weekly Pulse',
-      template: 'Hello {name}! 🌟\n\nIt\'s time for your weekly pulse check! How has your week been so far?\n\nWe\'d love to hear about:\n• Your overall mood\n• Any challenges you\'re facing\n• Wins or achievements\n\nYour feedback helps us support you better.\n\nBest regards,\n{department} Team',
-      description: 'Weekly comprehensive check-in'
-    },
-    {
-      id: 'project_feedback',
-      name: 'Project Feedback',
-      template: 'Hi {name}! 💼\n\nWe\'d appreciate your feedback on the current project you\'re working on.\n\nPlease share:\n• How you\'re feeling about the project\n• Any support you might need\n• Your stress levels (1-10)\n\nYour input is valuable to us!\n\nThanks,\nProject Management Team',
-      description: 'Project-specific wellness check'
+      id: 'professional_psychological',
+      name: 'Professional & Human',
+      description: 'Thoughtfully crafted message that balances professionalism with genuine care',
+      preview: 'Hi [Employee Name], hope you\'re having a good day! 😊 We genuinely care about your wellbeing at [Company Name]. Taking a moment to check in with yourself is so important. How are you feeling today? Please reply with:\n\n1️⃣ Your mood (1-10 scale)\n2️⃣ Any comments or thoughts (optional)\n\nExample: "8 - Having a great week, thanks for checking in!"\n\nYour wellbeing matters to us! 💙',
+      editable: false
     },
     {
       id: 'custom',
       name: 'Custom Message',
-      template: 'Hi {name}!\n\n[Your custom message here]\n\nBest regards,\nYour Team',
-      description: 'Customizable template'
+      description: 'Create your own personalized message with editable placeholders',
+      preview: 'Hi {employee_name}, how are you feeling today? Please reply with your mood (1-10) and any comments. Example: "7 - Busy but good day!"',
+      editable: true,
+      placeholders: ['{employee_name}', '{company_name}', '{organization_name}']
     }
   ];
   const [connectionStatus, setConnectionStatus] = useState<{ success?: boolean; error?: string } | null>(null);
@@ -162,25 +174,62 @@ const HRDashboard = () => {
   // Payment history hook
   const { payments, loading: paymentsLoading, error: paymentsError } = usePaymentHistory();
 
-  // IntaSend integration - Simple and correct implementation
-  useEffect(() => {
-    // Load IntaSend script
-    const script = document.createElement('script');
-    script.src = 'https://unpkg.com/intasend-inlinejs-sdk@4.0.7/build/intasend-inline.js';
-    script.async = true;
+  // Trial status hook
+  const { trialStatus, isOnTrial, isExpired, isExpiringSoon } = useTrialStatus();
 
-    script.onload = () => {
-      console.log('IntaSend script loaded');
-      // Initialize IntaSend after script loads
-      if (window.IntaSend) {
-        console.log('Initializing IntaSend...');
-        new window.IntaSend({
-          publicAPIKey: "ISPubKey_test_39c6a0b0-629e-4ac0-94d9-9b9c6e2f8c5a",
+  // Upgrade notice hook
+  const { showNotice, noticeProps, showUpgradeNotice, hideUpgradeNotice } = useUpgradeNotice();
+
+  // IntaSend integration - Corrected implementation based on official docs
+  useEffect(() => {
+    console.log('🔄 IntaSend useEffect triggered');
+    console.log('📋 Profile organization ID:', profile?.organization_id);
+    console.log('🌐 Window IntaSend available:', !!window.IntaSend);
+
+    // Function to initialize IntaSend
+    const initializeIntaSend = () => {
+      try {
+        const apiKey = import.meta.env.VITE_INTASEND_PUBLIC_API_KEY || "ISPubKey_test_39c6a0b0-629e-4ac0-94d9-9b9c6e2f8c5a";
+        console.log('Initializing IntaSend payment system...');
+
+        // Initialize IntaSend according to official documentation
+        const intaSend = new window.IntaSend({
+          publicAPIKey: apiKey,
           live: false
-        })
-        .on("COMPLETE", async (results) => {
-          console.log("Payment completed:", results);
+        });
+
+        console.log('✅ IntaSend instance created:', intaSend);
+
+        // Set up event handlers
+        intaSend.on("COMPLETE", async (results) => {
+          console.log("💰 Payment completed:", results);
+          console.log("📊 Payment details:", {
+            tracking_id: results.tracking_id,
+            api_ref: results.api_ref,
+            value: results.value,
+            invoice_id: results.invoice_id,
+            state: results.state,
+            provider: results.provider,
+            net_amount: results.net_amount
+          });
+
+          // Show immediate success feedback
+          const planName = results.api_ref?.split('-')[1] || 'business';
+          const amount = results.value || results.net_amount;
+
           try {
+            const requestBody = {
+              org_id: profile?.organization_id,
+              plan_name: planName,
+              payment_ref: results.tracking_id,
+              amount: parseFloat(amount)
+            };
+            console.log('📤 Sending activation request:', requestBody);
+
+            // Show loading state
+            const loadingMessage = `Processing payment of KES ${parseFloat(amount).toLocaleString()} for ${planName.charAt(0).toUpperCase() + planName.slice(1)} plan...`;
+            console.log('⏳', loadingMessage);
+
             const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/rest/v1/rpc/activate_plan`, {
               method: 'POST',
               headers: {
@@ -188,40 +237,533 @@ const HRDashboard = () => {
                 'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
                 'Content-Type': 'application/json'
               },
-              body: JSON.stringify({
-                org_id: profile?.organization_id,
-                plan_name: results.api_ref?.split('-')[1] || 'business',
-                payment_ref: results.tracking_id,
-                amount: results.value
-              })
+              body: JSON.stringify(requestBody)
             });
+
+            console.log('📥 Activation response status:', response.status);
+
             if (response.ok) {
-              alert("Payment successful! Your plan has been upgraded. Please refresh the page.");
-              window.location.reload();
+              const result = await response.json();
+              console.log('✅ Plan activation result:', result);
+
+              // Show detailed success message
+              const successTitle = "🎉 Payment Successful!";
+              const successMessage = `Plan: ${planName.charAt(0).toUpperCase() + planName.slice(1)}\n` +
+                `Amount: KES ${parseFloat(amount).toLocaleString()}\n` +
+                `Reference: ${results.tracking_id}\n` +
+                `Provider: ${results.provider || 'IntaSend'}\n\n` +
+                `Your subscription has been activated. The page will refresh to show your new plan features.`;
+
+              // Use toast notification if available, fallback to alert
+              if ((window as any).toast) {
+                (window as any).toast.showSuccess(successTitle, successMessage);
+              } else {
+                alert(`${successTitle}\n\n${successMessage}`);
+              }
+
+              // Refresh the page after a short delay
+              setTimeout(() => {
+                window.location.reload();
+              }, 2000);
+
+            } else {
+              const errorText = await response.text();
+              console.error('❌ Plan activation failed:', errorText);
+
+              let errorDetails;
+              try {
+                errorDetails = JSON.parse(errorText);
+              } catch {
+                errorDetails = { message: errorText };
+              }
+
+              const errorTitle = "Plan Activation Failed";
+              const errorMessage = `Payment received successfully, but there was an issue activating your plan.\n\n` +
+                `Payment Reference: ${results.tracking_id}\n` +
+                `Error: ${errorDetails.message || 'Unknown error'}\n\n` +
+                `Please contact our support team with this reference number.`;
+
+              // Use toast notification if available, fallback to alert
+              if ((window as any).toast) {
+                (window as any).toast.showError(errorTitle, errorMessage);
+              } else {
+                alert(errorMessage);
+              }
             }
           } catch (error) {
-            console.error('Plan activation error:', error);
-            alert("Payment received but plan activation failed. Please contact support.");
+            console.error('💥 Plan activation error:', error);
+
+            const errorTitle = "Technical Issue";
+            const errorMessage = `Payment completed successfully, but there was a technical issue.\n\n` +
+              `Payment Reference: ${results.tracking_id}\n` +
+              `Amount: KES ${parseFloat(amount).toLocaleString()}\n\n` +
+              `Please contact our support team with this reference number to activate your plan.`;
+
+            // Use toast notification if available, fallback to alert
+            if ((window as any).toast) {
+              (window as any).toast.showError(errorTitle, errorMessage);
+            } else {
+              alert(errorMessage);
+            }
           }
-        })
-        .on("FAILED", (results) => {
-          console.log("Payment failed:", results);
-          alert("Payment failed. Please try again or contact support.");
-        })
-        .on("IN-PROGRESS", (results) => {
-          console.log("Payment in progress:", results);
+        });
+
+        intaSend.on("FAILED", async (results) => {
+          console.log("❌ Payment failed:", results);
+          console.log("❌ Failure details:", {
+            tracking_id: results.tracking_id,
+            state: results.state,
+            provider: results.provider,
+            value: results.value,
+            error: results.error,
+            message: results.message,
+            status: results.status,
+            response: results.response
+          });
+
+          // Log failed payment to database for tracking
+          try {
+            if (results.tracking_id && profile?.organization_id) {
+              const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/rest/v1/payments`, {
+                method: 'POST',
+                headers: {
+                  'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+                  'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                  organization_id: profile.organization_id,
+                  amount: parseFloat(results.value || '0'),
+                  currency: 'KES',
+                  payment_ref: results.tracking_id,
+                  provider: 'intasend',
+                  status: 'failed'
+                })
+              });
+
+              if (response.ok) {
+                console.log('✅ Failed payment logged to database');
+              } else {
+                console.warn('⚠️ Could not log failed payment to database');
+              }
+            }
+          } catch (error) {
+            console.error('💥 Error logging failed payment:', error);
+          }
+
+          // Show user-friendly error message
+          const errorTitle = "Payment Failed";
+          const errorMessage = getPaymentErrorMessage(results);
+
+          // Use toast notification if available, fallback to alert
+          if ((window as any).toast) {
+            (window as any).toast.showError(errorTitle, errorMessage);
+          } else {
+            alert(errorMessage);
+          }
+        });
+
+        intaSend.on("IN-PROGRESS", (results) => {
+          console.log("⏳ Payment in progress:", results);
+          console.log("📊 Progress details:", {
+            tracking_id: results.tracking_id,
+            state: results.state,
+            provider: results.provider,
+            value: results.value
+          });
+
+          // Show progress feedback to user
+          if (results.provider === 'M-PESA') {
+            console.log('📱 M-Pesa STK push sent to user phone');
+
+            // Show progress notification
+            if ((window as any).toast) {
+              (window as any).toast.showInfo(
+                "Payment in Progress",
+                "Please check your phone for the M-Pesa payment request and enter your PIN to complete the transaction."
+              );
+            }
+          } else {
+            // Generic progress message for other providers
+            if ((window as any).toast) {
+              (window as any).toast.showInfo(
+                "Payment in Progress",
+                "Please complete the payment process in the payment window."
+              );
+            }
+          }
+        });
+
+        console.log('✅ IntaSend event handlers registered');
+
+        // Validate API key format (client-side only)
+        const validateApiKeyFormat = (key: string) => {
+          const isValidFormat = /^ISPubKey_(test|live)_[a-f0-9-]{36}$/.test(key);
+
+          if (!isValidFormat) {
+            console.warn('IntaSend API Key format appears invalid');
+          }
+
+          return isValidFormat;
+        };
+
+        // Validate the current API key
+        validateApiKeyFormat(apiKey);
+
+        // Network monitoring for IntaSend requests (production-ready)
+        const originalFetch = window.fetch;
+        window.fetch = async (...args) => {
+          const [url, options] = args;
+
+          // Monitor IntaSend API requests for errors only
+          if (typeof url === 'string' && url.includes('intasend.com')) {
+            console.log('IntaSend API Request:', url);
+          }
+
+          const response = await originalFetch(...args);
+
+          // Log IntaSend errors for debugging
+          if (typeof url === 'string' && url.includes('intasend.com') && !response.ok) {
+            console.error('IntaSend API Error:', {
+              url,
+              status: response.status,
+              statusText: response.statusText
+            });
+
+            try {
+              const errorText = await response.clone().text();
+              console.error('IntaSend Error Details:', errorText);
+            } catch (readError) {
+              console.error('Could not read IntaSend error response');
+            }
+          }
+
+          return response;
+        };
+
+
+
+        // Force IntaSend to rescan for buttons
+        const rescanButtons = () => {
+          const buttons = document.querySelectorAll('.intaSendPayButton');
+          console.log('IntaSend buttons found:', buttons.length);
+
+          // Force IntaSend to re-detect buttons
+          if (window.IntaSend && buttons.length > 0) {
+            // Try multiple methods to ensure button detection
+            if (typeof window.IntaSend.init === 'function') {
+              window.IntaSend.init();
+            }
+
+            if (typeof window.IntaSend.refresh === 'function') {
+              window.IntaSend.refresh();
+            }
+
+            if (typeof window.IntaSend.scan === 'function') {
+              window.IntaSend.scan();
+            }
+          }
+
+          return buttons.length;
+        };
+
+        // Initial scan
+        setTimeout(() => {
+          rescanButtons();
+
+          // Get buttons for validation
+          const buttons = document.querySelectorAll('.intaSendPayButton');
+
+          // Log button details with validation
+          buttons.forEach((btn, index) => {
+            const buttonData = {
+              className: btn.className,
+              amount: btn.getAttribute('data-amount'),
+              currency: btn.getAttribute('data-currency'),
+              email: btn.getAttribute('data-email'),
+              api_ref: btn.getAttribute('data-api_ref'),
+              comment: btn.getAttribute('data-comment'),
+              first_name: btn.getAttribute('data-first_name'),
+              last_name: btn.getAttribute('data-last_name'),
+              country: btn.getAttribute('data-country'),
+              card_tarrif: btn.getAttribute('data-card_tarrif'),
+              mobile_tarrif: btn.getAttribute('data-mobile_tarrif')
+            };
+
+            console.log(`🔘 Button ${index + 1}:`, buttonData);
+
+            // Validate required fields
+            const requiredFields = ['amount', 'currency', 'email', 'api_ref'];
+            const missingFields = requiredFields.filter(field => !buttonData[field as keyof typeof buttonData]);
+
+            if (missingFields.length > 0) {
+              console.warn(`⚠️ Button ${index + 1} missing required fields:`, missingFields);
+            } else {
+              console.log(`✅ Button ${index + 1} has all required fields`);
+            }
+
+            // Validate email format
+            const email = buttonData.email;
+            if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+              console.warn(`⚠️ Button ${index + 1} has invalid email format:`, email);
+            }
+
+            // Validate amount is numeric
+            const amount = buttonData.amount;
+            if (amount && (isNaN(Number(amount)) || Number(amount) <= 0)) {
+              console.warn(`⚠️ Button ${index + 1} has invalid amount:`, amount);
+            }
+          });
+
+          // Try multiple approaches to force IntaSend to detect buttons
+          if (window.IntaSend) {
+            // Method 1: Try init method
+            if (typeof window.IntaSend.init === 'function') {
+              console.log('🔄 Method 1: Re-initializing IntaSend buttons...');
+              window.IntaSend.init();
+            }
+
+            // Method 2: Try refresh method
+            if (typeof window.IntaSend.refresh === 'function') {
+              console.log('🔄 Method 2: Refreshing IntaSend buttons...');
+              window.IntaSend.refresh();
+            }
+
+            // Method 3: Try scan method
+            if (typeof window.IntaSend.scan === 'function') {
+              console.log('🔄 Method 3: Scanning for IntaSend buttons...');
+              window.IntaSend.scan();
+            }
+
+            // Method 4: Create new instance to force re-scan
+            try {
+              console.log('🔄 Method 4: Creating new IntaSend instance...');
+              const newInstance = new window.IntaSend({
+                publicAPIKey: import.meta.env.VITE_INTASEND_PUBLIC_API_KEY || "ISPubKey_test_39c6a0b0-629e-4ac0-94d9-9b9c6e2f8c5a",
+                live: false
+              });
+
+              // Set up events on new instance
+              newInstance.on("COMPLETE", async (results) => {
+                console.log("💰 Payment completed (new instance):", results);
+                // Same payment completion logic as before
+                try {
+                  const requestBody = {
+                    org_id: profile?.organization_id,
+                    plan_name: results.api_ref?.split('-')[1] || 'business',
+                    payment_ref: results.tracking_id,
+                    amount: results.value
+                  };
+                  console.log('📤 Sending activation request:', requestBody);
+
+                  const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/rest/v1/rpc/activate_plan`, {
+                    method: 'POST',
+                    headers: {
+                      'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+                      'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+                      'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(requestBody)
+                  });
+
+                  if (response.ok) {
+                    const result = await response.json();
+                    console.log('✅ Plan activation result:', result);
+                    alert("Payment successful! Your plan has been upgraded. Please refresh the page.");
+                    window.location.reload();
+                  } else {
+                    const error = await response.text();
+                    console.error('❌ Plan activation failed:', error);
+                    alert("Payment received but plan activation failed. Please contact support.");
+                  }
+                } catch (error) {
+                  console.error('💥 Plan activation error:', error);
+                  alert("Payment received but plan activation failed. Please contact support.");
+                }
+              });
+
+              newInstance.on("FAILED", (results) => {
+                console.log("❌ Payment failed (new instance):", results);
+                alert("Payment failed. Please try again or contact support.");
+              });
+
+              newInstance.on("IN-PROGRESS", (results) => {
+                console.log("⏳ Payment in progress (new instance):", results);
+              });
+
+              console.log('✅ New IntaSend instance created with events');
+            } catch (err) {
+              console.error('💥 Error creating new IntaSend instance:', err);
+            }
+          }
+
+          // Note: Manual click handlers removed since CSP issue is fixed
+          // IntaSend should now automatically detect and handle button clicks
+        }, 1500);
+
+        // Additional scans to ensure buttons are detected
+        setTimeout(() => {
+          rescanButtons();
+        }, 3000);
+
+        setTimeout(() => {
+          rescanButtons();
+        }, 5000);
+
+        // Set up a periodic check to ensure buttons remain active
+        const buttonCheckInterval = setInterval(() => {
+          const buttons = document.querySelectorAll('.intaSendPayButton');
+          if (buttons.length > 0 && window.IntaSend) {
+            // Silently re-initialize to keep buttons active
+            if (typeof window.IntaSend.init === 'function') {
+              window.IntaSend.init();
+            }
+          }
+        }, 10000); // Check every 10 seconds
+
+        // Store interval ID for cleanup
+        (window as any).intaSendButtonCheckInterval = buttonCheckInterval;
+
+        // Set up mutation observer to detect new payment buttons
+        const observer = new MutationObserver((mutations) => {
+          let shouldRescan = false;
+
+          mutations.forEach((mutation) => {
+            if (mutation.type === 'childList') {
+              mutation.addedNodes.forEach((node) => {
+                if (node.nodeType === Node.ELEMENT_NODE) {
+                  const element = node as Element;
+                  // Check if the added element or its children contain payment buttons
+                  if (element.classList?.contains('intaSendPayButton') ||
+                      element.querySelector?.('.intaSendPayButton')) {
+                    shouldRescan = true;
+                  }
+                }
+              });
+            }
+          });
+
+          if (shouldRescan) {
+            console.log('🔄 New payment buttons detected, rescanning...');
+            setTimeout(() => {
+              rescanButtons();
+            }, 100);
+          }
+        });
+
+        // Start observing
+        observer.observe(document.body, {
+          childList: true,
+          subtree: true
+        });
+
+        // Store observer for cleanup
+        (window as any).intaSendMutationObserver = observer;
+
+      } catch (error) {
+        console.error('💥 Error initializing IntaSend:', error);
+        console.log('🔍 Error details:', {
+          name: error.name,
+          message: error.message,
+          stack: error.stack
         });
       }
     };
 
-    document.head.appendChild(script);
+    // Check if script is already loaded
+    if (window.IntaSend) {
+      console.log('✅ IntaSend already loaded, initializing...');
+      initializeIntaSend();
+      return;
+    }
 
+    // Check if script already exists in DOM
+    const existingScript = document.querySelector('script[src*="intasend-inline"]');
+    if (existingScript) {
+      console.log('📜 IntaSend script already exists in DOM');
+      // Wait for it to load if not already loaded
+      if (window.IntaSend) {
+        initializeIntaSend();
+      } else {
+        existingScript.addEventListener('load', () => {
+          console.log('📜 Existing script loaded');
+          setTimeout(initializeIntaSend, 300);
+        });
+      }
+      return;
+    }
+
+    // Load IntaSend script
+    console.log('📥 Loading IntaSend script...');
+    const script = document.createElement('script');
+    script.src = 'https://unpkg.com/intasend-inlinejs-sdk@4.0.7/build/intasend-inline.js';
+    script.async = true;
+    script.id = 'intasend-script';
+
+    script.addEventListener('load', () => {
+      console.log('✅ IntaSend script loaded successfully');
+      console.log('🔍 Window.IntaSend after load:', !!window.IntaSend);
+      console.log('🔍 Window.IntaSend type:', typeof window.IntaSend);
+
+      // Wait for DOM to be ready and script to fully initialize
+      setTimeout(() => {
+        if (window.IntaSend) {
+          console.log('🚀 Proceeding to initialize IntaSend');
+          initializeIntaSend();
+        } else {
+          console.error('❌ IntaSend not available after script load');
+          console.log('🔍 Window object keys:', Object.keys(window).filter(k => k.toLowerCase().includes('inta')));
+        }
+      }, 500);
+    });
+
+    script.addEventListener('error', (error) => {
+      console.error('❌ Failed to load IntaSend script:', error);
+    });
+
+    document.head.appendChild(script);
+    console.log('📜 IntaSend script added to DOM');
+
+    // Cleanup function
     return () => {
-      if (script.parentNode) {
-        script.parentNode.removeChild(script);
+      // Clear the button check interval
+      if ((window as any).intaSendButtonCheckInterval) {
+        clearInterval((window as any).intaSendButtonCheckInterval);
+      }
+
+      // Remove the script
+      const scriptToRemove = document.getElementById('intasend-script');
+      if (scriptToRemove && scriptToRemove.parentNode) {
+        scriptToRemove.parentNode.removeChild(scriptToRemove);
+      }
+
+      // Restore original fetch if it was modified
+      if ((window as any).originalFetch) {
+        window.fetch = (window as any).originalFetch;
       }
     };
   }, [profile?.organization_id]);
+
+  // Helper function to get user-friendly payment error messages
+  const getPaymentErrorMessage = (results: any): string => {
+    const provider = results.provider || 'Payment';
+    const trackingId = results.tracking_id || 'Unknown';
+
+    // Common M-Pesa error scenarios
+    if (provider === 'M-PESA') {
+      if (results.state === 'FAILED') {
+        return `M-Pesa payment failed (Ref: ${trackingId}). This could be due to:\n\n• Insufficient funds in your M-Pesa account\n• Cancelled by user\n• Network timeout\n• Invalid phone number\n\nPlease try again or contact support if the issue persists.`;
+      }
+    }
+
+    // Card payment errors
+    if (provider === 'CARD' || results.provider?.includes('CARD')) {
+      return `Card payment failed (Ref: ${trackingId}). This could be due to:\n\n• Insufficient funds\n• Card declined by bank\n• Expired card\n• Network issues\n\nPlease check your card details and try again.`;
+    }
+
+    // Generic error message
+    return `Payment failed (Ref: ${trackingId}). Please try again or contact our support team if the issue persists.\n\nProvider: ${provider}`;
+  };
 
   // Check-in hooks
   const checkInCampaigns = useCheckInCampaigns();
@@ -327,6 +869,287 @@ const HRDashboard = () => {
     if (mood >= 8) return <Smile className="w-4 h-4 text-success" />;
     if (mood >= 6) return <Meh className="w-4 h-4 text-warning" />;
     return <Frown className="w-4 h-4 text-destructive" />;
+  };
+
+  // Employee list filtering and pagination
+  const employeesPerPage = 5;
+
+  // Filter employees based on search and department
+  const filteredEmployees = employeesList.data.filter((employee: any) => {
+    const matchesSearch = employee.name.toLowerCase().includes(employeeSearchTerm.toLowerCase()) ||
+                         employee.email.toLowerCase().includes(employeeSearchTerm.toLowerCase());
+    const matchesDepartment = selectedEmployeeDepartment === "all" || employee.department === selectedEmployeeDepartment;
+    return matchesSearch && matchesDepartment;
+  });
+
+  // Calculate pagination for employees
+  const totalEmployees = filteredEmployees.length;
+  const totalEmployeePages = Math.ceil(totalEmployees / employeesPerPage);
+  const employeeStartIndex = (employeePage - 1) * employeesPerPage;
+  const employeeEndIndex = employeeStartIndex + employeesPerPage;
+  const currentEmployees = filteredEmployees.slice(employeeStartIndex, employeeEndIndex);
+
+  // Handler for adding new employee
+  const handleAddEmployee = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!profile?.organization_id) return;
+
+    setIsSubmitting(true);
+    try {
+      const formData = new FormData(e.target as HTMLFormElement);
+      const employeeData = {
+        organization_id: profile.organization_id,
+        name: formData.get('emp-name') as string,
+        email: formData.get('emp-email') as string,
+        phone: formData.get('emp-phone') as string || null,
+        department: formData.get('emp-department') as string,
+        position: formData.get('emp-position') as string || null,
+        manager_id: formData.get('emp-manager') as string || null,
+        is_active: true
+      };
+
+      const response = await fetch(`${supabaseConfig.url}/rest/v1/employees`, {
+        method: 'POST',
+        headers: {
+          'apikey': supabaseConfig.anonKey,
+          'Authorization': `Bearer ${supabaseConfig.anonKey}`,
+          'Content-Type': 'application/json',
+          'Prefer': 'return=minimal'
+        },
+        body: JSON.stringify(employeeData)
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to create employee: ${response.status}`);
+      }
+
+      setShowAddEmployeeModal(false);
+      // Refresh the employees list
+      window.location.reload();
+    } catch (error) {
+      console.error('Error adding employee:', error);
+      alert('Failed to add employee. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Handler for adding new department
+  const handleAddDepartment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!profile?.organization_id) return;
+
+    setIsSubmitting(true);
+    try {
+      const formData = new FormData(e.target as HTMLFormElement);
+      const departmentData = {
+        organization_id: profile.organization_id,
+        name: formData.get('dept-name') as string,
+        description: formData.get('dept-description') as string,
+        manager_id: formData.get('dept-manager') as string || null
+      };
+
+      const response = await fetch(`${supabaseConfig.url}/rest/v1/departments`, {
+        method: 'POST',
+        headers: {
+          'apikey': supabaseConfig.anonKey,
+          'Authorization': `Bearer ${supabaseConfig.anonKey}`,
+          'Content-Type': 'application/json',
+          'Prefer': 'return=minimal'
+        },
+        body: JSON.stringify(departmentData)
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to create department: ${response.status}`);
+      }
+
+      setShowAddDepartmentModal(false);
+      // Refresh the departments list
+      window.location.reload();
+    } catch (error) {
+      console.error('Error adding department:', error);
+      alert('Failed to add department. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Handler for updating employee
+  const handleUpdateEmployee = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedEmployee?.id) return;
+
+    setIsSubmitting(true);
+    try {
+      const formData = new FormData(e.target as HTMLFormElement);
+      const employeeData = {
+        name: formData.get('edit-emp-name') as string,
+        email: formData.get('edit-emp-email') as string,
+        phone: formData.get('edit-emp-phone') as string || null,
+        department: formData.get('edit-emp-department') as string,
+        position: formData.get('edit-emp-position') as string || null,
+        is_active: formData.get('edit-emp-status') === 'active',
+        updated_at: new Date().toISOString()
+      };
+
+      const response = await fetch(`${supabaseConfig.url}/rest/v1/employees?id=eq.${selectedEmployee.id}`, {
+        method: 'PATCH',
+        headers: {
+          'apikey': supabaseConfig.anonKey,
+          'Authorization': `Bearer ${supabaseConfig.anonKey}`,
+          'Content-Type': 'application/json',
+          'Prefer': 'return=minimal'
+        },
+        body: JSON.stringify(employeeData)
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to update employee: ${response.status}`);
+      }
+
+      setShowEditEmployeeModal(false);
+      setSelectedEmployee(null);
+      // Refresh the employees list
+      window.location.reload();
+    } catch (error) {
+      console.error('Error updating employee:', error);
+      alert('Failed to update employee. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Handler for updating department
+  const handleUpdateDepartment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedDepartmentData?.id) return;
+
+    setIsSubmitting(true);
+    try {
+      const formData = new FormData(e.target as HTMLFormElement);
+      const departmentData = {
+        name: formData.get('edit-dept-name') as string,
+        description: formData.get('edit-dept-description') as string,
+        updated_at: new Date().toISOString()
+      };
+
+      const response = await fetch(`${supabaseConfig.url}/rest/v1/departments?id=eq.${selectedDepartmentData.id}`, {
+        method: 'PATCH',
+        headers: {
+          'apikey': supabaseConfig.anonKey,
+          'Authorization': `Bearer ${supabaseConfig.anonKey}`,
+          'Content-Type': 'application/json',
+          'Prefer': 'return=minimal'
+        },
+        body: JSON.stringify(departmentData)
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to update department: ${response.status}`);
+      }
+
+      setShowEditDepartmentModal(false);
+      setSelectedDepartmentData(null);
+      // Refresh the departments list
+      window.location.reload();
+    } catch (error) {
+      console.error('Error updating department:', error);
+      alert('Failed to update department. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Handler for showing delete employee confirmation
+  const handleDeleteEmployee = (employee: any) => {
+    setEmployeeToDelete(employee);
+    setShowDeleteEmployeeModal(true);
+  };
+
+  // Handler for confirming employee deletion
+  const confirmDeleteEmployee = async () => {
+    if (!employeeToDelete) return;
+
+    setIsSubmitting(true);
+    try {
+      const response = await fetch(`${supabaseConfig.url}/rest/v1/employees?id=eq.${employeeToDelete.id}`, {
+        method: 'DELETE',
+        headers: {
+          'apikey': supabaseConfig.anonKey,
+          'Authorization': `Bearer ${supabaseConfig.anonKey}`,
+          'Prefer': 'return=minimal'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to delete employee: ${response.status}`);
+      }
+
+      setShowDeleteEmployeeModal(false);
+      setEmployeeToDelete(null);
+      // Refresh the employees list
+      window.location.reload();
+    } catch (error) {
+      console.error('Error deleting employee:', error);
+      alert('Failed to delete employee. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Handler for showing delete department confirmation
+  const handleDeleteDepartment = (department: any) => {
+    setDepartmentToDelete(department);
+    setShowDeleteDepartmentModal(true);
+  };
+
+  // Handler for confirming department deletion
+  const confirmDeleteDepartment = async () => {
+    if (!departmentToDelete) return;
+
+    setIsSubmitting(true);
+    try {
+      // First delete all employees in the department
+      if (departmentToDelete.employee_count > 0) {
+        const deleteEmployeesResponse = await fetch(`${supabaseConfig.url}/rest/v1/employees?department=eq.${departmentToDelete.name}&organization_id=eq.${profile?.organization_id}`, {
+          method: 'DELETE',
+          headers: {
+            'apikey': supabaseConfig.anonKey,
+            'Authorization': `Bearer ${supabaseConfig.anonKey}`,
+            'Prefer': 'return=minimal'
+          }
+        });
+
+        if (!deleteEmployeesResponse.ok) {
+          throw new Error(`Failed to delete employees: ${deleteEmployeesResponse.status}`);
+        }
+      }
+
+      // Then delete the department
+      const response = await fetch(`${supabaseConfig.url}/rest/v1/departments?id=eq.${departmentToDelete.id}`, {
+        method: 'DELETE',
+        headers: {
+          'apikey': supabaseConfig.anonKey,
+          'Authorization': `Bearer ${supabaseConfig.anonKey}`,
+          'Prefer': 'return=minimal'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to delete department: ${response.status}`);
+      }
+
+      setShowDeleteDepartmentModal(false);
+      setDepartmentToDelete(null);
+      // Refresh the page to update both departments and employees lists
+      window.location.reload();
+    } catch (error) {
+      console.error('Error deleting department:', error);
+      alert('Failed to delete department. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
 
@@ -866,11 +1689,11 @@ const HRDashboard = () => {
       </div>
 
       <Card className="bg-gradient-card border-0 shadow-soft">
-        <CardHeader>
+        <CardHeader className="pb-6">
           <div className="flex items-center justify-between">
-            <div>
-              <CardTitle>Employee Responses</CardTitle>
-              <CardDescription>
+            <div className="space-y-2">
+              <CardTitle className="text-xl">Employee Responses</CardTitle>
+              <CardDescription className="text-base">
                 Showing {startIndex + 1}-{Math.min(endIndex, totalResponses)} of {totalResponses} responses
               </CardDescription>
             </div>
@@ -1163,8 +1986,8 @@ const HRDashboard = () => {
     };
 
     const handleSendCheckIn = async () => {
-      if (!checkInMessage.trim()) {
-        alert('Please enter a check-in message');
+      if (selectedMessageType === 'custom' && !checkInMessage.trim()) {
+        alert('Please enter a custom check-in message');
         return;
       }
 
@@ -1250,7 +2073,8 @@ const HRDashboard = () => {
         const campaignData = {
           organization_id: profile?.organization_id,
           name: autoGeneratedName,
-          message: checkInMessage,
+          message: selectedMessageType === 'custom' ? checkInMessage : '', // Only store custom messages
+          message_type: selectedMessageType,
           target_type: selectedTargetType,
           target_departments: selectedTargetType === 'department' ? selectedDepartments : null,
           target_employees: selectedTargetType === 'individual' ? selectedEmployees : null,
@@ -1324,7 +2148,8 @@ const HRDashboard = () => {
         checkInCampaigns.refreshCampaigns();
 
         // Reset form
-        setCheckInMessage('Hi {name}! 👋 How are you feeling today? Please share your mood and any feedback with us. Your wellbeing matters! 💙');
+        setSelectedMessageType('professional_psychological');
+        setCheckInMessage('Hi {employee_name}, how are you feeling today? Please reply with your mood (1-10) and any comments. Example: "7 - Busy but good day!"');
         setSelectedTargetType('all');
         setSelectedDepartments([]);
         setSelectedEmployees([]);
@@ -1542,25 +2367,30 @@ const HRDashboard = () => {
                 <Send className="w-5 h-5 text-blue-500" />
                 <span>Send Check-in Campaign</span>
               </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleTestConnection}
-                disabled={isTestingConnection}
-                className="text-xs"
-              >
-                {isTestingConnection ? (
-                  <>
-                    <div className="w-3 h-3 border border-current border-t-transparent rounded-full animate-spin mr-1" />
-                    Testing...
-                  </>
-                ) : (
-                  <>
-                    <Phone className="w-3 h-3 mr-1" />
-                    Test Connection
-                  </>
-                )}
-              </Button>
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleTestConnection}
+                  disabled={isTestingConnection}
+                  className="text-xs"
+                >
+                  {isTestingConnection ? (
+                    <>
+                      <div className="w-3 h-3 border border-current border-t-transparent rounded-full animate-spin mr-1" />
+                      Testing...
+                    </>
+                  ) : (
+                    <>
+                      <Phone className="w-3 h-3 mr-1" />
+                      Test WhatsApp
+                    </>
+                  )}
+                </Button>
+                <div className="text-xs text-muted-foreground">
+                  📱 Platform WhatsApp service enabled - just add employee numbers!
+                </div>
+              </div>
             </CardTitle>
             <CardDescription>Send wellness check-ins via WhatsApp to your team</CardDescription>
           </CardHeader>
@@ -1730,47 +2560,75 @@ const HRDashboard = () => {
 
             </div>
 
-            {/* Message Templates */}
-            <div className="space-y-2">
-              <Label>Message Templates</Label>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                {messageTemplates.map((template) => (
-                  <Button
-                    key={template.id}
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setCheckInMessage(template.template)}
-                    className="text-left justify-start h-auto p-3"
+            {/* Message Type Selection */}
+            <div className="space-y-3">
+              <Label>Message Type</Label>
+              <div className="grid grid-cols-1 gap-3">
+                {messageTypes.map((type) => (
+                  <div
+                    key={type.id}
+                    className={`relative p-4 border-2 rounded-lg cursor-pointer transition-all duration-200 ${
+                      selectedMessageType === type.id
+                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                        : 'border-border hover:border-blue-300 hover:bg-blue-50/50 dark:hover:bg-blue-900/10'
+                    }`}
+                    onClick={() => {
+                      setSelectedMessageType(type.id);
+                      if (type.id === 'custom') {
+                        setCheckInMessage('Hi {employee_name}, how are you feeling today? Please reply with your mood (1-10) and any comments. Example: "7 - Busy but good day!"');
+                      }
+                    }}
                   >
-                    <div>
-                      <div className="font-medium text-sm">{template.name}</div>
-                      <div className="text-xs text-muted-foreground">{template.description}</div>
+                    <div className="flex items-start space-x-3">
+                      <input
+                        type="radio"
+                        id={`message-type-${type.id}`}
+                        name="message-type"
+                        value={type.id}
+                        checked={selectedMessageType === type.id}
+                        onChange={(e) => setSelectedMessageType(e.target.value)}
+                        className="w-4 h-4 text-blue-600 mt-1"
+                      />
+                      <div className="flex-1">
+                        <div className="font-medium text-sm mb-1">{type.name}</div>
+                        <div className="text-xs text-muted-foreground mb-2">{type.description}</div>
+                        <div className="text-xs text-muted-foreground bg-background/50 p-2 rounded border italic">
+                          {type.preview}
+                        </div>
+                        {type.placeholders && (
+                          <div className="mt-2 text-xs text-blue-600">
+                            Available placeholders: {type.placeholders.join(', ')}
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </Button>
+                  </div>
                 ))}
               </div>
             </div>
 
-            {/* Message */}
-            <div className="space-y-2">
-              <Label htmlFor="message">Message</Label>
-              <Textarea
-                id="message"
-                placeholder="Enter your check-in message..."
-                value={checkInMessage}
-                onChange={(e) => setCheckInMessage(e.target.value)}
-                rows={4}
-                className="resize-none"
-              />
-              <div className="flex items-center justify-between">
-                <p className="text-xs text-muted-foreground">
-                  Use {'{name}'} to personalize with employee names, {'{department}'} for department
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {checkInMessage.length}/1600 characters
-                </p>
+            {/* Custom Message Input - Only show for custom message type */}
+            {selectedMessageType === 'custom' && (
+              <div className="space-y-2">
+                <Label htmlFor="message">Custom Message</Label>
+                <Textarea
+                  id="message"
+                  placeholder="Enter your custom check-in message..."
+                  value={checkInMessage}
+                  onChange={(e) => setCheckInMessage(e.target.value)}
+                  rows={4}
+                  className="resize-none"
+                />
+                <div className="flex items-center justify-between">
+                  <p className="text-xs text-muted-foreground">
+                    Use {'{employee_name}'} and {'{company_name}'} placeholders for personalization
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {checkInMessage.length}/1600 characters
+                  </p>
+                </div>
               </div>
-            </div>
+            )}
               </>
             )}
 
@@ -1888,21 +2746,75 @@ const HRDashboard = () => {
                   </div>
                 </div>
 
-                {/* Message for Schedule */}
-                <div className="space-y-2">
-                  <Label htmlFor="schedule-message">Message</Label>
-                  <Textarea
-                    id="schedule-message"
-                    placeholder="Enter your check-in message..."
-                    value={checkInMessage}
-                    onChange={(e) => setCheckInMessage(e.target.value)}
-                    rows={4}
-                    className="resize-none"
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Use {'{name}'} to personalize with employee names
-                  </p>
+                {/* Message Type Selection for Schedule */}
+                <div className="space-y-3">
+                  <Label>Message Type</Label>
+                  <div className="grid grid-cols-1 gap-3">
+                    {messageTypes.map((type) => (
+                      <div
+                        key={type.id}
+                        className={`relative p-4 border-2 rounded-lg cursor-pointer transition-all duration-200 ${
+                          selectedMessageType === type.id
+                            ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                            : 'border-border hover:border-blue-300 hover:bg-blue-50/50 dark:hover:bg-blue-900/10'
+                        }`}
+                        onClick={() => {
+                          setSelectedMessageType(type.id);
+                          if (type.id === 'custom') {
+                            setCheckInMessage('Hi {employee_name}, how are you feeling today? Please reply with your mood (1-10) and any comments. Example: "7 - Busy but good day!"');
+                          }
+                        }}
+                      >
+                        <div className="flex items-start space-x-3">
+                          <input
+                            type="radio"
+                            id={`schedule-message-type-${type.id}`}
+                            name="schedule-message-type"
+                            value={type.id}
+                            checked={selectedMessageType === type.id}
+                            onChange={(e) => setSelectedMessageType(e.target.value)}
+                            className="w-4 h-4 text-blue-600 mt-1"
+                          />
+                          <div className="flex-1">
+                            <div className="font-medium text-sm mb-1">{type.name}</div>
+                            <div className="text-xs text-muted-foreground mb-2">{type.description}</div>
+                            <div className="text-xs text-muted-foreground bg-background/50 p-2 rounded border italic">
+                              {type.preview}
+                            </div>
+                            {type.placeholders && (
+                              <div className="mt-2 text-xs text-blue-600">
+                                Available placeholders: {type.placeholders.join(', ')}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
+
+                {/* Custom Message Input for Schedule - Only show for custom message type */}
+                {selectedMessageType === 'custom' && (
+                  <div className="space-y-2">
+                    <Label htmlFor="schedule-message">Custom Message</Label>
+                    <Textarea
+                      id="schedule-message"
+                      placeholder="Enter your custom check-in message..."
+                      value={checkInMessage}
+                      onChange={(e) => setCheckInMessage(e.target.value)}
+                      rows={4}
+                      className="resize-none"
+                    />
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs text-muted-foreground">
+                        Use {'{employee_name}'} and {'{company_name}'} placeholders for personalization
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {checkInMessage.length}/1600 characters
+                      </p>
+                    </div>
+                  </div>
+                )}
 
 
               </>
@@ -2052,21 +2964,75 @@ const HRDashboard = () => {
                   </div>
                 </div>
 
-                {/* Message for Automate */}
-                <div className="space-y-2">
-                  <Label htmlFor="automate-message">Message</Label>
-                  <Textarea
-                    id="automate-message"
-                    placeholder="Enter your check-in message..."
-                    value={checkInMessage}
-                    onChange={(e) => setCheckInMessage(e.target.value)}
-                    rows={4}
-                    className="resize-none"
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Use {'{name}'} to personalize with employee names
-                  </p>
+                {/* Message Type Selection for Automate */}
+                <div className="space-y-3">
+                  <Label>Message Type</Label>
+                  <div className="grid grid-cols-1 gap-3">
+                    {messageTypes.map((type) => (
+                      <div
+                        key={type.id}
+                        className={`relative p-4 border-2 rounded-lg cursor-pointer transition-all duration-200 ${
+                          selectedMessageType === type.id
+                            ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
+                            : 'border-border hover:border-purple-300 hover:bg-purple-50/50 dark:hover:bg-purple-900/10'
+                        }`}
+                        onClick={() => {
+                          setSelectedMessageType(type.id);
+                          if (type.id === 'custom') {
+                            setCheckInMessage('Hi {employee_name}, how are you feeling today? Please reply with your mood (1-10) and any comments. Example: "7 - Busy but good day!"');
+                          }
+                        }}
+                      >
+                        <div className="flex items-start space-x-3">
+                          <input
+                            type="radio"
+                            id={`automate-message-type-${type.id}`}
+                            name="automate-message-type"
+                            value={type.id}
+                            checked={selectedMessageType === type.id}
+                            onChange={(e) => setSelectedMessageType(e.target.value)}
+                            className="w-4 h-4 text-purple-600 mt-1"
+                          />
+                          <div className="flex-1">
+                            <div className="font-medium text-sm mb-1">{type.name}</div>
+                            <div className="text-xs text-muted-foreground mb-2">{type.description}</div>
+                            <div className="text-xs text-muted-foreground bg-background/50 p-2 rounded border italic">
+                              {type.preview}
+                            </div>
+                            {type.placeholders && (
+                              <div className="mt-2 text-xs text-purple-600">
+                                Available placeholders: {type.placeholders.join(', ')}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
+
+                {/* Custom Message Input for Automate - Only show for custom message type */}
+                {selectedMessageType === 'custom' && (
+                  <div className="space-y-2">
+                    <Label htmlFor="automate-message">Custom Message</Label>
+                    <Textarea
+                      id="automate-message"
+                      placeholder="Enter your custom check-in message..."
+                      value={checkInMessage}
+                      onChange={(e) => setCheckInMessage(e.target.value)}
+                      rows={4}
+                      className="resize-none"
+                    />
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs text-muted-foreground">
+                        Use {'{employee_name}'} and {'{company_name}'} placeholders for personalization
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {checkInMessage.length}/1600 characters
+                      </p>
+                    </div>
+                  </div>
+                )}
 
 
               </>
@@ -2218,107 +3184,136 @@ const HRDashboard = () => {
 
     return (
     <div className="space-y-6">
-      {/* AI Insights Header */}
-      <div className="bg-gradient-to-r from-background to-background/95 dark:from-slate-900 dark:to-slate-800 rounded-2xl border border-border/50 shadow-lg p-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl flex items-center justify-center">
-              <Brain className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <h2 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 dark:from-purple-400 dark:to-pink-400 bg-clip-text text-transparent">
-                AI Insights
-              </h2>
-              <p className="text-sm text-muted-foreground">Powered by OpenRouter DeepSeek V3 - Advanced team wellness analysis</p>
-            </div>
+      {/* AI Insights Header - Consistent with other sections */}
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center space-x-3">
+          <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+            <Brain className="w-4 h-4 text-purple-600" />
           </div>
-          <div className="flex space-x-2">
-            <Button
-              onClick={() => aiInsights.generateNewInsights(aiInsights.selectedEmployee || undefined)}
-              disabled={aiInsights.generating}
-              className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
-            >
-              {aiInsights.generating ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                  Analyzing...
-                </>
-              ) : (
-                <>
-                  <Brain className="w-4 h-4 mr-2" />
-                  Generate {aiInsights.selectedEmployee ? 'Personal' : 'Team'} Insights
-                </>
-              )}
-            </Button>
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">AI Insights</h1>
+            <p className="text-sm text-muted-foreground">AI-powered team wellness analysis</p>
+          </div>
+        </div>
+        <div className="flex space-x-2">
+          <Button
+            onClick={() => {
+              // Check if trying to generate team insights without permission
+              if (!canUseFeature('aiInsights')) {
+                showUpgradeNotice({
+                  featureName: 'Team AI Insights',
+                  currentPlan: currentPlan?.name || 'Current',
+                  requiredPlan: 'Business',
+                  description: 'Get AI-powered insights about your team\'s wellness, mood trends, and actionable recommendations to improve employee satisfaction.'
+                })
+                return
+              }
+
+              // If we're here, user has at least Business plan for team insights
+              // Employee insights scope is already locked at the button level
+              aiInsights.generateNewInsights(aiInsights.selectedEmployee || undefined)
+            }}
+            disabled={aiInsights.generating}
+            className="bg-purple-600 hover:bg-purple-700 text-white"
+          >
+            {aiInsights.generating ? (
+              <>
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                Analyzing...
+              </>
+            ) : (
+              <>
+                <Brain className="w-4 h-4 mr-2" />
+                Generate Insights
+              </>
+            )}
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => aiInsights.refreshInsights()}
+            disabled={aiInsights.loading}
+          >
+            <Activity className="w-4 h-4 mr-2" />
+            Refresh
+          </Button>
+          {aiInsights.insights.length > 0 && (
             <Button
               variant="outline"
-              onClick={() => aiInsights.refreshInsights()}
-              disabled={aiInsights.loading}
+              onClick={() => {
+                import('../utils/exportUtils').then(({ exportAllInsights }) => {
+                  exportAllInsights(aiInsights.insights, 'csv')
+                })
+              }}
             >
-              <Activity className="w-4 h-4 mr-2" />
-              Refresh
+              <Download className="w-4 h-4 mr-2" />
+              Export
             </Button>
-            {aiInsights.insights.length > 0 && (
-              <Button
-                variant="outline"
-                onClick={() => {
-                  import('../utils/exportUtils').then(({ exportAllInsights }) => {
-                    exportAllInsights(aiInsights.insights, 'csv')
-                  })
-                }}
-              >
-                <Download className="w-4 h-4 mr-2" />
-                Export All
-              </Button>
-            )}
-          </div>
+          )}
         </div>
       </div>
 
-      {/* Insights Filters and Controls */}
-      <Card className="bg-gradient-card border-0 shadow-soft">
+      {/* Insights Filters and Controls - Improved */}
+      <Card className="bg-white border border-gray-200">
         <CardContent className="p-6">
-          <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
-            {/* Scope Filter */}
-            <div className="flex items-center space-x-4">
-              <Label className="text-sm font-medium">View:</Label>
-              <div className="flex space-x-2">
-                <Button
-                  variant={aiInsights.scope === 'all' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => aiInsights.setScope('all')}
-                >
-                  <Globe className="w-4 h-4 mr-2" />
-                  All Insights
-                </Button>
-                <Button
-                  variant={aiInsights.scope === 'organization' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => aiInsights.setScope('organization')}
-                >
-                  <Building className="w-4 h-4 mr-2" />
-                  Organization
-                </Button>
-                <Button
-                  variant={aiInsights.scope === 'individual' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => aiInsights.setScope('individual')}
-                >
-                  <User className="w-4 h-4 mr-2" />
-                  Individual
-                </Button>
+          <div className="space-y-4">
+            {/* Top Row - Scope Selection */}
+            <div className="flex flex-wrap items-center gap-6">
+              <div className="flex items-center space-x-3">
+                <Label className="text-sm font-medium text-gray-700">Analysis Scope:</Label>
+                <div className="flex space-x-1 bg-gray-100 rounded-lg p-1">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => aiInsights.setScope('organization')}
+                    className={`${
+                      aiInsights.scope === 'organization'
+                        ? 'bg-white shadow-sm text-gray-900 font-medium'
+                        : 'text-gray-600 hover:bg-gray-200 hover:text-gray-900'
+                    }`}
+                  >
+                    <Building className="w-4 h-4 mr-1" />
+                    Team Insights
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      if (!canUseFeature('employeeInsights')) {
+                        showUpgradeNotice({
+                          featureName: 'Employee AI Insights',
+                          currentPlan: currentPlan?.name || 'Current',
+                          requiredPlan: 'Enterprise',
+                          description: 'Get personalized AI insights for individual employees including wellness trends, performance indicators, and personalized recommendations.'
+                        })
+                        return
+                      }
+                      aiInsights.setScope('individual')
+                    }}
+                    className={`${
+                      aiInsights.scope === 'individual'
+                        ? 'bg-white shadow-sm text-gray-900 font-medium'
+                        : canUseFeature('employeeInsights')
+                        ? 'text-gray-600 hover:bg-gray-200 hover:text-gray-900'
+                        : 'text-gray-400 hover:bg-gray-200 cursor-pointer'
+                    } relative`}
+                  >
+                    <User className="w-4 h-4 mr-1" />
+                    Employee Insights
+                    {!canUseFeature('employeeInsights') && (
+                      <Lock className="w-3 h-3 ml-1 text-gray-400" />
+                    )}
+                  </Button>
+                </div>
               </div>
-            </div>
 
-            {/* Employee Selector */}
-            {(aiInsights.scope === 'individual' || aiInsights.scope === 'all') && (
-              <div className="flex items-center space-x-4">
-                <Label className="text-sm font-medium">Employee:</Label>
-                {canUseFeature('individualInsights') ? (
+              {/* Employee Selector - Only show for Employee Insights with Enterprise access */}
+              {aiInsights.scope === 'individual' && canUseFeature('employeeInsights') && (
+                <div className="flex items-center space-x-3">
+                  <Label className="text-sm font-medium text-gray-700">Employee:</Label>
                   <select
                     value={aiInsights.selectedEmployee || ''}
                     onChange={(e) => aiInsights.setSelectedEmployee(e.target.value || null)}
-                    className="px-3 py-2 border border-border rounded-md bg-background text-foreground text-sm min-w-[200px]"
+                    className="px-3 py-2 border border-gray-300 rounded-md bg-white text-gray-900 text-sm min-w-[200px] focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                   >
                     <option value="">All Employees</option>
                     {aiInsights.employees.map((emp: any) => (
@@ -2327,20 +3322,33 @@ const HRDashboard = () => {
                       </option>
                     ))}
                   </select>
-                ) : (
-                  <div className="px-3 py-2 border border-border rounded-md bg-muted text-muted-foreground text-sm min-w-[200px] flex items-center">
-                    <span>Individual insights require Enterprise plan</span>
-                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Bottom Row - Stats and Info */}
+            <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+              <div className="flex items-center space-x-4 text-sm text-gray-600">
+                <span className="flex items-center">
+                  <div className="w-2 h-2 bg-purple-500 rounded-full mr-2"></div>
+                  {aiInsights.insights.length} insights generated
+                </span>
+                {aiInsights.scope === 'individual' && aiInsights.selectedEmployee && (
+                  <span className="flex items-center">
+                    <User className="w-3 h-3 mr-1" />
+                    {aiInsights.employees.find((e: any) => e.employee_id === aiInsights.selectedEmployee)?.employee_name}
+                  </span>
+                )}
+                {aiInsights.scope === 'organization' && (
+                  <span className="flex items-center">
+                    <Building className="w-3 h-3 mr-1" />
+                    Team-level insights
+                  </span>
                 )}
               </div>
-            )}
-
-            {/* Insights Stats */}
-            <div className="flex items-center space-x-4 text-sm text-muted-foreground">
-              <span>{aiInsights.insights.length} insights</span>
-              {aiInsights.selectedEmployee && (
-                <span>• Personal insights for {aiInsights.employees.find((e: any) => e.employee_id === aiInsights.selectedEmployee)?.employee_name}</span>
-              )}
+              <div className="text-xs text-gray-500">
+                Last updated: {new Date().toLocaleDateString()}
+              </div>
             </div>
           </div>
         </CardContent>
@@ -2405,38 +3413,66 @@ const HRDashboard = () => {
         </Card>
       ) : (
         <div className="space-y-6">
-          {/* Insights Summary */}
+          {/* Insights Summary - Professional Stats */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <Card className="bg-gradient-card border-0 shadow-soft">
-              <CardContent className="p-4 text-center">
-                <div className="text-2xl font-bold text-purple-600">
-                  {aiInsights.insights.filter((i: any) => i.insight_type === 'summary' || i.insight_type === 'personal_insight').length}
+            <Card className="bg-white border border-gray-200 hover:shadow-md transition-shadow">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-2xl font-bold text-gray-900">
+                      {aiInsights.insights.filter((i: any) => i.insight_type === 'summary' || i.insight_type === 'personal_insight').length}
+                    </div>
+                    <div className="text-sm text-gray-600 font-medium">Assessments</div>
+                  </div>
+                  <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                    <Brain className="w-5 h-5 text-purple-600" />
+                  </div>
                 </div>
-                <div className="text-xs text-muted-foreground">Assessments</div>
               </CardContent>
             </Card>
-            <Card className="bg-gradient-card border-0 shadow-soft">
-              <CardContent className="p-4 text-center">
-                <div className="text-2xl font-bold text-yellow-600">
-                  {aiInsights.insights.filter((i: any) => i.insight_type === 'recommendation').length}
+            <Card className="bg-white border border-gray-200 hover:shadow-md transition-shadow">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-2xl font-bold text-gray-900">
+                      {aiInsights.insights.filter((i: any) => i.insight_type === 'recommendation').length}
+                    </div>
+                    <div className="text-sm text-gray-600 font-medium">Recommendations</div>
+                  </div>
+                  <div className="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center">
+                    <Zap className="w-5 h-5 text-yellow-600" />
+                  </div>
                 </div>
-                <div className="text-xs text-muted-foreground">Recommendations</div>
               </CardContent>
             </Card>
-            <Card className="bg-gradient-card border-0 shadow-soft">
-              <CardContent className="p-4 text-center">
-                <div className="text-2xl font-bold text-red-600">
-                  {aiInsights.insights.filter((i: any) => i.insight_type === 'risk_alert').length}
+            <Card className="bg-white border border-gray-200 hover:shadow-md transition-shadow">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-2xl font-bold text-gray-900">
+                      {aiInsights.insights.filter((i: any) => i.insight_type === 'risk_alert').length}
+                    </div>
+                    <div className="text-sm text-gray-600 font-medium">Risk Alerts</div>
+                  </div>
+                  <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
+                    <AlertTriangle className="w-5 h-5 text-red-600" />
+                  </div>
                 </div>
-                <div className="text-xs text-muted-foreground">Risk Alerts</div>
               </CardContent>
             </Card>
-            <Card className="bg-gradient-card border-0 shadow-soft">
-              <CardContent className="p-4 text-center">
-                <div className="text-2xl font-bold text-blue-600">
-                  {aiInsights.insights.filter((i: any) => i.insight_type === 'trend_analysis').length}
+            <Card className="bg-white border border-gray-200 hover:shadow-md transition-shadow">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-2xl font-bold text-gray-900">
+                      {aiInsights.insights.filter((i: any) => i.insight_type === 'trend_analysis').length}
+                    </div>
+                    <div className="text-sm text-gray-600 font-medium">Trend Analysis</div>
+                  </div>
+                  <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <TrendingUp className="w-5 h-5 text-blue-600" />
+                  </div>
                 </div>
-                <div className="text-xs text-muted-foreground">Trend Analysis</div>
               </CardContent>
             </Card>
           </div>
@@ -2552,229 +3588,12 @@ const HRDashboard = () => {
         </div>
       </div>
 
-      {/* Available Plans - Matching Homepage */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Startup Plan */}
-        <Card className="bg-gradient-card border-0 shadow-soft">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle>Startup</CardTitle>
-                <CardDescription>Perfect for small Kenyan teams</CardDescription>
-              </div>
-              <Badge variant="outline">Basic</Badge>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="text-center">
-              <p className="text-3xl font-bold">KES 2,500</p>
-              <p className="text-sm text-muted-foreground">per month</p>
-              <p className="text-xs text-muted-foreground">($19 USD)</p>
-            </div>
-            <ul className="space-y-2 text-sm">
-              <li className="flex items-center space-x-2">
-                <CheckCircle className="w-4 h-4 text-green-500" />
-                <span>Up to 25 employees</span>
-              </li>
-              <li className="flex items-center space-x-2">
-                <CheckCircle className="w-4 h-4 text-green-500" />
-                <span>Monthly check-ins</span>
-              </li>
-              <li className="flex items-center space-x-2">
-                <CheckCircle className="w-4 h-4 text-green-500" />
-                <span>Basic analytics</span>
-              </li>
-              <li className="flex items-center space-x-2">
-                <CheckCircle className="w-4 h-4 text-green-500" />
-                <span>WhatsApp & SMS integration</span>
-              </li>
-              <li className="flex items-center space-x-2">
-                <CheckCircle className="w-4 h-4 text-green-500" />
-                <span>Email support</span>
-              </li>
-            </ul>
-            {currentPlan?.id === 'startup' ? (
-              <Button variant="outline" className="w-full" disabled>
-                <CreditCard className="w-4 h-4 mr-2" />
-                Current Plan
-              </Button>
-            ) : (
-              <button
-                className="intaSendPayButton w-full bg-white border-2 border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white font-semibold py-3 px-6 rounded-lg transition-all duration-300"
-                data-amount={PLANS.startup.price.toString()}
-                data-currency="KES"
-                data-email={user?.email || "hr@company.com"}
-                data-api_ref="staffpulse-startup-upgrade"
-                data-comment="StaffPulse Startup Plan Upgrade"
-                data-first_name={profile?.full_name?.split(' ')[0] || "HR"}
-                data-last_name={profile?.full_name?.split(' ')[1] || "Manager"}
-                data-country="KE"
-                data-card_tarrif="BUSINESS-PAYS"
-                data-mobile_tarrif="BUSINESS-PAYS"
-                onClick={(e) => {
-                  console.log('Startup button clicked!');
-                  console.log('Current target (button):', e.currentTarget);
-                  console.log('Button classes:', e.currentTarget.className);
-                  console.log('Data attributes:', {
-                    amount: e.currentTarget.getAttribute('data-amount'),
-                    currency: e.currentTarget.getAttribute('data-currency'),
-                    email: e.currentTarget.getAttribute('data-email')
-                  });
-                }}
-                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
-              >
-                <CreditCard className="w-4 h-4" style={{ pointerEvents: 'none' }} />
-                <span style={{ pointerEvents: 'none' }}>Upgrade to Startup - KES {PLANS.startup.price.toLocaleString()}</span>
-              </button>
-            )}
-          </CardContent>
-        </Card>
+      {/* Enhanced Plan Cards */}
+      <EnhancedPlanCards />
 
-        {/* Business Plan */}
-        <Card className={`bg-gradient-card border-0 shadow-soft relative ${currentPlan?.id === 'business' ? 'ring-2 ring-blue-500' : ''}`}>
-          {currentPlan?.id === 'business' && (
-            <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-              <Badge variant="default" className="bg-blue-500 text-white">Current Plan</Badge>
-            </div>
-          )}
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle>Business</CardTitle>
-                <CardDescription>For growing Kenyan organizations</CardDescription>
-              </div>
-              <Badge variant="default" className="bg-blue-100 text-blue-700">Most Popular</Badge>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="text-center">
-              <p className="text-3xl font-bold text-blue-600">KES 6,500</p>
-              <p className="text-sm text-muted-foreground">per month</p>
-              <p className="text-xs text-muted-foreground">($49 USD)</p>
-            </div>
-            <ul className="space-y-2 text-sm">
-              <li className="flex items-center space-x-2">
-                <CheckCircle className="w-4 h-4 text-green-500" />
-                <span>Up to 100 employees</span>
-              </li>
-              <li className="flex items-center space-x-2">
-                <CheckCircle className="w-4 h-4 text-green-500" />
-                <span>Weekly check-ins</span>
-              </li>
-              <li className="flex items-center space-x-2">
-                <CheckCircle className="w-4 h-4 text-green-500" />
-                <span>Advanced analytics</span>
-              </li>
-              <li className="flex items-center space-x-2">
-                <CheckCircle className="w-4 h-4 text-green-500" />
-                <span>Department insights</span>
-              </li>
-              <li className="flex items-center space-x-2">
-                <CheckCircle className="w-4 h-4 text-green-500" />
-                <span>Priority support</span>
-              </li>
-              <li className="flex items-center space-x-2">
-                <CheckCircle className="w-4 h-4 text-green-500" />
-                <span>Custom branding</span>
-              </li>
-            </ul>
-            {currentPlan?.id === 'business' ? (
-              <Button variant="outline" className="w-full" disabled>
-                <CreditCard className="w-4 h-4 mr-2" />
-                Current Plan
-              </Button>
-            ) : (
-              <button
-                className="intaSendPayButton w-full bg-white border-2 border-green-600 text-green-600 hover:bg-green-600 hover:text-white font-semibold py-3 px-6 rounded-lg transition-all duration-300"
-                data-amount={PLANS.business.price.toString()}
-                data-currency="KES"
-                data-email={user?.email || "hr@company.com"}
-                data-api_ref="staffpulse-business-upgrade"
-                data-comment="StaffPulse Business Plan Upgrade"
-                data-first_name={profile?.full_name?.split(' ')[0] || "HR"}
-                data-last_name={profile?.full_name?.split(' ')[1] || "Manager"}
-                data-country="KE"
-                data-card_tarrif="BUSINESS-PAYS"
-                data-mobile_tarrif="BUSINESS-PAYS"
-                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
-              >
-                <CreditCard className="w-4 h-4" style={{ pointerEvents: 'none' }} />
-                <span style={{ pointerEvents: 'none' }}>Upgrade to Business - KES {PLANS.business.price.toLocaleString()}</span>
-              </button>
-            )}
-          </CardContent>
-        </Card>
 
-        {/* Enterprise Plan */}
-        <Card className="bg-gradient-card border-0 shadow-soft">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle>Enterprise</CardTitle>
-                <CardDescription>For large Kenyan corporations</CardDescription>
-              </div>
-              <Badge variant="outline" className="bg-purple-100 text-purple-700">Best Value</Badge>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="text-center">
-              <p className="text-3xl font-bold text-purple-600">KES 15,000</p>
-              <p className="text-sm text-muted-foreground">per month</p>
-              <p className="text-xs text-muted-foreground">($115 USD)</p>
-            </div>
-            <ul className="space-y-2 text-sm">
-              <li className="flex items-center space-x-2">
-                <CheckCircle className="w-4 h-4 text-green-500" />
-                <span>Unlimited employees</span>
-              </li>
-              <li className="flex items-center space-x-2">
-                <CheckCircle className="w-4 h-4 text-green-500" />
-                <span>Daily check-ins</span>
-              </li>
-              <li className="flex items-center space-x-2">
-                <CheckCircle className="w-4 h-4 text-green-500" />
-                <span>Custom analytics</span>
-              </li>
-              <li className="flex items-center space-x-2">
-                <CheckCircle className="w-4 h-4 text-green-500" />
-                <span>API access</span>
-              </li>
-              <li className="flex items-center space-x-2">
-                <CheckCircle className="w-4 h-4 text-green-500" />
-                <span>Dedicated success manager</span>
-              </li>
-              <li className="flex items-center space-x-2">
-                <CheckCircle className="w-4 h-4 text-green-500" />
-                <span>On-site training</span>
-              </li>
-            </ul>
-            {currentPlan?.id === 'enterprise' ? (
-              <Button className="w-full bg-green-600 hover:bg-green-700" disabled>
-                <TrendingUp className="w-4 h-4 mr-2" />
-                Current Plan
-              </Button>
-            ) : (
-              <button
-                className="intaSendPayButton w-full bg-white border-2 border-purple-600 text-purple-600 hover:bg-purple-600 hover:text-white font-semibold py-3 px-6 rounded-lg transition-all duration-300"
-                data-amount={PLANS.enterprise.price.toString()}
-                data-currency="KES"
-                data-email={user?.email || "hr@company.com"}
-                data-api_ref="staffpulse-enterprise-upgrade"
-                data-comment="StaffPulse Enterprise Plan Upgrade"
-                data-first_name={profile?.full_name?.split(' ')[0] || "HR"}
-                data-last_name={profile?.full_name?.split(' ')[1] || "Manager"}
-                data-country="KE"
-                data-card_tarrif="BUSINESS-PAYS"
-                data-mobile_tarrif="BUSINESS-PAYS"
-                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
-              >
-                <TrendingUp className="w-4 h-4" style={{ pointerEvents: 'none' }} />
-                <span style={{ pointerEvents: 'none' }}>Upgrade to Enterprise - KES {PLANS.enterprise.price.toLocaleString()}</span>
-              </button>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+
+
 
       {/* Payment Security Features */}
       <Card className="bg-gradient-card border-0 shadow-soft">
@@ -3018,14 +3837,14 @@ const HRDashboard = () => {
 
       {/* Department Management */}
       <Card className="bg-gradient-card border-0 shadow-soft">
-        <CardHeader>
+        <CardHeader className="pb-6">
           <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="flex items-center space-x-2">
+            <div className="space-y-2">
+              <CardTitle className="flex items-center space-x-2 text-xl">
                 <Building className="w-5 h-5 text-blue-500" />
                 <span>Department Management</span>
               </CardTitle>
-              <CardDescription>Manage departments and their employees</CardDescription>
+              <CardDescription className="text-base">Manage departments and their employees</CardDescription>
             </div>
             <Button onClick={() => setShowAddDepartmentModal(true)}>
               <Plus className="w-4 h-4 mr-2" />
@@ -3066,13 +3885,35 @@ const HRDashboard = () => {
                       {department.description || 'No description available'}
                     </p>
                     <div className="flex space-x-2">
-                      <Button variant="outline" size="sm">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setSelectedDepartmentData(department);
+                          setShowViewDepartmentModal(true);
+                        }}
+                      >
                         <Eye className="w-4 h-4 mr-2" />
                         View
                       </Button>
-                      <Button variant="outline" size="sm">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setSelectedDepartmentData(department);
+                          setShowEditDepartmentModal(true);
+                        }}
+                      >
                         <Settings className="w-4 h-4 mr-2" />
                         Edit
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleDeleteDepartment(department)}
+                        disabled={isSubmitting}
+                      >
+                        <Trash2 className="w-4 h-4" />
                       </Button>
                     </div>
                   </div>
@@ -3085,14 +3926,14 @@ const HRDashboard = () => {
 
       {/* Employee List Management */}
       <Card className="bg-gradient-card border-0 shadow-soft">
-        <CardHeader>
+        <CardHeader className="pb-6">
           <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="flex items-center space-x-2">
+            <div className="space-y-2">
+              <CardTitle className="flex items-center space-x-2 text-xl">
                 <Users className="w-5 h-5 text-green-500" />
                 <span>Employee Directory</span>
               </CardTitle>
-              <CardDescription>Manage individual employees and their information</CardDescription>
+              <CardDescription className="text-base">Manage individual employees and their information</CardDescription>
             </div>
             <div className="flex space-x-2">
               <Button variant="outline">
@@ -3108,15 +3949,26 @@ const HRDashboard = () => {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center space-x-4 mb-4">
-            <Input placeholder="Search employees..." className="flex-1" />
-            <Select>
+            <Input
+              placeholder="Search employees..."
+              className="flex-1"
+              value={employeeSearchTerm}
+              onChange={(e) => {
+                setEmployeeSearchTerm(e.target.value);
+                setEmployeePage(1); // Reset to first page when searching
+              }}
+            />
+            <Select value={selectedEmployeeDepartment} onValueChange={(value) => {
+              setSelectedEmployeeDepartment(value);
+              setEmployeePage(1); // Reset to first page when filtering
+            }}>
               <SelectTrigger className="w-48">
                 <SelectValue placeholder="Filter by department" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Departments</SelectItem>
                 {departmentsList.data.map((dept: any) => (
-                  <SelectItem key={dept.id} value={dept.id}>
+                  <SelectItem key={dept.id} value={dept.name}>
                     {dept.name}
                   </SelectItem>
                 ))}
@@ -3129,12 +3981,17 @@ const HRDashboard = () => {
               <div className="text-center py-8">
                 <p className="text-muted-foreground">Loading employees...</p>
               </div>
-            ) : employeesList.data.length === 0 ? (
+            ) : filteredEmployees.length === 0 ? (
               <div className="text-center py-8">
-                <p className="text-muted-foreground">No employees found. Add your first employee to get started.</p>
+                <p className="text-muted-foreground">
+                  {employeesList.data.length === 0
+                    ? "No employees found. Add your first employee to get started."
+                    : "No employees match your search criteria."
+                  }
+                </p>
               </div>
             ) : (
-              employeesList.data.map((employee: any) => (
+              currentEmployees.map((employee: any) => (
                 <div key={employee.id} className="flex items-center justify-between p-4 border border-border rounded-lg bg-background/50">
                   <div className="flex items-center space-x-4">
                     <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/20 rounded-full flex items-center justify-center">
@@ -3143,7 +4000,7 @@ const HRDashboard = () => {
                     <div>
                       <p className="font-semibold">{employee.name}</p>
                       <p className="text-sm text-muted-foreground">
-                        {employee.email} • {employee.department}
+                        {employee.email} • {employee.department || 'No Department'}
                         {employee.position && ` • ${employee.position}`}
                       </p>
                     </div>
@@ -3155,11 +4012,34 @@ const HRDashboard = () => {
                     >
                       {employee.is_active ? "Active" : "Inactive"}
                     </Badge>
-                    <Button variant="outline" size="sm">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setSelectedEmployee(employee);
+                        setShowViewEmployeeModal(true);
+                      }}
+                    >
+                      <Eye className="w-4 h-4 mr-2" />
+                      View
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setSelectedEmployee(employee);
+                        setShowEditEmployeeModal(true);
+                      }}
+                    >
                       <Settings className="w-4 h-4 mr-2" />
                       Edit
                     </Button>
-                    <Button variant="outline" size="sm">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDeleteEmployee(employee)}
+                      disabled={isSubmitting}
+                    >
                       <Trash2 className="w-4 h-4" />
                     </Button>
                   </div>
@@ -3169,11 +4049,62 @@ const HRDashboard = () => {
           </div>
 
           <div className="flex items-center justify-between pt-4">
-            <p className="text-sm text-muted-foreground">Showing 4 of 78 employees</p>
-            <div className="flex space-x-2">
-              <Button variant="outline" size="sm">Previous</Button>
-              <Button variant="outline" size="sm">Next</Button>
-            </div>
+            <p className="text-sm text-muted-foreground">
+              {totalEmployees === 0 ? (
+                "No employees to display"
+              ) : (
+                `Showing ${employeeStartIndex + 1}-${Math.min(employeeEndIndex, totalEmployees)} of ${totalEmployees} employees`
+              )}
+            </p>
+            {totalEmployeePages > 1 && (
+              <div className="flex space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setEmployeePage(Math.max(1, employeePage - 1))}
+                  disabled={employeePage === 1}
+                >
+                  Previous
+                </Button>
+
+                {/* Page numbers */}
+                <div className="flex space-x-1">
+                  {Array.from({ length: Math.min(5, totalEmployeePages) }, (_, i) => {
+                    let pageNum;
+                    if (totalEmployeePages <= 5) {
+                      pageNum = i + 1;
+                    } else if (employeePage <= 3) {
+                      pageNum = i + 1;
+                    } else if (employeePage >= totalEmployeePages - 2) {
+                      pageNum = totalEmployeePages - 4 + i;
+                    } else {
+                      pageNum = employeePage - 2 + i;
+                    }
+
+                    return (
+                      <Button
+                        key={pageNum}
+                        variant={employeePage === pageNum ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setEmployeePage(pageNum)}
+                        className="w-8 h-8 p-0"
+                      >
+                        {pageNum}
+                      </Button>
+                    );
+                  })}
+                </div>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setEmployeePage(Math.min(totalEmployeePages, employeePage + 1))}
+                  disabled={employeePage === totalEmployeePages}
+                >
+                  Next
+                </Button>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -3429,11 +4360,91 @@ const HRDashboard = () => {
       {/* Main Content */}
       <div className="flex-1 overflow-auto">
         <div className="p-6">
-          <div className="max-w-7xl mx-auto">
+          <div className="max-w-7xl mx-auto space-y-6">
+            {/* Trial Status Banner */}
+            <TrialStatusBanner
+              onUpgradeClick={() => setActiveSection('billing')}
+              showDismiss={true}
+            />
+
             {renderContent()}
           </div>
         </div>
       </div>
+
+      {/* View Employee Modal */}
+      {showViewEmployeeModal && selectedEmployee && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <Card className="bg-gradient-card border-0 shadow-soft w-full max-w-2xl mx-4 max-h-[80vh] overflow-y-auto">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center space-x-2">
+                    <Users className="w-5 h-5 text-blue-500" />
+                    <span>Employee Details</span>
+                  </CardTitle>
+                  <CardDescription>View employee information</CardDescription>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowViewEmployeeModal(false)}
+                  className="text-muted-foreground hover:text-foreground"
+                >
+                  ✕
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Full Name</Label>
+                  <div className="p-3 bg-muted rounded-md">{selectedEmployee.name}</div>
+                </div>
+                <div className="space-y-2">
+                  <Label>Email Address</Label>
+                  <div className="p-3 bg-muted rounded-md">{selectedEmployee.email}</div>
+                </div>
+                <div className="space-y-2">
+                  <Label>Phone Number</Label>
+                  <div className="p-3 bg-muted rounded-md">{selectedEmployee.phone || 'Not provided'}</div>
+                </div>
+                <div className="space-y-2">
+                  <Label>Department</Label>
+                  <div className="p-3 bg-muted rounded-md">{selectedEmployee.department}</div>
+                </div>
+                <div className="space-y-2">
+                  <Label>Position</Label>
+                  <div className="p-3 bg-muted rounded-md">{selectedEmployee.position || 'Not specified'}</div>
+                </div>
+                <div className="space-y-2">
+                  <Label>Status</Label>
+                  <div className="p-3 bg-muted rounded-md">
+                    <Badge variant={selectedEmployee.is_active ? "default" : "outline"}>
+                      {selectedEmployee.is_active ? "Active" : "Inactive"}
+                    </Badge>
+                  </div>
+                </div>
+              </div>
+              <div className="flex space-x-3 pt-4">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setShowViewEmployeeModal(false);
+                    setShowEditEmployeeModal(true);
+                  }}
+                >
+                  <Settings className="w-4 h-4 mr-2" />
+                  Edit Employee
+                </Button>
+                <Button variant="outline" onClick={() => setShowViewEmployeeModal(false)}>
+                  Close
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* Add Employee Modal */}
       {showAddEmployeeModal && (
@@ -3459,73 +4470,166 @@ const HRDashboard = () => {
               </div>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="emp-name">Full Name</Label>
-                  <Input id="emp-name" placeholder="John Mwangi" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="emp-email">Email Address</Label>
-                  <Input id="emp-email" type="email" placeholder="john.mwangi@company.com" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="emp-phone">Phone Number</Label>
-                  <Input id="emp-phone" placeholder="+254712345678" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="emp-department">Department</Label>
-                  <Select>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select department" />
-                    </SelectTrigger>
-                    <SelectContent>
+              <form onSubmit={handleAddEmployee}>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="emp-name">Full Name</Label>
+                    <Input id="emp-name" name="emp-name" placeholder="John Mwangi" required />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="emp-email">Email Address</Label>
+                    <Input id="emp-email" name="emp-email" type="email" placeholder="john.mwangi@company.com" required />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="emp-phone">Phone Number</Label>
+                    <Input id="emp-phone" name="emp-phone" placeholder="+254712345678" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="emp-department">Department</Label>
+                    <select
+                      id="emp-department"
+                      name="emp-department"
+                      className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground"
+                      required
+                    >
+                      <option value="">Select department</option>
                       {departmentsList.data.map((department: any) => (
-                        <SelectItem key={department.id} value={department.id}>
+                        <option key={department.id} value={department.name}>
                           {department.name}
-                        </SelectItem>
+                        </option>
                       ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="emp-position">Position</Label>
-                  <Input id="emp-position" placeholder="Software Engineer" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="emp-manager">Manager</Label>
-                  <Select>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select manager" />
-                    </SelectTrigger>
-                    <SelectContent>
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="emp-position">Position</Label>
+                    <Input id="emp-position" name="emp-position" placeholder="Software Engineer" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="emp-manager">Manager</Label>
+                    <select
+                      id="emp-manager"
+                      name="emp-manager"
+                      className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground"
+                    >
+                      <option value="">Select manager (optional)</option>
                       {employeesList.data.filter((emp: any) => emp.is_active).map((employee: any) => (
-                        <SelectItem key={employee.id} value={employee.id}>
+                        <option key={employee.id} value={employee.id}>
                           {employee.name}
-                        </SelectItem>
+                        </option>
                       ))}
-                    </SelectContent>
-                  </Select>
+                    </select>
+                  </div>
                 </div>
-              </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="emp-notes">Notes (Optional)</Label>
-                <textarea
-                  id="emp-notes"
-                  className="w-full min-h-[80px] px-3 py-2 border border-border rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                  placeholder="Additional notes about the employee..."
-                />
-              </div>
+                <div className="space-y-2 mb-6">
+                  <Label htmlFor="emp-notes">Notes (Optional)</Label>
+                  <textarea
+                    id="emp-notes"
+                    name="emp-notes"
+                    className="w-full min-h-[80px] px-3 py-2 border border-border rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                    placeholder="Additional notes about the employee..."
+                  />
+                </div>
 
-              <div className="flex space-x-3 pt-4">
-                <Button className="flex-1">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Employee
-                </Button>
-                <Button variant="outline" onClick={() => setShowAddEmployeeModal(false)}>
-                  Cancel
+                <div className="flex space-x-3 pt-4">
+                  <Button type="submit" className="flex-1" disabled={isSubmitting}>
+                    <Plus className="w-4 h-4 mr-2" />
+                    {isSubmitting ? 'Adding...' : 'Add Employee'}
+                  </Button>
+                  <Button type="button" variant="outline" onClick={() => setShowAddEmployeeModal(false)}>
+                    Cancel
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Edit Employee Modal */}
+      {showEditEmployeeModal && selectedEmployee && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <Card className="bg-gradient-card border-0 shadow-soft w-full max-w-2xl mx-4 max-h-[80vh] overflow-y-auto">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center space-x-2">
+                    <Users className="w-5 h-5 text-blue-500" />
+                    <span>Edit Employee</span>
+                  </CardTitle>
+                  <CardDescription>Update employee information</CardDescription>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowEditEmployeeModal(false)}
+                  className="text-muted-foreground hover:text-foreground"
+                >
+                  ✕
                 </Button>
               </div>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <form onSubmit={handleUpdateEmployee}>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-emp-name">Full Name</Label>
+                    <Input id="edit-emp-name" name="edit-emp-name" defaultValue={selectedEmployee.name} required />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-emp-email">Email Address</Label>
+                    <Input id="edit-emp-email" name="edit-emp-email" type="email" defaultValue={selectedEmployee.email} required />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-emp-phone">Phone Number</Label>
+                    <Input id="edit-emp-phone" name="edit-emp-phone" defaultValue={selectedEmployee.phone || ''} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-emp-department">Department</Label>
+                    <select
+                      id="edit-emp-department"
+                      name="edit-emp-department"
+                      className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground"
+                      defaultValue={selectedEmployee.department}
+                      required
+                    >
+                      <option value="">Select department</option>
+                      {departmentsList.data.map((department: any) => (
+                        <option key={department.id} value={department.name}>
+                          {department.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-emp-position">Position</Label>
+                    <Input id="edit-emp-position" name="edit-emp-position" defaultValue={selectedEmployee.position || ''} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-emp-status">Status</Label>
+                    <select
+                      id="edit-emp-status"
+                      name="edit-emp-status"
+                      className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground"
+                      defaultValue={selectedEmployee.is_active ? 'active' : 'inactive'}
+                      required
+                    >
+                      <option value="active">Active</option>
+                      <option value="inactive">Inactive</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="flex space-x-3 pt-4">
+                  <Button type="submit" className="flex-1" disabled={isSubmitting}>
+                    <Settings className="w-4 h-4 mr-2" />
+                    {isSubmitting ? 'Updating...' : 'Update Employee'}
+                  </Button>
+                  <Button type="button" variant="outline" onClick={() => setShowEditEmployeeModal(false)}>
+                    Cancel
+                  </Button>
+                </div>
+              </form>
             </CardContent>
           </Card>
         </div>
@@ -3555,48 +4659,360 @@ const HRDashboard = () => {
               </div>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="dept-name">Department Name</Label>
-                  <Input id="dept-name" placeholder="Customer Success" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="dept-description">Description</Label>
-                  <textarea
-                    id="dept-description"
-                    className="w-full min-h-[80px] px-3 py-2 border border-border rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                    placeholder="Brief description of the department's role and responsibilities..."
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="dept-manager">Department Head</Label>
-                  <Select>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select department head" />
-                    </SelectTrigger>
-                    <SelectContent>
+              <form onSubmit={handleAddDepartment}>
+                <div className="space-y-4 mb-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="dept-name">Department Name</Label>
+                    <Input id="dept-name" name="dept-name" placeholder="Customer Success" required />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="dept-description">Description</Label>
+                    <textarea
+                      id="dept-description"
+                      name="dept-description"
+                      className="w-full min-h-[80px] px-3 py-2 border border-border rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                      placeholder="Brief description of the department's role and responsibilities..."
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="dept-manager">Department Head</Label>
+                    <select
+                      id="dept-manager"
+                      name="dept-manager"
+                      className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground"
+                    >
+                      <option value="">Select department head (optional)</option>
                       {employeesList.data.filter((emp: any) => emp.is_active).map((employee: any) => (
-                        <SelectItem key={employee.id} value={employee.id}>
+                        <option key={employee.id} value={employee.id}>
                           {employee.name}
-                        </SelectItem>
+                        </option>
                       ))}
-                    </SelectContent>
-                  </Select>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="flex space-x-3 pt-4">
+                  <Button type="submit" className="flex-1" disabled={isSubmitting}>
+                    <Plus className="w-4 h-4 mr-2" />
+                    {isSubmitting ? 'Creating...' : 'Create Department'}
+                  </Button>
+                  <Button type="button" variant="outline" onClick={() => setShowAddDepartmentModal(false)}>
+                    Cancel
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* View Department Modal */}
+      {showViewDepartmentModal && selectedDepartmentData && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <Card className="bg-gradient-card border-0 shadow-soft w-full max-w-2xl mx-4 max-h-[80vh] overflow-y-auto">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center space-x-2">
+                    <Building className="w-5 h-5 text-blue-500" />
+                    <span>Department Details</span>
+                  </CardTitle>
+                  <CardDescription>View department information</CardDescription>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowViewDepartmentModal(false)}
+                  className="text-muted-foreground hover:text-foreground"
+                >
+                  ✕
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Department Name</Label>
+                  <div className="p-3 bg-muted rounded-md">{selectedDepartmentData.name}</div>
+                </div>
+                <div className="space-y-2">
+                  <Label>Employee Count</Label>
+                  <div className="p-3 bg-muted rounded-md">{selectedDepartmentData.employee_count} employees</div>
+                </div>
+                <div className="space-y-2 md:col-span-2">
+                  <Label>Description</Label>
+                  <div className="p-3 bg-muted rounded-md">{selectedDepartmentData.description || 'No description available'}</div>
+                </div>
+              </div>
+              <div className="flex space-x-3 pt-4">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setShowViewDepartmentModal(false);
+                    setShowEditDepartmentModal(true);
+                  }}
+                >
+                  <Settings className="w-4 h-4 mr-2" />
+                  Edit Department
+                </Button>
+                <Button variant="outline" onClick={() => setShowViewDepartmentModal(false)}>
+                  Close
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Edit Department Modal */}
+      {showEditDepartmentModal && selectedDepartmentData && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <Card className="bg-gradient-card border-0 shadow-soft w-full max-w-lg mx-4">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center space-x-2">
+                    <Building className="w-5 h-5 text-purple-500" />
+                    <span>Edit Department</span>
+                  </CardTitle>
+                  <CardDescription>Update department information</CardDescription>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowEditDepartmentModal(false)}
+                  className="text-muted-foreground hover:text-foreground"
+                >
+                  ✕
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <form onSubmit={handleUpdateDepartment}>
+                <div className="space-y-4 mb-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-dept-name">Department Name</Label>
+                    <Input id="edit-dept-name" name="edit-dept-name" defaultValue={selectedDepartmentData.name} required />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-dept-description">Description</Label>
+                    <textarea
+                      id="edit-dept-description"
+                      name="edit-dept-description"
+                      className="w-full min-h-[80px] px-3 py-2 border border-border rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                      defaultValue={selectedDepartmentData.description || ''}
+                      placeholder="Brief description of the department's role and responsibilities..."
+                    />
+                  </div>
+                </div>
+
+                <div className="flex space-x-3 pt-4">
+                  <Button type="submit" className="flex-1" disabled={isSubmitting}>
+                    <Settings className="w-4 h-4 mr-2" />
+                    {isSubmitting ? 'Updating...' : 'Update Department'}
+                  </Button>
+                  <Button type="button" variant="outline" onClick={() => setShowEditDepartmentModal(false)}>
+                    Cancel
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Delete Employee Confirmation Modal */}
+      {showDeleteEmployeeModal && employeeToDelete && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <Card className="bg-gradient-card border-0 shadow-soft w-full max-w-md mx-4">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center space-x-2 text-red-600">
+                    <Trash2 className="w-5 h-5" />
+                    <span>Delete Employee</span>
+                  </CardTitle>
+                  <CardDescription>This action cannot be undone</CardDescription>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setShowDeleteEmployeeModal(false);
+                    setEmployeeToDelete(null);
+                  }}
+                  className="text-muted-foreground hover:text-foreground"
+                >
+                  ✕
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center space-x-4 p-4 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
+                <div className="w-12 h-12 bg-red-100 dark:bg-red-900/40 rounded-full flex items-center justify-center">
+                  <Trash2 className="w-6 h-6 text-red-600" />
+                </div>
+                <div className="flex-1">
+                  <h4 className="font-semibold text-red-800 dark:text-red-200">
+                    Delete {employeeToDelete.name}?
+                  </h4>
+                  <p className="text-sm text-red-600 dark:text-red-300">
+                    This will permanently remove this employee from your organization. All associated data will be lost.
+                  </p>
                 </div>
               </div>
 
+              <div className="space-y-2">
+                <p className="text-sm text-muted-foreground">
+                  <strong>Employee:</strong> {employeeToDelete.name}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  <strong>Email:</strong> {employeeToDelete.email}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  <strong>Department:</strong> {employeeToDelete.department}
+                </p>
+              </div>
+
               <div className="flex space-x-3 pt-4">
-                <Button className="flex-1">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Create Department
+                <Button
+                  variant="destructive"
+                  className="flex-1"
+                  onClick={confirmDeleteEmployee}
+                  disabled={isSubmitting}
+                >
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  {isSubmitting ? 'Deleting...' : 'Delete Employee'}
                 </Button>
-                <Button variant="outline" onClick={() => setShowAddDepartmentModal(false)}>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setShowDeleteEmployeeModal(false);
+                    setEmployeeToDelete(null);
+                  }}
+                  disabled={isSubmitting}
+                >
                   Cancel
                 </Button>
               </div>
             </CardContent>
           </Card>
         </div>
+      )}
+
+      {/* Delete Department Confirmation Modal */}
+      {showDeleteDepartmentModal && departmentToDelete && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <Card className="bg-gradient-card border-0 shadow-soft w-full max-w-md mx-4">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center space-x-2 text-red-600">
+                    <Trash2 className="w-5 h-5" />
+                    <span>Delete Department</span>
+                  </CardTitle>
+                  <CardDescription>This action cannot be undone</CardDescription>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setShowDeleteDepartmentModal(false);
+                    setDepartmentToDelete(null);
+                  }}
+                  className="text-muted-foreground hover:text-foreground"
+                >
+                  ✕
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center space-x-4 p-4 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
+                <div className="w-12 h-12 bg-red-100 dark:bg-red-900/40 rounded-full flex items-center justify-center">
+                  <Trash2 className="w-6 h-6 text-red-600" />
+                </div>
+                <div className="flex-1">
+                  <h4 className="font-semibold text-red-800 dark:text-red-200">
+                    Delete {departmentToDelete.name}?
+                  </h4>
+                  <p className="text-sm text-red-600 dark:text-red-300">
+                    {departmentToDelete.employee_count > 0 ? (
+                      <>This will permanently delete the department AND all {departmentToDelete.employee_count} employees in it. This action cannot be undone.</>
+                    ) : (
+                      <>This will permanently remove this department from your organization.</>
+                    )}
+                  </p>
+                </div>
+              </div>
+
+              {departmentToDelete.employee_count > 0 && (
+                <div className="p-4 bg-orange-50 dark:bg-orange-900/20 rounded-lg border border-orange-200 dark:border-orange-800">
+                  <div className="flex items-center space-x-2 mb-2">
+                    <Users className="w-5 h-5 text-orange-600" />
+                    <h5 className="font-semibold text-orange-800 dark:text-orange-200">
+                      Employees that will be deleted:
+                    </h5>
+                  </div>
+                  <p className="text-sm text-orange-700 dark:text-orange-300">
+                    All {departmentToDelete.employee_count} employees in this department will be permanently removed from the system, including their profiles, data, and history.
+                  </p>
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <p className="text-sm text-muted-foreground">
+                  <strong>Department:</strong> {departmentToDelete.name}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  <strong>Employees:</strong> {departmentToDelete.employee_count}
+                </p>
+                {departmentToDelete.description && (
+                  <p className="text-sm text-muted-foreground">
+                    <strong>Description:</strong> {departmentToDelete.description}
+                  </p>
+                )}
+              </div>
+
+              <div className="flex space-x-3 pt-4">
+                <Button
+                  variant="destructive"
+                  className="flex-1"
+                  onClick={confirmDeleteDepartment}
+                  disabled={isSubmitting}
+                >
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  {isSubmitting ? 'Deleting...' : (
+                    departmentToDelete.employee_count > 0
+                      ? `Delete Department & ${departmentToDelete.employee_count} Employees`
+                      : 'Delete Department'
+                  )}
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setShowDeleteDepartmentModal(false);
+                    setDepartmentToDelete(null);
+                  }}
+                  disabled={isSubmitting}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Upgrade Notice Modal */}
+      {showNotice && (
+        <UpgradeNotice
+          {...noticeProps as any}
+          onUpgrade={() => {
+            hideUpgradeNotice()
+            setActiveSection('billing')
+          }}
+          onClose={hideUpgradeNotice}
+        />
       )}
 
     </div>

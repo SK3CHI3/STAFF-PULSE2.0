@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import { AuthProvider } from "./contexts/AuthContext";
 import { ProtectedRoute, HRProtectedRoute, AdminProtectedRoute } from "./components/auth/ProtectedRoute";
+import { ToastContainer } from "./components/Toast";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import HRDashboard from "./pages/HRDashboard";
@@ -17,15 +18,10 @@ import { useEffect } from "react";
 const queryClient = new QueryClient();
 
 const App = () => {
-  // Initialize scheduling service when app starts
+  // Database-level scheduling is now handled by pg_cron
+  // Client-side scheduling service is disabled in favor of server-side processing
   useEffect(() => {
-    console.log('🚀 Initializing StaffPulse scheduling service...');
-    schedulingService.startScheduler();
-
-    // Cleanup on unmount
-    return () => {
-      schedulingService.stopScheduler();
-    };
+    console.log('📋 Using database-level scheduling with pg_cron - client-side scheduler disabled');
   }, []);
 
   return (
@@ -63,6 +59,7 @@ const App = () => {
             </Routes>
           </BrowserRouter>
         </AuthProvider>
+        <ToastContainer />
       </TooltipProvider>
     </QueryClientProvider>
   </ThemeProvider>

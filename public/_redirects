@@ -1,0 +1,11 @@
+# Netlify redirects file for React SPA
+# This ensures all routes are handled by React Router
+
+# Redirect all routes to index.html for SPA routing
+/*    /index.html   200
+
+# API redirects (if needed for backend integration)
+/api/*  https://your-backend-api.com/api/:splat  200
+
+# Webhook redirects for Twilio (when you have a backend)
+/webhooks/*  https://your-backend-api.com/webhooks/:splat  200

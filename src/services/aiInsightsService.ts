@@ -522,6 +522,65 @@ Format your response in clear sections with bullet points for easy reading.
     }
   }
 
+  async getAllEmployeesWithInsights(organizationId: string): Promise<any[]> {
+    try {
+      console.log(`🔍 Fetching employees for organization: ${organizationId}`)
+
+      const response = await fetch(`${supabaseConfig.url}/rest/v1/employees?organization_id=eq.${organizationId}&is_active=eq.true&select=id,name,department,position,phone,email`, {
+        headers: {
+          'apikey': supabaseConfig.anonKey,
+          'Authorization': `Bearer ${supabaseConfig.anonKey}`
+        }
+      })
+
+      if (!response.ok) {
+        const errorText = await response.text()
+        console.error(`❌ Failed to fetch employees: ${response.status} - ${errorText}`)
+        throw new Error(`Failed to fetch employees: ${response.status}`)
+      }
+
+      const employees = await response.json()
+      console.log(`📋 Found ${employees.length} employees`)
+
+      // For each employee, get their latest insights
+      const employeesWithInsights = await Promise.all(
+        employees.map(async (employee: any) => {
+          try {
+            const insightsResponse = await fetch(`${supabaseConfig.url}/rest/v1/ai_insights?organization_id=eq.${organizationId}&employee_id=eq.${employee.id}&order=created_at.desc&limit=3`, {
+              headers: {
+                'apikey': supabaseConfig.anonKey,
+                'Authorization': `Bearer ${supabaseConfig.anonKey}`
+              }
+            })
+
+            const insights = insightsResponse.ok ? await insightsResponse.json() : []
+
+            return {
+              ...employee,
+              role: employee.position, // Map position to role for compatibility
+              insights: insights || [],
+              hasInsights: insights.length > 0
+            }
+          } catch (error) {
+            console.error(`Failed to fetch insights for employee ${employee.id}:`, error)
+            return {
+              ...employee,
+              role: employee.position,
+              insights: [],
+              hasInsights: false
+            }
+          }
+        })
+      )
+
+      console.log(`✅ Successfully fetched ${employeesWithInsights.length} employees with insights`)
+      return employeesWithInsights
+    } catch (error) {
+      console.error('❌ Failed to get employees with insights:', error)
+      return []
+    }
+  }
+
   async getStoredInsights(organizationId: string): Promise<any[]> {
     const response = await fetch(`${supabaseConfig.url}/rest/v1/rpc/get_ai_insights`, {
       method: 'POST',
