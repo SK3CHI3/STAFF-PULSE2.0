@@ -12,7 +12,7 @@ const Index = () => {
     {
       icon: MessageSquare,
       title: "WhatsApp & SMS Integration",
-      description: "Reach employees directly through their phones. Works perfectly across Kenya's mobile networks.",
+      description: "Reach employees directly through their phones. Works perfectly across all mobile networks.",
       gradient: "from-green-500 to-emerald-600"
     },
     {
@@ -109,8 +109,8 @@ const Index = () => {
       price: "2,500",
       priceUSD: "19",
       currency: "KES",
-      description: "Perfect for small Kenyan teams",
-      features: ["Up to 25 employees", "Monthly check-ins", "Basic analytics", "WhatsApp & SMS integration", "Email support"],
+      description: "Perfect for small teams",
+      features: ["1 - 25 employees", "Monthly check-ins", "Basic analytics", "WhatsApp & SMS integration", "Email support"],
       popular: false,
       savings: null
     },
@@ -119,8 +119,8 @@ const Index = () => {
       price: "6,500",
       priceUSD: "49",
       currency: "KES",
-      description: "For growing Kenyan organizations",
-      features: ["Up to 100 employees", "Weekly check-ins", "Advanced analytics", "Department insights", "Priority support", "Custom branding"],
+      description: "For growing organizations",
+      features: ["26 - 100 employees", "Weekly check-ins", "Advanced analytics", "Department insights", "Priority support", "Custom branding"],
       popular: true,
       savings: "Most Popular"
     },
@@ -129,8 +129,8 @@ const Index = () => {
       price: "15,000",
       priceUSD: "115",
       currency: "KES",
-      description: "For large Kenyan corporations",
-      features: ["Unlimited employees", "Daily check-ins", "Custom analytics", "API access", "Dedicated success manager", "On-site training"],
+      description: "For large corporations",
+      features: ["100+ employees", "Daily check-ins", "Custom analytics", "API access", "Dedicated success manager", "On-site training"],
       popular: false,
       savings: "Best Value"
     }
@@ -153,7 +153,7 @@ const Index = () => {
                 </span>
                 <div className="flex items-center space-x-1">
                   <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
-                  <span className="text-xs text-muted-foreground font-medium">Kenya</span>
+                  <span className="text-xs text-muted-foreground font-medium">Online</span>
                 </div>
               </div>
             </div>
@@ -186,117 +186,191 @@ const Index = () => {
         </div>
       </nav>
 
-      {/* Enhanced Hero Section with Carousel */}
-      <section className="relative py-24 lg:py-32 overflow-hidden">
-        {/* Enhanced Background */}
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-50/50 via-cyan-50/30 to-green-50/50 dark:from-slate-900/50 dark:via-slate-800/30 dark:to-slate-900/50"></div>
-        <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-bl from-blue-500/20 to-transparent rounded-full blur-3xl"></div>
-        <div className="absolute bottom-0 left-0 w-96 h-96 bg-gradient-to-tr from-green-500/20 to-transparent rounded-full blur-3xl"></div>
-        <div className="absolute inset-0 opacity-40">
-          <div className="absolute inset-0" style={{
-            backgroundImage: `radial-gradient(circle at 25% 25%, rgba(59, 130, 246, 0.1) 0%, transparent 50%), radial-gradient(circle at 75% 75%, rgba(34, 197, 94, 0.1) 0%, transparent 50%)`
-          }}></div>
-        </div>
+      {/* Hero Section with RGB Gradient - Full Screen */}
+      <section className="relative min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-600 via-blue-600 to-cyan-500 overflow-hidden">
+        {/* RGB Gradient Background Elements */}
+        <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-bl from-pink-500/30 via-purple-500/20 to-transparent rounded-full blur-3xl"></div>
+        <div className="absolute bottom-0 left-0 w-80 h-80 bg-gradient-to-tr from-cyan-500/30 via-blue-500/20 to-transparent rounded-full blur-3xl"></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-gradient-to-r from-purple-500/10 via-pink-500/10 to-cyan-500/10 rounded-full blur-3xl"></div>
 
         <div className="container mx-auto px-6 relative z-10">
-          <div className="max-w-6xl mx-auto">
-            <Carousel
-              plugins={[
-                Autoplay({
-                  delay: 5000,
-                }),
-              ]}
-              className="w-full"
-            >
-              <CarouselContent>
-                {heroSlides.map((slide, index) => (
-                  <CarouselItem key={index}>
-                    <div className="text-center space-y-10 py-12 animate-fade-in">
-                      {/* Enhanced Header Section */}
-                      <div className="space-y-8">
-                        {/* Status Badge */}
-                        <div className="flex justify-center">
-                          <div className="inline-flex items-center space-x-3 px-6 py-3 bg-gradient-to-r from-background/80 to-background/60 dark:from-slate-800/80 dark:to-slate-800/60 rounded-2xl border border-border/50 backdrop-blur-sm shadow-lg">
-                            <div className="w-8 h-8 bg-gradient-to-r from-green-500 to-blue-500 rounded-xl flex items-center justify-center">
-                              <span className="text-white font-bold text-sm">🇰🇪</span>
-                            </div>
-                            <div className="text-left">
-                              <p className="text-sm font-semibold text-foreground">Built for Kenya</p>
-                              <p className="text-xs text-muted-foreground">Proudly Kenyan</p>
-                            </div>
-                            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                          </div>
-                        </div>
+          <div className="grid lg:grid-cols-2 gap-16 items-center max-w-7xl mx-auto">
+            {/* Left Content */}
+            <div className="space-y-8">
+              {/* Simple Badge */}
+              <div className="inline-flex items-center space-x-2 px-4 py-2 bg-white/20 backdrop-blur-sm rounded-full border border-white/30">
+                <span className="text-sm font-medium text-white">✨ Welcome to StaffPulse</span>
+              </div>
 
-                        {/* Main Title */}
-                        <div className="space-y-4">
-                          <h1 className="text-6xl lg:text-8xl font-black leading-tight tracking-tight">
-                            {slide.title.split(' ').slice(0, -1).join(' ')}
-                            <span className="bg-gradient-to-r from-blue-600 via-cyan-600 to-green-600 dark:from-blue-400 dark:via-cyan-400 dark:to-green-400 bg-clip-text text-transparent block lg:inline">
-                              {' ' + slide.title.split(' ').slice(-1)[0]}
-                            </span>
-                          </h1>
+              {/* Clean Main Title */}
+              <div className="space-y-6">
+                <h1 className="text-5xl lg:text-7xl font-bold leading-tight text-white">
+                  Transform Your Team's
+                  <span className="block text-yellow-300">Wellness</span>
+                </h1>
 
-                          <h2 className="text-2xl lg:text-4xl text-foreground/80 dark:text-foreground/90 font-bold leading-relaxed">
-                            {slide.subtitle}
-                          </h2>
+                <p className="text-xl lg:text-2xl text-white/90 leading-relaxed">
+                  Simple employee mood tracking through WhatsApp. Get real insights into team wellness without awkward conversations.
+                </p>
+              </div>
 
-                          <p className="text-xl lg:text-2xl text-muted-foreground leading-relaxed max-w-4xl mx-auto font-medium">
-                            {slide.description}
-                          </p>
-                        </div>
+              {/* Action Buttons */}
+              <div className="flex flex-col sm:flex-row gap-4">
+                <Button size="lg" className="bg-white text-purple-600 hover:bg-gray-100 px-8 py-4 text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300">
+                  Get Started
+                  <ArrowRight className="w-5 h-5 ml-2" />
+                </Button>
+                <Button variant="outline" size="lg" className="px-8 py-4 text-lg font-semibold rounded-xl border-2 border-white/30 text-white hover:bg-white/10 backdrop-blur-sm transition-all duration-300">
+                  <Play className="w-5 h-5 mr-2" />
+                  Watch Demo
+                </Button>
+              </div>
 
-                        {/* Feature Highlights */}
-                        <div className="flex flex-wrap justify-center gap-6 lg:gap-8">
-                          <div className="flex items-center space-x-3 px-4 py-2 bg-background/60 dark:bg-slate-800/60 rounded-xl border border-border/50 backdrop-blur-sm">
-                            <CheckCircle className="w-5 h-5 text-green-500" />
-                            <span className="text-sm font-medium text-foreground">No employee accounts needed</span>
-                          </div>
-                          <div className="flex items-center space-x-3 px-4 py-2 bg-background/60 dark:bg-slate-800/60 rounded-xl border border-border/50 backdrop-blur-sm">
-                            <CheckCircle className="w-5 h-5 text-green-500" />
-                            <span className="text-sm font-medium text-foreground">WhatsApp & SMS ready</span>
-                          </div>
-                          <div className="flex items-center space-x-3 px-4 py-2 bg-background/60 dark:bg-slate-800/60 rounded-xl border border-border/50 backdrop-blur-sm">
-                            <CheckCircle className="w-5 h-5 text-green-500" />
-                            <span className="text-sm font-medium text-foreground">Real-time analytics</span>
-                          </div>
-                        </div>
+              {/* Social Proof */}
+              <div className="flex items-center space-x-6">
+                <div className="flex -space-x-2">
+                  <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full border-2 border-white flex items-center justify-center">
+                    <Users className="w-5 h-5 text-white" />
+                  </div>
+                  <div className="w-10 h-10 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full border-2 border-white flex items-center justify-center">
+                    <CheckCircle className="w-5 h-5 text-white" />
+                  </div>
+                  <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full border-2 border-white flex items-center justify-center">
+                    <Star className="w-5 h-5 text-white" />
+                  </div>
+                  <div className="w-10 h-10 bg-gradient-to-r from-orange-500 to-red-500 rounded-full border-2 border-white flex items-center justify-center">
+                    <TrendingUp className="w-5 h-5 text-white" />
+                  </div>
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-white">500+ Companies</p>
+                  <p className="text-sm text-white/70">Trust StaffPulse</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Right Content - Modern Feature Carousel */}
+            <div className="relative">
+              <Carousel
+                plugins={[
+                  Autoplay({
+                    delay: 6000,
+                  }),
+                ]}
+                className="w-full max-w-xl mx-auto"
+              >
+                <CarouselContent>
+                  {/* WhatsApp Integration Feature */}
+                  <CarouselItem>
+                    <div className="relative bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl rounded-3xl p-8 border border-white/20 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.4)] hover:shadow-[0_35px_60px_-12px_rgba(0,0,0,0.5)] transition-all duration-500 h-[380px] flex flex-col w-full">
+
+                      {/* Icon */}
+                      <div className="w-20 h-20 bg-gradient-to-r from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center mb-6 shadow-[0_20px_25px_-5px_rgba(34,197,94,0.4)] hover:shadow-[0_25px_35px_-5px_rgba(34,197,94,0.5)] transition-all duration-300">
+                        <MessageSquare className="w-10 h-10 text-white" />
                       </div>
 
-                      {/* Enhanced Action Buttons */}
-                      <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
-                        <Button variant="hero" size="lg" className="group text-xl px-10 py-4 shadow-2xl hover:shadow-3xl transition-all duration-300 transform hover:scale-105">
-                          {slide.cta}
-                          <ArrowRight className="w-6 h-6 ml-2 group-hover:translate-x-1 transition-transform duration-300" />
-                        </Button>
-                        <Button variant="outline" size="lg" className="group text-xl px-10 py-4 bg-background/60 dark:bg-slate-800/60 border-border/50 backdrop-blur-sm hover:bg-accent/50 transition-all duration-300">
-                          <Play className="w-6 h-6 mr-3 group-hover:scale-110 transition-transform duration-300" />
-                          Watch Demo
-                        </Button>
-                      </div>
+                      {/* Content */}
+                      <div className="space-y-4 flex-1 flex flex-col justify-between">
+                        <h3 className="text-2xl font-bold text-white">Seamless Communication</h3>
+                        <p className="text-white/80 leading-relaxed">
+                          Reach employees directly through WhatsApp. No apps to download, no accounts to create. Just simple, instant mood tracking.
+                        </p>
 
-                      {/* Trust Indicators */}
-                      <div className="flex flex-wrap justify-center gap-6 lg:gap-8">
-                        <div className="flex items-center space-x-3 px-4 py-2 bg-green-50 dark:bg-green-900/20 rounded-xl border border-green-200 dark:border-green-800">
-                          <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400" />
-                          <span className="text-sm font-medium text-green-700 dark:text-green-300">14-day free trial</span>
-                        </div>
-                        <div className="flex items-center space-x-3 px-4 py-2 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800">
-                          <CheckCircle className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                          <span className="text-sm font-medium text-blue-700 dark:text-blue-300">No setup fees</span>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <CheckCircle className="w-5 h-5 text-success" />
-                          <span>Kenyan pricing & support</span>
+                        {/* Feature Points */}
+                        <div className="space-y-2">
+                          <div className="flex items-center space-x-2">
+                            <CheckCircle className="w-4 h-4 text-green-400" />
+                            <span className="text-white/90 text-sm">Works on any phone</span>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <CheckCircle className="w-4 h-4 text-green-400" />
+                            <span className="text-white/90 text-sm">Instant notifications</span>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <CheckCircle className="w-4 h-4 text-green-400" />
+                            <span className="text-white/90 text-sm">Anonymous responses</span>
+                          </div>
                         </div>
                       </div>
                     </div>
                   </CarouselItem>
-                ))}
-              </CarouselContent>
-              <CarouselPrevious className="left-4 bg-gradient-glass border-primary/20" />
-              <CarouselNext className="right-4 bg-gradient-glass border-primary/20" />
-            </Carousel>
+
+                  {/* AI Insights Feature */}
+                  <CarouselItem>
+                    <div className="relative bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl rounded-3xl p-8 border border-white/20 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.4)] hover:shadow-[0_35px_60px_-12px_rgba(0,0,0,0.5)] transition-all duration-500 h-[380px] flex flex-col w-full">
+
+                      {/* Icon */}
+                      <div className="w-20 h-20 bg-gradient-to-r from-purple-500 to-pink-600 rounded-2xl flex items-center justify-center mb-6 shadow-[0_20px_25px_-5px_rgba(168,85,247,0.4)] hover:shadow-[0_25px_35px_-5px_rgba(168,85,247,0.5)] transition-all duration-300">
+                        <BarChart3 className="w-10 h-10 text-white" />
+                      </div>
+
+                      {/* Content */}
+                      <div className="space-y-4 flex-1 flex flex-col justify-between">
+                        <h3 className="text-2xl font-bold text-white">Smart Analytics</h3>
+                        <p className="text-white/80 leading-relaxed">
+                          AI-powered insights identify patterns, predict trends, and provide actionable recommendations for team wellness.
+                        </p>
+
+                        {/* Feature Points */}
+                        <div className="space-y-2">
+                          <div className="flex items-center space-x-2">
+                            <Zap className="w-4 h-4 text-purple-400" />
+                            <span className="text-white/90 text-sm">Sentiment analysis</span>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <TrendingUp className="w-4 h-4 text-purple-400" />
+                            <span className="text-white/90 text-sm">Trend predictions</span>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <Target className="w-4 h-4 text-purple-400" />
+                            <span className="text-white/90 text-sm">Actionable insights</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </CarouselItem>
+
+                  {/* Productivity Boost Feature */}
+                  <CarouselItem>
+                    <div className="relative bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl rounded-3xl p-8 border border-white/20 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.4)] hover:shadow-[0_35px_60px_-12px_rgba(0,0,0,0.5)] transition-all duration-500 h-[380px] flex flex-col w-full">
+
+                      {/* Icon */}
+                      <div className="w-20 h-20 bg-gradient-to-r from-blue-500 to-cyan-600 rounded-2xl flex items-center justify-center mb-6 shadow-[0_20px_25px_-5px_rgba(59,130,246,0.4)] hover:shadow-[0_25px_35px_-5px_rgba(59,130,246,0.5)] transition-all duration-300">
+                        <TrendingUp className="w-10 h-10 text-white" />
+                      </div>
+
+                      {/* Content */}
+                      <div className="space-y-4">
+                        <h3 className="text-2xl font-bold text-white">Enhanced Performance</h3>
+                        <p className="text-white/80 leading-relaxed">
+                          Happy teams are productive teams. Track wellness metrics and watch productivity soar as team satisfaction improves.
+                        </p>
+
+                        {/* Feature Points */}
+                        <div className="space-y-2">
+                          <div className="flex items-center space-x-2">
+                            <Award className="w-4 h-4 text-blue-400" />
+                            <span className="text-white/90 text-sm">Performance tracking</span>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <Users className="w-4 h-4 text-blue-400" />
+                            <span className="text-white/90 text-sm">Team collaboration</span>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <Clock className="w-4 h-4 text-blue-400" />
+                            <span className="text-white/90 text-sm">Real-time monitoring</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </CarouselItem>
+                </CarouselContent>
+
+                {/* Custom Navigation */}
+                <CarouselPrevious className="left-4 bg-white/10 border-white/20 text-white hover:bg-white/20 backdrop-blur-sm" />
+                <CarouselNext className="right-4 bg-white/10 border-white/20 text-white hover:bg-white/20 backdrop-blur-sm" />
+              </Carousel>
+            </div>
           </div>
         </div>
       </section>
@@ -312,7 +386,7 @@ const Index = () => {
             <h2 className="text-4xl lg:text-5xl font-bold">Everything You Need for</h2>
             <h3 className="text-4xl lg:text-5xl font-bold bg-gradient-primary bg-clip-text text-transparent">Team Wellness</h3>
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-              Powerful features designed specifically for Kenyan organizations to make employee wellness tracking simple and effective.
+              Powerful features designed to make employee wellness tracking simple, effective, and engaging for modern organizations.
             </p>
           </div>
 
@@ -344,7 +418,7 @@ const Index = () => {
             </Badge>
             <h2 className="text-4xl lg:text-5xl font-bold">How It Works</h2>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Get started in minutes with our simple 3-step process designed for Kenyan businesses
+              Get started in minutes with our simple 3-step process designed for modern businesses
             </p>
           </div>
 
@@ -353,14 +427,14 @@ const Index = () => {
               {
                 step: "1",
                 title: "Add Your Team",
-                description: "Upload employee contact info or add them manually. Works with Kenyan phone numbers and supports all local networks.",
+                description: "Upload employee contact info or add them manually. Works with all phone numbers and supports global mobile networks.",
                 icon: UserPlus,
                 color: "from-blue-500 to-cyan-600"
               },
               {
                 step: "2", 
                 title: "Send Check-ins",
-                description: "Automated WhatsApp/SMS asking 'How are you feeling today?' Perfect for Kenya's mobile-first workforce.",
+                description: "Automated WhatsApp/SMS asking 'How are you feeling today?' Perfect for today's mobile-first workforce.",
                 icon: MessageSquare,
                 color: "from-green-500 to-emerald-600"
               },
@@ -397,9 +471,9 @@ const Index = () => {
               <Award className="w-4 h-4 mr-2" />
               Customer Stories
             </Badge>
-            <h2 className="text-4xl lg:text-5xl font-bold">Loved by Kenyan HR Teams</h2>
+            <h2 className="text-4xl lg:text-5xl font-bold">Loved by HR Teams Worldwide</h2>
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-              See how organizations across Kenya are improving team wellness with StaffPulse
+              See how organizations around the world are improving team wellness with StaffPulse
             </p>
           </div>
 
@@ -450,10 +524,10 @@ const Index = () => {
               <DollarSign className="w-4 h-4 mr-2" />
               Affordable Pricing
             </Badge>
-            <h2 className="text-4xl lg:text-5xl font-bold">Kenyan Pricing</h2>
+            <h2 className="text-4xl lg:text-5xl font-bold">Simple Pricing</h2>
             <h3 className="text-4xl lg:text-5xl font-bold bg-gradient-primary bg-clip-text text-transparent">Made Affordable</h3>
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-              Transparent pricing in Kenyan Shillings with no hidden fees. All plans include free setup and training.
+              Transparent pricing with no hidden fees. All plans include free setup and training.
             </p>
           </div>
 
@@ -516,14 +590,14 @@ const Index = () => {
           <div className="space-y-8 text-white max-w-4xl mx-auto">
             <Badge variant="outline" className="bg-white/10 border-white/20 text-white">
               <Globe2 className="w-4 h-4 mr-2" />
-              Join 500+ Kenyan Organizations
+              Join 500+ Organizations Worldwide
             </Badge>
             <h2 className="text-4xl lg:text-6xl font-bold leading-tight">
               Ready to Transform Your 
               <span className="block">Team's Wellness?</span>
             </h2>
             <p className="text-xl lg:text-2xl opacity-90 leading-relaxed">
-              Join hundreds of Kenyan organizations using StaffPulse to build happier, healthier teams across Nairobi, Mombasa, Kisumu, and beyond.
+              Join hundreds of organizations worldwide using StaffPulse to build happier, healthier teams across the globe.
             </p>
             <div className="flex flex-col sm:flex-row gap-6 justify-center pt-4">
               <Button variant="secondary" size="lg" className="text-lg px-10 py-6 shadow-strong">
@@ -542,7 +616,7 @@ const Index = () => {
               </div>
               <div className="flex items-center space-x-2">
                 <CheckCircle className="w-5 h-5" />
-                <span>Kenyan customer support</span>
+                <span>24/7 customer support</span>
               </div>
               <div className="flex items-center space-x-2">
                 <CheckCircle className="w-5 h-5" />
@@ -565,15 +639,10 @@ const Index = () => {
                 <span className="text-2xl font-bold">StaffPulse</span>
               </div>
               <p className="text-muted-foreground leading-relaxed max-w-md">
-                Simple employee wellness tracking built specifically for Kenyan organizations. 
+                Simple employee wellness tracking built for modern organizations worldwide.
                 Transform your team's wellness with WhatsApp-based check-ins.
               </p>
-              <div className="space-y-2">
-                <p className="font-semibold">🇰🇪 Proudly serving Kenya</p>
-                <p className="text-sm text-muted-foreground">
-                  Nairobi • Mombasa • Kisumu • Nakuru • Eldoret
-                </p>
-              </div>
+
             </div>
             
             <div>
@@ -591,8 +660,8 @@ const Index = () => {
               <ul className="space-y-3 text-muted-foreground">
                 <li><a href="#" className="hover:text-background transition-colors hover:underline">Help Center</a></li>
                 <li><a href="#" className="hover:text-background transition-colors hover:underline">Contact Support</a></li>
-                <li><a href="#" className="hover:text-background transition-colors hover:underline">WhatsApp: +254 700 000 000</a></li>
-                <li><a href="#" className="hover:text-background transition-colors hover:underline">Email: support@staffpulse.co.ke</a></li>
+                <li><a href="#" className="hover:text-background transition-colors hover:underline">Live Chat Support</a></li>
+                <li><a href="#" className="hover:text-background transition-colors hover:underline">Email: support@staffpulse.com</a></li>
               </ul>
             </div>
             
@@ -609,12 +678,7 @@ const Index = () => {
           
           <div className="border-t border-border mt-12 pt-8 flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
             <div className="text-sm text-muted-foreground">
-              © 2024 StaffPulse Kenya Ltd. All rights reserved.
-            </div>
-            <div className="flex items-center space-x-6 text-sm text-muted-foreground">
-              <span>Made with ❤️ in Kenya</span>
-              <span>•</span>
-              <span>🇰🇪 Kenyan Owned & Operated</span>
+              © {new Date().getFullYear()} StaffPulse Ltd. All rights reserved.
             </div>
           </div>
         </div>

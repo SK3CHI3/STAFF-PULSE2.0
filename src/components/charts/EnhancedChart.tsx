@@ -107,7 +107,29 @@ export const MoodTrendChart: React.FC<{
   error: string | null
   title?: string
   description?: string
-}> = ({ data, loading, error, title = "Team Mood Trend", description = "Wellness patterns over time" }) => (
+  timeline?: string
+}> = ({ data, loading, error, title = "Team Mood Trend", description = "Wellness patterns over time", timeline = '7d' }) => {
+  // Helper function to get appropriate interval for X-axis labels
+  const getXAxisInterval = (timeline: string, dataLength: number) => {
+    if (dataLength <= 7) return 0; // Show all labels for 7 or fewer points
+
+    switch (timeline) {
+      case '7d':
+        return 0; // Show all days
+      case '1m':
+        return Math.ceil(dataLength / 8); // Show ~8 labels
+      case '3m':
+        return Math.ceil(dataLength / 6); // Show ~6 labels
+      case '6m':
+        return Math.ceil(dataLength / 6); // Show ~6 labels
+      case '1y':
+        return Math.ceil(dataLength / 8); // Show ~8 labels
+      default:
+        return Math.ceil(dataLength / 8);
+    }
+  };
+
+  return (
   <EnhancedChart
     title={title}
     description={description}
@@ -117,14 +139,26 @@ export const MoodTrendChart: React.FC<{
     type="area"
     icon={<TrendingUp className="w-5 h-5 text-green-500" />}
   >
-    <AreaChart data={data}>
+    <AreaChart data={data} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
       <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-      <XAxis 
-        dataKey="date" 
+      <XAxis
+        dataKey="date"
         stroke="hsl(var(--muted-foreground))"
-        fontSize={12}
+        tick={{ fontSize: 11 }}
+        interval={Math.max(0, Math.floor(data.length / 6))}
+        angle={-45}
+        textAnchor="end"
+        height={70}
         tickLine={false}
         axisLine={false}
+        tickFormatter={(value) => {
+          if (!value) return '';
+          const date = new Date(value);
+          return date.toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric'
+          });
+        }}
       />
       <YAxis 
         domain={[0, 10]} 
@@ -153,12 +187,13 @@ export const MoodTrendChart: React.FC<{
         dataKey="mood"
         stroke="#10b981"
         fill="url(#moodGradient)"
-        strokeWidth={3}
-        dot={{ fill: "#10b981", strokeWidth: 2, r: 4 }}
+        strokeWidth={2.5}
+        dot={false}
       />
     </AreaChart>
   </EnhancedChart>
-)
+  );
+}
 
 export const DepartmentWellnessChart: React.FC<{
   data: any[]
@@ -176,12 +211,16 @@ export const DepartmentWellnessChart: React.FC<{
     type="bar"
     icon={<TrendingUp className="w-5 h-5 text-blue-500" />}
   >
-    <BarChart data={data}>
+    <BarChart data={data} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
       <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-      <XAxis 
-        dataKey="department" 
+      <XAxis
+        dataKey="department"
         stroke="hsl(var(--muted-foreground))"
-        fontSize={12}
+        tick={{ fontSize: 12 }}
+        interval={0}
+        angle={data.length > 4 ? -45 : 0}
+        textAnchor={data.length > 4 ? 'end' : 'middle'}
+        height={data.length > 4 ? 60 : 40}
         tickLine={false}
         axisLine={false}
       />
@@ -192,13 +231,15 @@ export const DepartmentWellnessChart: React.FC<{
         tickLine={false}
         axisLine={false}
       />
-      <Tooltip 
-        contentStyle={{ 
+      <Tooltip
+        contentStyle={{
           backgroundColor: "hsl(var(--card))",
           border: "1px solid hsl(var(--border))",
           borderRadius: "8px",
           fontSize: "12px"
         }}
+        labelStyle={{ color: "hsl(var(--foreground))" }}
+        formatter={(value, name) => [`${value}/10`, 'Mood Score']}
       />
       <Bar
         dataKey="mood"
@@ -215,24 +256,58 @@ export const EngagementChart: React.FC<{
   error: string | null
   title?: string
   description?: string
-}> = ({ data, loading, error, title = "Engagement Metrics", description = "Response rates and participation over time" }) => (
+  timeline?: string
+}> = ({ data, loading, error, title = "Engagement Metrics", description = "Response rates and participation over time", timeline = '7d' }) => {
+  // Helper function to get appropriate interval for X-axis labels
+  const getXAxisInterval = (timeline: string, dataLength: number) => {
+    if (dataLength <= 7) return 0; // Show all labels for 7 or fewer points
+
+    switch (timeline) {
+      case '7d':
+        return 0; // Show all days
+      case '1m':
+        return Math.ceil(dataLength / 8); // Show ~8 labels
+      case '3m':
+        return Math.ceil(dataLength / 6); // Show ~6 labels
+      case '6m':
+        return Math.ceil(dataLength / 6); // Show ~6 labels
+      case '1y':
+        return Math.ceil(dataLength / 8); // Show ~8 labels
+      default:
+        return Math.ceil(dataLength / 8);
+    }
+  };
+
+  return (
   <EnhancedChart
     title={title}
     description={description}
     data={data}
     loading={loading}
     error={error}
-    type="line"
+    type="area"
     icon={<TrendingUp className="w-5 h-5 text-purple-500" />}
   >
-    <LineChart data={data}>
+    <AreaChart data={data} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
       <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-      <XAxis 
-        dataKey="date" 
+      <XAxis
+        dataKey="date"
         stroke="hsl(var(--muted-foreground))"
-        fontSize={12}
+        tick={{ fontSize: 11 }}
+        interval={Math.max(0, Math.floor(data.length / 6))}
+        angle={-45}
+        textAnchor="end"
+        height={70}
         tickLine={false}
         axisLine={false}
+        tickFormatter={(value) => {
+          if (!value) return '';
+          const date = new Date(value);
+          return date.toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric'
+          });
+        }}
       />
       <YAxis 
         stroke="hsl(var(--muted-foreground))"
@@ -240,30 +315,48 @@ export const EngagementChart: React.FC<{
         tickLine={false}
         axisLine={false}
       />
-      <Tooltip 
-        contentStyle={{ 
+      <Tooltip
+        contentStyle={{
           backgroundColor: "hsl(var(--card))",
           border: "1px solid hsl(var(--border))",
           borderRadius: "8px",
           fontSize: "12px"
         }}
+        labelStyle={{ color: "hsl(var(--foreground))" }}
+        formatter={(value, name) => {
+          if (name === 'Response Rate %') return [`${value}%`, name];
+          return [value, name];
+        }}
       />
-      <Line
+      <defs>
+        <linearGradient id="responsesGradientHR" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3}/>
+          <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0.05}/>
+        </linearGradient>
+        <linearGradient id="responseRateGradientHR" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="5%" stopColor="#06b6d4" stopOpacity={0.3}/>
+          <stop offset="95%" stopColor="#06b6d4" stopOpacity={0.05}/>
+        </linearGradient>
+      </defs>
+      <Area
         type="monotone"
         dataKey="responses"
         stroke="#8b5cf6"
-        strokeWidth={3}
-        dot={{ fill: "#8b5cf6", strokeWidth: 2, r: 4 }}
+        fill="url(#responsesGradientHR)"
+        strokeWidth={2.5}
+        dot={false}
         name="Responses"
       />
-      <Line
+      <Area
         type="monotone"
         dataKey="responseRate"
         stroke="#06b6d4"
-        strokeWidth={3}
-        dot={{ fill: "#06b6d4", strokeWidth: 2, r: 4 }}
+        fill="url(#responseRateGradientHR)"
+        strokeWidth={2.5}
+        dot={false}
         name="Response Rate %"
       />
-    </LineChart>
+    </AreaChart>
   </EnhancedChart>
-)
+  );
+}

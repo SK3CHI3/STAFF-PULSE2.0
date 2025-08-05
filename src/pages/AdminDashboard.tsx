@@ -9,13 +9,18 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { ModernSidebar, adminDashboardItems } from "@/components/layout/ModernSidebar";
+import { TimelineSelector, TimelineOption } from "@/components/charts/TimelineSelector";
 import {
   usePlatformGrowth,
   useUsageMetrics,
   useOrganizationsList,
   useRecentActivities,
   useSystemHealth,
-  usePlatformFeedback
+  usePlatformFeedback,
+  useOrganizationDistribution,
+  useSystemMetrics,
+  useAdminProfile,
+  useDailyEngagementMetrics
 } from "@/hooks/useAdminData";
 import { 
   BarChart, 
@@ -35,6 +40,7 @@ import {
   Building,
   Users,
   TrendingUp,
+  TrendingDown,
   DollarSign,
   Activity,
   Settings,
@@ -56,33 +62,126 @@ import {
   Globe,
   Shield,
   BarChart3,
-  MessageSquare
+  MessageSquare,
+  LayoutDashboard
 } from "lucide-react";
 
 const AdminDashboard = () => {
   const [selectedPeriod, setSelectedPeriod] = useState("30d");
   const [activeSection, setActiveSection] = useState("overview");
+  const [timeline, setTimeline] = useState<TimelineOption>('1m');
 
   // Real data hooks
-  const platformGrowthData = usePlatformGrowth(6);
+  const platformGrowthData = usePlatformGrowth(timeline);
   const usageMetricsData = useUsageMetrics(4);
   const organizationsData = useOrganizationsList();
   const recentActivitiesData = useRecentActivities(10);
   const systemHealthData = useSystemHealth();
   const platformFeedbackData = usePlatformFeedback(10);
+  const organizationDistributionData = useOrganizationDistribution();
+  const systemMetricsData = useSystemMetrics();
+  const adminProfileData = useAdminProfile();
+  const dailyEngagementData = useDailyEngagementMetrics(timeline);
 
   // Use real data or fallback to empty arrays
   const platformGrowth = platformGrowthData.data || [];
-
   const usageMetrics = usageMetricsData.data || [];
-
   const organizations = organizationsData.data || [];
-
   const recentActivities = recentActivitiesData.data || [];
-
   const systemHealth = systemHealthData.data || [];
-
   const platformFeedback = platformFeedbackData.data || [];
+  const organizationDistribution = organizationDistributionData.data || [];
+  const systemMetrics = systemMetricsData.data || {};
+  const adminProfile = adminProfileData.data || {};
+  const dailyEngagement = dailyEngagementData.data || [];
+
+  // Helper function to get appropriate interval for X-axis labels
+  const getXAxisInterval = (timeline: string, dataLength: number) => {
+    if (dataLength <= 7) return 0; // Show all labels for 7 or fewer points
+
+    switch (timeline) {
+      case '7d':
+        return 0; // Show all days
+      case '1m':
+        return Math.ceil(dataLength / 8); // Show ~8 labels
+      case '3m':
+        return Math.ceil(dataLength / 6); // Show ~6 labels
+      case '6m':
+        return Math.ceil(dataLength / 6); // Show ~6 labels
+      case '1y':
+        return Math.ceil(dataLength / 8); // Show ~8 labels
+      default:
+        return Math.ceil(dataLength / 8);
+    }
+  };
+
+  // Helper function to calculate trend (appreciation/depreciation)
+  const calculateTrend = (data: any[], key: string) => {
+    if (!data || data.length < 2) return { trend: 'neutral', percentage: 0 };
+
+    const validData = data.filter(item => item[key] !== undefined && item[key] !== null && item[key] > 0);
+    if (validData.length < 2) return { trend: 'neutral', percentage: 0 };
+
+    const firstValue = validData[0][key];
+    const lastValue = validData[validData.length - 1][key];
+
+    if (firstValue === 0) return { trend: 'neutral', percentage: 0 };
+
+    const percentage = ((lastValue - firstValue) / firstValue) * 100;
+    const trend = percentage > 0 ? 'up' : percentage < 0 ? 'down' : 'neutral';
+
+    return { trend, percentage: Math.abs(percentage) };
+  };
+
+  // Helper function to calculate total revenue from timeline data
+  const getTotalRevenue = (data: any[]) => {
+    if (!data || data.length === 0) return 0;
+    return data.reduce((total, item) => total + (item.revenue || 0), 0);
+  };
+
+  // Generate dynamic sidebar items
+  const getDynamicAdminDashboardItems = () => {
+    return [
+      {
+        id: "overview",
+        label: "Overview",
+        icon: LayoutDashboard,
+        active: activeSection === "overview"
+      },
+      {
+        id: "organizations",
+        label: "Organizations",
+        icon: Building,
+        badge: systemMetrics.totalOrganizations?.toString() || "0",
+        active: activeSection === "organizations"
+      },
+      {
+        id: "analytics",
+        label: "Analytics",
+        icon: BarChart3,
+        active: activeSection === "analytics"
+      },
+      {
+        id: "feedback",
+        label: "Feedback",
+        icon: MessageSquare,
+        badge: platformFeedback.length?.toString() || "0",
+        active: activeSection === "feedback"
+      },
+      {
+        id: "system",
+        label: "System Health",
+        icon: Activity,
+        active: activeSection === "system"
+      },
+      {
+        id: "settings",
+        label: "Settings",
+        icon: Settings,
+        active: activeSection === "settings"
+      }
+    ];
+  };
 
   const getStatusBadge = (status: string) => {
     const variants = {
@@ -170,8 +269,21 @@ const AdminDashboard = () => {
             <Building className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">51</div>
-            <p className="text-xs text-success">+8 this month</p>
+            <div className="text-2xl font-bold">{systemMetrics.totalOrganizations || 0}</div>
+            <div className="flex items-center space-x-1 mt-1">
+              {(() => {
+                const trend = calculateTrend(platformGrowth, 'organizations');
+                return (
+                  <>
+                    {trend.trend === 'up' && <TrendingUp className="h-3 w-3 text-green-500" />}
+                    {trend.trend === 'down' && <TrendingDown className="h-3 w-3 text-red-500" />}
+                    <p className={`text-xs ${trend.trend === 'up' ? 'text-green-500' : trend.trend === 'down' ? 'text-red-500' : 'text-muted-foreground'}`}>
+                      {trend.trend === 'neutral' ? 'No change' : `${trend.percentage.toFixed(1)}% ${trend.trend === 'up' ? 'increase' : 'decrease'}`}
+                    </p>
+                  </>
+                );
+              })()}
+            </div>
           </CardContent>
         </Card>
 
@@ -181,35 +293,86 @@ const AdminDashboard = () => {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">2,847</div>
-            <p className="text-xs text-success">+12% from last month</p>
+            <div className="text-2xl font-bold">{systemMetrics.totalEmployees || 0}</div>
+            <div className="flex items-center space-x-1 mt-1">
+              {(() => {
+                const trend = calculateTrend(platformGrowth, 'employees');
+                return (
+                  <>
+                    {trend.trend === 'up' && <TrendingUp className="h-3 w-3 text-green-500" />}
+                    {trend.trend === 'down' && <TrendingDown className="h-3 w-3 text-red-500" />}
+                    <p className={`text-xs ${trend.trend === 'up' ? 'text-green-500' : trend.trend === 'down' ? 'text-red-500' : 'text-muted-foreground'}`}>
+                      {trend.trend === 'neutral' ? 'No change' : `${trend.percentage.toFixed(1)}% ${trend.trend === 'up' ? 'increase' : 'decrease'}`}
+                    </p>
+                  </>
+                );
+              })()}
+            </div>
           </CardContent>
         </Card>
 
         <Card className="bg-gradient-card border-0 shadow-soft">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Monthly Revenue</CardTitle>
+            <CardTitle className="text-sm font-medium">Total Check-ins</CardTitle>
+            <Activity className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{systemMetrics.totalCheckIns || 0}</div>
+            <div className="flex items-center space-x-1 mt-1">
+              {(() => {
+                const trend = calculateTrend(dailyEngagement, 'checkIns');
+                return (
+                  <>
+                    {trend.trend === 'up' && <TrendingUp className="h-3 w-3 text-green-500" />}
+                    {trend.trend === 'down' && <TrendingDown className="h-3 w-3 text-red-500" />}
+                    <p className={`text-xs ${trend.trend === 'up' ? 'text-green-500' : trend.trend === 'down' ? 'text-red-500' : 'text-muted-foreground'}`}>
+                      {trend.trend === 'neutral' ? 'No change' : `${trend.percentage.toFixed(1)}% ${trend.trend === 'up' ? 'increase' : 'decrease'}`}
+                    </p>
+                  </>
+                );
+              })()}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gradient-card border-0 shadow-soft">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">$24,580</div>
-            <p className="text-xs text-success">+18% from last month</p>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gradient-card border-0 shadow-soft">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Platform Health</CardTitle>
-            <CheckCircle className="h-4 w-4 text-success" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-success">99.9%</div>
+            <div className="text-2xl font-bold">KES {getTotalRevenue(platformGrowth).toLocaleString()}</div>
+            <div className="flex items-center space-x-1 mt-1">
+              {(() => {
+                const trend = calculateTrend(platformGrowth, 'revenue');
+                return (
+                  <>
+                    {trend.trend === 'up' && <TrendingUp className="h-3 w-3 text-green-500" />}
+                    {trend.trend === 'down' && <TrendingDown className="h-3 w-3 text-red-500" />}
+                    <p className={`text-xs ${trend.trend === 'up' ? 'text-green-500' : trend.trend === 'down' ? 'text-red-500' : 'text-muted-foreground'}`}>
+                      {trend.trend === 'neutral' ? 'No change' : `${trend.percentage.toFixed(1)}% ${trend.trend === 'up' ? 'increase' : 'decrease'}`}
+                    </p>
+                  </>
+                );
+              })()}
+            </div>
             <p className="text-xs text-muted-foreground">Uptime this month</p>
           </CardContent>
         </Card>
       </div>
 
       {/* Beautiful Analytics Charts */}
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h3 className="text-lg font-semibold">Platform Analytics</h3>
+          <p className="text-sm text-muted-foreground">Growth and engagement trends</p>
+        </div>
+        <TimelineSelector
+          value={timeline}
+          onChange={setTimeline}
+          className="ml-auto"
+        />
+      </div>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Platform Growth Chart */}
         <Card className="bg-gradient-card border-0 shadow-soft">
@@ -218,26 +381,86 @@ const AdminDashboard = () => {
               <TrendingUp className="w-5 h-5 text-blue-500" />
               <span>Platform Growth</span>
             </CardTitle>
-            <CardDescription>Organizations and employee growth over time</CardDescription>
+            <CardDescription>Organizations and employee growth over the {
+              timeline === '7d' ? 'last 7 days' :
+              timeline === '1m' ? 'last month' :
+              timeline === '3m' ? 'last 3 months' :
+              timeline === '6m' ? 'last 6 months' : 'last year'
+            }</CardDescription>
           </CardHeader>
           <CardContent>
+            {platformGrowthData.loading ? (
+              <div className="flex items-center justify-center h-[300px]">
+                <div className="text-muted-foreground">Loading chart data...</div>
+              </div>
+            ) : platformGrowthData.error ? (
+              <div className="flex items-center justify-center h-[300px]">
+                <div className="text-destructive">Error loading data: {platformGrowthData.error}</div>
+              </div>
+            ) : platformGrowth.length === 0 ? (
+              <div className="flex items-center justify-center h-[300px]">
+                <div className="text-muted-foreground">No data available for the selected period</div>
+              </div>
+            ) : (
             <ResponsiveContainer width="100%" height={300}>
-              <ComposedChart data={platformGrowth}>
+              <AreaChart data={platformGrowth} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" />
-                <YAxis yAxisId="left" stroke="hsl(var(--muted-foreground))" />
-                <YAxis yAxisId="right" orientation="right" stroke="hsl(var(--muted-foreground))" />
+                <XAxis
+                  dataKey="date"
+                  stroke="hsl(var(--muted-foreground))"
+                  tick={{ fontSize: 12 }}
+                  interval={getXAxisInterval(timeline, platformGrowth.length)}
+                  angle={timeline === '7d' ? 0 : -45}
+                  textAnchor={timeline === '7d' ? 'middle' : 'end'}
+                  height={timeline === '7d' ? 40 : 60}
+                />
+                <YAxis
+                  stroke="hsl(var(--muted-foreground))"
+                  tick={{ fontSize: 12 }}
+                  domain={['dataMin - 1', 'dataMax + 1']}
+                  allowDataOverflow={false}
+                />
                 <Tooltip
                   contentStyle={{
                     backgroundColor: "hsl(var(--card))",
                     border: "1px solid hsl(var(--border))",
                     borderRadius: "8px"
                   }}
+                  labelStyle={{ color: "hsl(var(--foreground))" }}
                 />
-                <Bar yAxisId="left" dataKey="organizations" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-                <Line yAxisId="right" type="monotone" dataKey="employees" stroke="#10b981" strokeWidth={3} dot={{ fill: "#10b981", strokeWidth: 2, r: 4 }} />
-              </ComposedChart>
+                <defs>
+                  <linearGradient id="organizationsGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.05}/>
+                  </linearGradient>
+                  <linearGradient id="employeesGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="#10b981" stopOpacity={0.05}/>
+                  </linearGradient>
+                </defs>
+                <Area
+                  type="monotone"
+                  dataKey="organizations"
+                  stroke="#3b82f6"
+                  fill="url(#organizationsGradient)"
+                  strokeWidth={2.5}
+                  dot={false}
+                  name="Organizations"
+                  connectNulls={false}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="employees"
+                  stroke="#10b981"
+                  fill="url(#employeesGradient)"
+                  strokeWidth={2.5}
+                  dot={false}
+                  name="Employees"
+                  connectNulls={false}
+                />
+              </AreaChart>
             </ResponsiveContainer>
+            )}
           </CardContent>
         </Card>
 
@@ -248,26 +471,44 @@ const AdminDashboard = () => {
               <DollarSign className="w-5 h-5 text-green-500" />
               <span>Revenue Analytics</span>
             </CardTitle>
-            <CardDescription>Monthly recurring revenue trends</CardDescription>
+            <CardDescription>Revenue trends over the {
+              timeline === '7d' ? 'last 7 days' :
+              timeline === '1m' ? 'last month' :
+              timeline === '3m' ? 'last 3 months' :
+              timeline === '6m' ? 'last 6 months' : 'last year'
+            }</CardDescription>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
-              <AreaChart data={platformGrowth}>
+              <AreaChart data={platformGrowth} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" />
-                <YAxis stroke="hsl(var(--muted-foreground))" />
+                <XAxis
+                  dataKey="date"
+                  stroke="hsl(var(--muted-foreground))"
+                  tick={{ fontSize: 12 }}
+                  interval={getXAxisInterval(timeline, platformGrowth.length)}
+                  angle={timeline === '7d' ? 0 : -45}
+                  textAnchor={timeline === '7d' ? 'middle' : 'end'}
+                  height={timeline === '7d' ? 40 : 60}
+                />
+                <YAxis
+                  stroke="hsl(var(--muted-foreground))"
+                  tick={{ fontSize: 12 }}
+                  domain={[0, 'dataMax + 100']}
+                />
                 <Tooltip
                   contentStyle={{
                     backgroundColor: "hsl(var(--card))",
                     border: "1px solid hsl(var(--border))",
                     borderRadius: "8px"
                   }}
-                  formatter={(value) => [`$${value}`, 'Revenue']}
+                  labelStyle={{ color: "hsl(var(--foreground))" }}
+                  formatter={(value) => [`KES ${value}`, 'Revenue']}
                 />
                 <defs>
                   <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="#10b981" stopOpacity={0.05}/>
+                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.2}/>
+                    <stop offset="95%" stopColor="#10b981" stopOpacity={0.02}/>
                   </linearGradient>
                 </defs>
                 <Area
@@ -275,8 +516,9 @@ const AdminDashboard = () => {
                   dataKey="revenue"
                   stroke="#10b981"
                   fill="url(#revenueGradient)"
-                  strokeWidth={3}
-                  dot={{ fill: "#10b981", strokeWidth: 2, r: 4 }}
+                  strokeWidth={2.5}
+                  dot={{ fill: "#10b981", strokeWidth: 1, r: 2.5 }}
+                  activeDot={{ r: 4, stroke: "#10b981", strokeWidth: 2, fill: "#ffffff" }}
                 />
               </AreaChart>
             </ResponsiveContainer>
@@ -376,16 +618,23 @@ const AdminDashboard = () => {
     <div className="space-y-6">
       {/* Analytics Header */}
       <div className="bg-gradient-to-r from-background to-background/95 dark:from-slate-900 dark:to-slate-800 rounded-2xl border border-border/50 shadow-lg p-6">
-        <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl flex items-center justify-center">
-            <BarChart3 className="w-5 h-5 text-white" />
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl flex items-center justify-center">
+              <BarChart3 className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <h2 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 dark:from-purple-400 dark:to-pink-400 bg-clip-text text-transparent">
+                Platform Analytics
+              </h2>
+              <p className="text-sm text-muted-foreground">Comprehensive insights across all organizations</p>
+            </div>
           </div>
-          <div>
-            <h2 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 dark:from-purple-400 dark:to-pink-400 bg-clip-text text-transparent">
-              Platform Analytics
-            </h2>
-            <p className="text-sm text-muted-foreground">Comprehensive insights across all organizations</p>
-          </div>
+          <TimelineSelector
+            value={timeline}
+            onChange={setTimeline}
+            className="ml-auto"
+          />
         </div>
       </div>
 
@@ -398,25 +647,71 @@ const AdminDashboard = () => {
               <TrendingUp className="w-5 h-5 text-blue-500" />
               <span>Platform Growth</span>
             </CardTitle>
-            <CardDescription>Organizations and employee growth over time</CardDescription>
+            <CardDescription>Organizations and employee growth over the {
+              timeline === '7d' ? 'last 7 days' :
+              timeline === '1m' ? 'last month' :
+              timeline === '3m' ? 'last 3 months' :
+              timeline === '6m' ? 'last 6 months' : 'last year'
+            }</CardDescription>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
-              <ComposedChart data={platformGrowth}>
+              <AreaChart data={platformGrowth} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" />
-                <YAxis yAxisId="left" stroke="hsl(var(--muted-foreground))" />
-                <YAxis yAxisId="right" orientation="right" stroke="hsl(var(--muted-foreground))" />
+                <XAxis
+                  dataKey="date"
+                  stroke="hsl(var(--muted-foreground))"
+                  tick={{ fontSize: 12 }}
+                  interval={getXAxisInterval(timeline, platformGrowth.length)}
+                  angle={timeline === '7d' ? 0 : -45}
+                  textAnchor={timeline === '7d' ? 'middle' : 'end'}
+                  height={timeline === '7d' ? 40 : 60}
+                />
+                <YAxis
+                  stroke="hsl(var(--muted-foreground))"
+                  tick={{ fontSize: 12 }}
+                  domain={['dataMin - 1', 'dataMax + 1']}
+                  allowDataOverflow={false}
+                />
                 <Tooltip
                   contentStyle={{
                     backgroundColor: "hsl(var(--card))",
                     border: "1px solid hsl(var(--border))",
                     borderRadius: "8px"
                   }}
+                  labelStyle={{ color: "hsl(var(--foreground))" }}
                 />
-                <Bar yAxisId="left" dataKey="organizations" fill="#3b82f6" radius={[4, 4, 0, 0]} />
-                <Line yAxisId="right" type="monotone" dataKey="employees" stroke="#10b981" strokeWidth={3} dot={{ fill: "#10b981", strokeWidth: 2, r: 4 }} />
-              </ComposedChart>
+                <defs>
+                  <linearGradient id="organizationsGradientAnalytics" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0.05}/>
+                  </linearGradient>
+                  <linearGradient id="employeesGradientAnalytics" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#06b6d4" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="#06b6d4" stopOpacity={0.05}/>
+                  </linearGradient>
+                </defs>
+                <Area
+                  type="monotone"
+                  dataKey="organizations"
+                  stroke="#8b5cf6"
+                  fill="url(#organizationsGradientAnalytics)"
+                  strokeWidth={2.5}
+                  dot={false}
+                  name="Organizations"
+                  connectNulls={false}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="employees"
+                  stroke="#06b6d4"
+                  fill="url(#employeesGradientAnalytics)"
+                  strokeWidth={2.5}
+                  dot={false}
+                  name="Employees"
+                  connectNulls={false}
+                />
+              </AreaChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
@@ -428,35 +723,54 @@ const AdminDashboard = () => {
               <DollarSign className="w-5 h-5 text-green-500" />
               <span>Revenue Analytics</span>
             </CardTitle>
-            <CardDescription>Monthly recurring revenue trends</CardDescription>
+            <CardDescription>Revenue trends over the {
+              timeline === '7d' ? 'last 7 days' :
+              timeline === '1m' ? 'last month' :
+              timeline === '3m' ? 'last 3 months' :
+              timeline === '6m' ? 'last 6 months' : 'last year'
+            }</CardDescription>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
-              <AreaChart data={platformGrowth}>
+              <AreaChart data={platformGrowth} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" />
-                <YAxis stroke="hsl(var(--muted-foreground))" />
+                <XAxis
+                  dataKey="date"
+                  stroke="hsl(var(--muted-foreground))"
+                  tick={{ fontSize: 12 }}
+                  interval={getXAxisInterval(timeline, platformGrowth.length)}
+                  angle={timeline === '7d' ? 0 : -45}
+                  textAnchor={timeline === '7d' ? 'middle' : 'end'}
+                  height={timeline === '7d' ? 40 : 60}
+                />
+                <YAxis
+                  stroke="hsl(var(--muted-foreground))"
+                  tick={{ fontSize: 12 }}
+                  domain={[0, 'dataMax + 100']}
+                />
                 <Tooltip
                   contentStyle={{
                     backgroundColor: "hsl(var(--card))",
                     border: "1px solid hsl(var(--border))",
                     borderRadius: "8px"
                   }}
-                  formatter={(value) => [`$${value}`, 'Revenue']}
+                  labelStyle={{ color: "hsl(var(--foreground))" }}
+                  formatter={(value) => [`KES ${value}`, 'Revenue']}
                 />
                 <defs>
-                  <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="#10b981" stopOpacity={0.05}/>
+                  <linearGradient id="revenueGradientAnalytics" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.2}/>
+                    <stop offset="95%" stopColor="#f59e0b" stopOpacity={0.02}/>
                   </linearGradient>
                 </defs>
                 <Area
                   type="monotone"
                   dataKey="revenue"
-                  stroke="#10b981"
-                  fill="url(#revenueGradient)"
-                  strokeWidth={3}
-                  dot={{ fill: "#10b981", strokeWidth: 2, r: 4 }}
+                  stroke="#f59e0b"
+                  fill="url(#revenueGradientAnalytics)"
+                  strokeWidth={2.5}
+                  dot={{ fill: "#f59e0b", strokeWidth: 1, r: 2.5 }}
+                  activeDot={{ r: 4, stroke: "#f59e0b", strokeWidth: 2, fill: "#ffffff" }}
                 />
               </AreaChart>
             </ResponsiveContainer>
@@ -470,26 +784,114 @@ const AdminDashboard = () => {
               <Activity className="w-5 h-5 text-purple-500" />
               <span>User Engagement</span>
             </CardTitle>
-            <CardDescription>Check-ins, responses, and satisfaction rates</CardDescription>
+            <CardDescription>Check-ins, responses, and mood trends over the {
+              timeline === '7d' ? 'last 7 days' :
+              timeline === '1m' ? 'last month' :
+              timeline === '3m' ? 'last 3 months' :
+              timeline === '6m' ? 'last 6 months' : 'last year'
+            }</CardDescription>
           </CardHeader>
           <CardContent>
+            {dailyEngagementData.loading ? (
+              <div className="flex items-center justify-center h-[300px]">
+                <div className="text-muted-foreground">Loading engagement data...</div>
+              </div>
+            ) : dailyEngagementData.error ? (
+              <div className="flex items-center justify-center h-[300px]">
+                <div className="text-destructive">Error loading data: {dailyEngagementData.error}</div>
+              </div>
+            ) : dailyEngagement.length === 0 ? (
+              <div className="flex items-center justify-center h-[300px]">
+                <div className="text-muted-foreground">No engagement data available for the selected period</div>
+              </div>
+            ) : (
             <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={usageMetrics}>
+              <AreaChart data={dailyEngagement} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" />
-                <YAxis stroke="hsl(var(--muted-foreground))" />
+                <XAxis
+                  dataKey="date"
+                  stroke="hsl(var(--muted-foreground))"
+                  tick={{ fontSize: 12 }}
+                  interval={getXAxisInterval(timeline, dailyEngagement.length)}
+                  angle={timeline === '7d' ? 0 : -45}
+                  textAnchor={timeline === '7d' ? 'middle' : 'end'}
+                  height={timeline === '7d' ? 40 : 60}
+                />
+                <YAxis
+                  stroke="hsl(var(--muted-foreground))"
+                  tick={{ fontSize: 12 }}
+                  domain={[0, 'dataMax + 1']}
+                  allowDataOverflow={false}
+                />
                 <Tooltip
                   contentStyle={{
                     backgroundColor: "hsl(var(--card))",
                     border: "1px solid hsl(var(--border))",
                     borderRadius: "8px"
                   }}
+                  labelStyle={{ color: "hsl(var(--foreground))" }}
                 />
-                <Line type="monotone" dataKey="checkIns" stroke="#8b5cf6" strokeWidth={3} dot={{ fill: "#8b5cf6", strokeWidth: 2, r: 4 }} name="Check-ins" />
-                <Line type="monotone" dataKey="responses" stroke="#06b6d4" strokeWidth={3} dot={{ fill: "#06b6d4", strokeWidth: 2, r: 4 }} name="Responses" />
-                <Line type="monotone" dataKey="satisfaction" stroke="#f59e0b" strokeWidth={3} dot={{ fill: "#f59e0b", strokeWidth: 2, r: 4 }} name="Satisfaction %" />
-              </LineChart>
+                <defs>
+                  <linearGradient id="checkInsGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0.05}/>
+                  </linearGradient>
+                  <linearGradient id="responsesGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#06b6d4" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="#06b6d4" stopOpacity={0.05}/>
+                  </linearGradient>
+                  <linearGradient id="avgMoodGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="#f59e0b" stopOpacity={0.05}/>
+                  </linearGradient>
+                  <linearGradient id="activeUsersGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="#10b981" stopOpacity={0.05}/>
+                  </linearGradient>
+                </defs>
+                <Area
+                  type="monotone"
+                  dataKey="checkIns"
+                  stroke="#8b5cf6"
+                  fill="url(#checkInsGradient)"
+                  strokeWidth={2.5}
+                  dot={false}
+                  name="Check-ins"
+                  connectNulls={false}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="responses"
+                  stroke="#06b6d4"
+                  fill="url(#responsesGradient)"
+                  strokeWidth={2.5}
+                  dot={false}
+                  name="Responses"
+                  connectNulls={false}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="avgMood"
+                  stroke="#f59e0b"
+                  fill="url(#avgMoodGradient)"
+                  strokeWidth={2.5}
+                  dot={false}
+                  name="Avg Mood"
+                  connectNulls={false}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="activeUsers"
+                  stroke="#10b981"
+                  fill="url(#activeUsersGradient)"
+                  strokeWidth={2.5}
+                  dot={false}
+                  name="Active Users"
+                  connectNulls={false}
+                />
+              </AreaChart>
             </ResponsiveContainer>
+            )}
           </CardContent>
         </Card>
 
@@ -504,23 +906,27 @@ const AdminDashboard = () => {
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={[
-                { plan: "Starter", active: 18, trial: 5, suspended: 2 },
-                { plan: "Professional", active: 22, trial: 3, suspended: 1 },
-                { plan: "Enterprise", active: 8, trial: 1, suspended: 0 }
-              ]}>
+              <BarChart data={organizationDistribution} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis dataKey="plan" stroke="hsl(var(--muted-foreground))" />
-                <YAxis stroke="hsl(var(--muted-foreground))" />
+                <XAxis
+                  dataKey="plan"
+                  stroke="hsl(var(--muted-foreground))"
+                  tick={{ fontSize: 12 }}
+                />
+                <YAxis
+                  stroke="hsl(var(--muted-foreground))"
+                  tick={{ fontSize: 12 }}
+                />
                 <Tooltip
                   contentStyle={{
                     backgroundColor: "hsl(var(--card))",
                     border: "1px solid hsl(var(--border))",
                     borderRadius: "8px"
                   }}
+                  labelStyle={{ color: "hsl(var(--foreground))" }}
                 />
                 <Bar dataKey="active" stackId="a" fill="#10b981" radius={[0, 0, 0, 0]} name="Active" />
-                <Bar dataKey="trial" stackId="a" fill="#f59e0b" radius={[0, 0, 0, 0]} name="Trial" />
+                <Bar dataKey="trial" stackId="a" fill="#3b82f6" radius={[0, 0, 0, 0]} name="Trial" />
                 <Bar dataKey="suspended" stackId="a" fill="#ef4444" radius={[4, 4, 0, 0]} name="Suspended" />
               </BarChart>
             </ResponsiveContainer>
@@ -722,8 +1128,21 @@ const AdminDashboard = () => {
             <CardTitle className="text-sm">API Response Time</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">145ms</div>
-            <p className="text-xs text-success">Average response time</p>
+            <div className="text-2xl font-bold">{systemMetrics.apiResponseTime || 0}ms</div>
+            <div className="flex items-center space-x-1 mt-1">
+              {(() => {
+                const responseTime = systemMetrics.apiResponseTime || 0;
+                const isGood = responseTime < 200;
+                return (
+                  <>
+                    {isGood ? <TrendingUp className="h-3 w-3 text-green-500" /> : <TrendingDown className="h-3 w-3 text-red-500" />}
+                    <p className={`text-xs ${isGood ? 'text-green-500' : 'text-red-500'}`}>
+                      {isGood ? 'Excellent' : 'Needs attention'}
+                    </p>
+                  </>
+                );
+              })()}
+            </div>
           </CardContent>
         </Card>
 
@@ -732,8 +1151,22 @@ const AdminDashboard = () => {
             <CardTitle className="text-sm">Database Load</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">42%</div>
-            <Progress value={42} className="mt-2 h-2" />
+            <div className="text-2xl font-bold">{Math.round(systemMetrics.databaseLoad || 0)}%</div>
+            <div className="flex items-center space-x-1 mt-1">
+              {(() => {
+                const load = systemMetrics.databaseLoad || 0;
+                const isGood = load < 70;
+                return (
+                  <>
+                    {isGood ? <TrendingUp className="h-3 w-3 text-green-500" /> : <TrendingDown className="h-3 w-3 text-red-500" />}
+                    <p className={`text-xs ${isGood ? 'text-green-500' : 'text-red-500'}`}>
+                      {isGood ? 'Optimal' : 'High load'}
+                    </p>
+                  </>
+                );
+              })()}
+            </div>
+            <Progress value={systemMetrics.databaseLoad || 0} className="mt-2 h-2" />
           </CardContent>
         </Card>
 
@@ -742,8 +1175,21 @@ const AdminDashboard = () => {
             <CardTitle className="text-sm">Server Uptime</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">99.9%</div>
-            <p className="text-xs text-success">Last 30 days</p>
+            <div className="text-2xl font-bold">{systemMetrics.serverUptime || 0}%</div>
+            <div className="flex items-center space-x-1 mt-1">
+              {(() => {
+                const uptime = systemMetrics.serverUptime || 0;
+                const isGood = uptime > 99;
+                return (
+                  <>
+                    {isGood ? <TrendingUp className="h-3 w-3 text-green-500" /> : <TrendingDown className="h-3 w-3 text-red-500" />}
+                    <p className={`text-xs ${isGood ? 'text-green-500' : 'text-red-500'}`}>
+                      {isGood ? 'Excellent' : 'Below target'}
+                    </p>
+                  </>
+                );
+              })()}
+            </div>
           </CardContent>
         </Card>
 
@@ -752,8 +1198,21 @@ const AdminDashboard = () => {
             <CardTitle className="text-sm">Active Users</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">1,247</div>
-            <p className="text-xs text-muted-foreground">Currently online</p>
+            <div className="text-2xl font-bold">{systemMetrics.activeUsers || 0}</div>
+            <div className="flex items-center space-x-1 mt-1">
+              {(() => {
+                const trend = calculateTrend(dailyEngagement, 'activeUsers');
+                return (
+                  <>
+                    {trend.trend === 'up' && <TrendingUp className="h-3 w-3 text-green-500" />}
+                    {trend.trend === 'down' && <TrendingDown className="h-3 w-3 text-red-500" />}
+                    <p className={`text-xs ${trend.trend === 'up' ? 'text-green-500' : trend.trend === 'down' ? 'text-red-500' : 'text-muted-foreground'}`}>
+                      {trend.trend === 'neutral' ? 'Stable' : `${trend.percentage.toFixed(1)}% ${trend.trend === 'up' ? 'increase' : 'decrease'}`}
+                    </p>
+                  </>
+                );
+              })()}
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -833,13 +1292,13 @@ const AdminDashboard = () => {
     <div className="flex h-screen bg-gradient-dashboard">
       {/* Modern Sidebar */}
       <ModernSidebar
-        items={adminDashboardItems}
+        items={getDynamicAdminDashboardItems()}
         activeItem={activeSection}
         onItemClick={setActiveSection}
         userInfo={{
-          name: "Admin User",
-          email: "admin@staffpulse.com",
-          role: "Platform Administrator"
+          name: adminProfile.name || "Admin User",
+          email: adminProfile.email || "admin@staffpulse.com",
+          role: adminProfile.role || "Platform Administrator"
         }}
       />
 

@@ -5,12 +5,18 @@ const TWILIO_ACCOUNT_SID = import.meta.env.VITE_TWILIO_ACCOUNT_SID
 const TWILIO_AUTH_TOKEN = import.meta.env.VITE_TWILIO_AUTH_TOKEN
 const TWILIO_WHATSAPP_NUMBER = import.meta.env.VITE_TWILIO_WHATSAPP_NUMBER
 
+// Twilio API endpoints
+const TWILIO_API_BASE = 'https://api.twilio.com/2010-04-01'
+const TWILIO_MESSAGES_ENDPOINT = `${TWILIO_API_BASE}/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json`
+const TWILIO_ACCOUNT_ENDPOINT = `${TWILIO_API_BASE}/Accounts/${TWILIO_ACCOUNT_SID}.json`
+
 interface SendCheckInParams {
   campaignId: string
   employees: Array<{
     id: string
     name: string
     phone: string
+    department?: string
   }>
   message: string
   organizationId: string
@@ -21,6 +27,27 @@ interface CheckInResponse {
   totalSent: number
   failed: number
   errors: string[]
+  details?: Array<{
+    employeeId: string
+    employeeName: string
+    phone: string
+    status: 'sent' | 'failed'
+    messageSid?: string
+    error?: string
+  }>
+}
+
+interface TwilioMessageResponse {
+  sid: string
+  status: string
+  error_code?: string
+  error_message?: string
+}
+
+interface PhoneValidationResult {
+  isValid: boolean
+  formatted: string
+  error?: string
 }
 
 export class TwilioService {
@@ -30,57 +57,162 @@ export class TwilioService {
     }
   }
 
-  private formatPhoneNumber(phone: string): string {
-    // Remove all non-digit characters
-    const cleaned = phone.replace(/\D/g, '')
-    
-    // Add country code if missing (assuming Kenya +254)
-    if (cleaned.startsWith('0')) {
-      return `+254${cleaned.substring(1)}`
-    } else if (cleaned.startsWith('254')) {
-      return `+${cleaned}`
-    } else if (!cleaned.startsWith('+')) {
-      return `+254${cleaned}`
+  private validateAndFormatPhone(phone: string): PhoneValidationResult {
+    if (!phone || typeof phone !== 'string') {
+      return {
+        isValid: false,
+        formatted: '',
+        error: 'Phone number is required'
+      }
     }
-    
-    return cleaned.startsWith('+') ? cleaned : `+${cleaned}`
+
+    // Remove all non-digit characters except +
+    const cleaned = phone.replace(/[^\d+]/g, '')
+
+    // Remove any + that's not at the beginning
+    const normalizedPhone = cleaned.replace(/(?!^)\+/g, '')
+
+    // Validate minimum length
+    if (normalizedPhone.replace(/\+/g, '').length < 9) {
+      return {
+        isValid: false,
+        formatted: '',
+        error: 'Phone number too short'
+      }
+    }
+
+    let formatted = ''
+
+    // Handle different formats for Kenya (+254)
+    if (normalizedPhone.startsWith('+254')) {
+      formatted = normalizedPhone
+    } else if (normalizedPhone.startsWith('254')) {
+      formatted = `+${normalizedPhone}`
+    } else if (normalizedPhone.startsWith('0')) {
+      // Convert local format (0xxx) to international (+254xxx)
+      formatted = `+254${normalizedPhone.substring(1)}`
+    } else if (normalizedPhone.startsWith('+')) {
+      // Already has country code
+      formatted = normalizedPhone
+    } else {
+      // Assume Kenya if no country code
+      formatted = `+254${normalizedPhone}`
+    }
+
+    // Final validation - should be +254 followed by 9 digits
+    const kenyanPhoneRegex = /^\+254[17]\d{8}$/
+    if (!kenyanPhoneRegex.test(formatted)) {
+      return {
+        isValid: false,
+        formatted: '',
+        error: 'Invalid Kenyan phone number format. Expected format: +254XXXXXXXXX'
+      }
+    }
+
+    return {
+      isValid: true,
+      formatted,
+      error: undefined
+    }
+  }
+
+  private formatPhoneNumber(phone: string): string {
+    const result = this.validateAndFormatPhone(phone)
+    if (!result.isValid) {
+      throw new Error(result.error || 'Invalid phone number')
+    }
+    return result.formatted
   }
 
   private async sendWhatsAppMessage(to: string, message: string): Promise<{ success: boolean; messageSid?: string; error?: string }> {
     try {
       this.validateConfig()
 
-      const formattedPhone = this.formatPhoneNumber(to)
-      const whatsappTo = `whatsapp:${formattedPhone}`
+      // Validate phone number first
+      const phoneValidation = this.validateAndFormatPhone(to)
+      if (!phoneValidation.isValid) {
+        return {
+          success: false,
+          error: phoneValidation.error || 'Invalid phone number'
+        }
+      }
+
+      const whatsappTo = `whatsapp:${phoneValidation.formatted}`
+      const whatsappFrom = TWILIO_WHATSAPP_NUMBER?.startsWith('whatsapp:')
+        ? TWILIO_WHATSAPP_NUMBER
+        : `whatsapp:${TWILIO_WHATSAPP_NUMBER}`
+
+      // Validate message content
+      if (!message || message.trim().length === 0) {
+        return {
+          success: false,
+          error: 'Message content cannot be empty'
+        }
+      }
+
+      if (message.length > 1600) {
+        return {
+          success: false,
+          error: 'Message too long. WhatsApp messages must be under 1600 characters'
+        }
+      }
 
       // Create basic auth header
       const credentials = btoa(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`)
 
-      const response = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json`, {
+      const response = await fetch(TWILIO_MESSAGES_ENDPOINT, {
         method: 'POST',
         headers: {
           'Authorization': `Basic ${credentials}`,
           'Content-Type': 'application/x-www-form-urlencoded',
         },
         body: new URLSearchParams({
-          From: TWILIO_WHATSAPP_NUMBER || '',
+          From: whatsappFrom,
           To: whatsappTo,
-          Body: message
+          Body: message.trim()
         })
       })
 
       if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`)
+        let errorMessage = `HTTP ${response.status}: ${response.statusText}`
+
+        try {
+          const errorData = await response.json()
+          if (errorData.message) {
+            errorMessage = errorData.message
+          } else if (errorData.error_message) {
+            errorMessage = errorData.error_message
+          }
+        } catch {
+          // If JSON parsing fails, use the status text
+          const textError = await response.text()
+          if (textError) {
+            errorMessage = textError
+          }
+        }
+
+        return {
+          success: false,
+          error: errorMessage
+        }
       }
 
-      const data = await response.json()
+      const data: TwilioMessageResponse = await response.json()
+
+      // Check if Twilio returned an error in the response
+      if (data.error_code) {
+        return {
+          success: false,
+          error: data.error_message || `Twilio error: ${data.error_code}`
+        }
+      }
+
       return {
         success: true,
         messageSid: data.sid
       }
     } catch (error) {
-      console.error('Failed to send WhatsApp message:', error)
+      console.error('WhatsApp send error:', error)
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error occurred'
@@ -142,11 +274,35 @@ export class TwilioService {
   }
 
   async sendCheckInCampaign(params: SendCheckInParams): Promise<CheckInResponse> {
-    const { campaignId, employees, message, organizationId } = params
-    
+    const { campaignId, employees, message } = params
+
     let totalSent = 0
     let failed = 0
     const errors: string[] = []
+    const details: CheckInResponse['details'] = []
+
+    console.log(`🚀 Starting WhatsApp campaign ${campaignId} for ${employees.length} employees`)
+
+    // Validate inputs
+    if (!employees || employees.length === 0) {
+      return {
+        success: false,
+        totalSent: 0,
+        failed: 0,
+        errors: ['No employees provided for campaign'],
+        details: []
+      }
+    }
+
+    if (!message || message.trim().length === 0) {
+      return {
+        success: false,
+        totalSent: 0,
+        failed: 0,
+        errors: ['Message content cannot be empty'],
+        details: []
+      }
+    }
 
     // Update campaign status to 'sending'
     try {
@@ -168,34 +324,70 @@ export class TwilioService {
 
     // Send messages to each employee
     for (const employee of employees) {
+      console.log(`📱 Sending to ${employee.name} (${employee.phone})`)
+
       if (!employee.phone || employee.phone.trim() === '') {
         failed++
-        errors.push(`${employee.name}: No phone number provided`)
-        await this.logCheckInSend(campaignId, employee.id, '', undefined, 'failed', 'No phone number')
+        const errorMsg = 'No phone number provided'
+        errors.push(`${employee.name}: ${errorMsg}`)
+        details.push({
+          employeeId: employee.id,
+          employeeName: employee.name,
+          phone: '',
+          status: 'failed',
+          error: errorMsg
+        })
+        await this.logCheckInSend(campaignId, employee.id, '', undefined, 'failed', errorMsg)
         continue
       }
 
       try {
         // Personalize the message
-        const personalizedMessage = message.replace(/\{name\}/g, employee.name)
-        
+        const personalizedMessage = message
+          .replace(/\{name\}/g, employee.name)
+          .replace(/\{department\}/g, employee.department || 'your department')
+
         const result = await this.sendWhatsAppMessage(employee.phone, personalizedMessage)
-        
+
         if (result.success) {
           totalSent++
+          console.log(`✅ Sent to ${employee.name}: ${result.messageSid}`)
+          details.push({
+            employeeId: employee.id,
+            employeeName: employee.name,
+            phone: employee.phone,
+            status: 'sent',
+            messageSid: result.messageSid
+          })
           await this.logCheckInSend(campaignId, employee.id, employee.phone, result.messageSid, 'sent')
         } else {
           failed++
+          console.log(`❌ Failed to send to ${employee.name}: ${result.error}`)
           errors.push(`${employee.name}: ${result.error}`)
+          details.push({
+            employeeId: employee.id,
+            employeeName: employee.name,
+            phone: employee.phone,
+            status: 'failed',
+            error: result.error
+          })
           await this.logCheckInSend(campaignId, employee.id, employee.phone, undefined, 'failed', result.error)
         }
 
-        // Add small delay to avoid rate limiting
-        await new Promise(resolve => setTimeout(resolve, 1000))
+        // Add delay to avoid rate limiting (Twilio allows 1 message per second)
+        await new Promise(resolve => setTimeout(resolve, 1100))
       } catch (error) {
         failed++
         const errorMsg = error instanceof Error ? error.message : 'Unknown error'
+        console.log(`❌ Exception sending to ${employee.name}: ${errorMsg}`)
         errors.push(`${employee.name}: ${errorMsg}`)
+        details.push({
+          employeeId: employee.id,
+          employeeName: employee.name,
+          phone: employee.phone,
+          status: 'failed',
+          error: errorMsg
+        })
         await this.logCheckInSend(campaignId, employee.id, employee.phone, undefined, 'failed', errorMsg)
       }
     }
@@ -203,21 +395,25 @@ export class TwilioService {
     // Update final campaign stats
     await this.updateCampaignStats(campaignId, totalSent)
 
+    console.log(`📊 Campaign ${campaignId} completed: ${totalSent} sent, ${failed} failed`)
+
     return {
       success: totalSent > 0,
       totalSent,
       failed,
-      errors
+      errors,
+      details
     }
   }
 
-  async testConnection(): Promise<{ success: boolean; error?: string }> {
+  async testConnection(): Promise<{ success: boolean; error?: string; accountInfo?: any }> {
     try {
+      console.log('🔍 Testing Twilio connection...')
       this.validateConfig()
 
       const credentials = btoa(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`)
 
-      const response = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}.json`, {
+      const response = await fetch(TWILIO_ACCOUNT_ENDPOINT, {
         method: 'GET',
         headers: {
           'Authorization': `Basic ${credentials}`,
@@ -225,16 +421,79 @@ export class TwilioService {
       })
 
       if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+        let errorMessage = `HTTP ${response.status}: ${response.statusText}`
+        try {
+          const errorData = await response.json()
+          if (errorData.message) {
+            errorMessage = errorData.message
+          }
+        } catch {
+          // Use status text if JSON parsing fails
+        }
+        throw new Error(errorMessage)
       }
 
-      return { success: true }
+      const accountData = await response.json()
+      console.log('✅ Twilio connection successful')
+
+      return {
+        success: true,
+        accountInfo: {
+          friendlyName: accountData.friendly_name,
+          status: accountData.status,
+          type: accountData.type
+        }
+      }
     } catch (error) {
+      console.error('❌ Twilio connection failed:', error)
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error occurred'
       }
     }
+  }
+
+  // Validate multiple phone numbers
+  validatePhoneNumbers(phones: string[]): Array<{ phone: string; isValid: boolean; formatted: string; error?: string }> {
+    return phones.map(phone => {
+      const result = this.validateAndFormatPhone(phone)
+      return {
+        phone,
+        isValid: result.isValid,
+        formatted: result.formatted,
+        error: result.error
+      }
+    })
+  }
+
+  // Get message templates
+  getMessageTemplates(): Array<{ id: string; name: string; template: string; description: string }> {
+    return [
+      {
+        id: 'daily_checkin',
+        name: 'Daily Check-in',
+        template: 'Hi {name}! 👋\n\nHow are you feeling today? Please take a moment to share your mood and any thoughts with us.\n\nReply to this message or use our app to check in.\n\nThanks!\nYour HR Team',
+        description: 'Standard daily wellness check-in'
+      },
+      {
+        id: 'weekly_pulse',
+        name: 'Weekly Pulse',
+        template: 'Hello {name}! 🌟\n\nIt\'s time for your weekly pulse check! How has your week been so far?\n\nWe\'d love to hear about:\n• Your overall mood\n• Any challenges you\'re facing\n• Wins or achievements\n\nYour feedback helps us support you better.\n\nBest regards,\n{department} Team',
+        description: 'Weekly comprehensive check-in'
+      },
+      {
+        id: 'project_feedback',
+        name: 'Project Feedback',
+        template: 'Hi {name}! 💼\n\nWe\'d appreciate your feedback on the current project you\'re working on.\n\nPlease share:\n• How you\'re feeling about the project\n• Any support you might need\n• Your stress levels (1-10)\n\nYour input is valuable to us!\n\nThanks,\nProject Management Team',
+        description: 'Project-specific wellness check'
+      },
+      {
+        id: 'custom',
+        name: 'Custom Message',
+        template: 'Hi {name}!\n\n[Your custom message here]\n\nBest regards,\nYour Team',
+        description: 'Customizable template'
+      }
+    ]
   }
 }
 

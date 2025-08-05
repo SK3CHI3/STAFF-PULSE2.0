@@ -66,7 +66,37 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
         if (session?.user) {
           console.log('👤 [AUTH] User found, fetching profile for:', session.user.id)
-          await fetchUserProfile(session.user.id)
+
+          // For new signups, try multiple times to get the profile
+          if (event === 'SIGNED_UP') {
+            console.log('🆕 [AUTH] New user signup detected, will retry profile fetch...')
+
+            // Try to fetch profile with retries for new signups
+            let retries = 0
+            const maxRetries = 5
+            const retryInterval = 2000 // 2 seconds
+
+            const tryFetchProfile = async () => {
+              try {
+                await fetchUserProfile(session.user.id)
+                if (!profile && retries < maxRetries) {
+                  retries++
+                  console.log(`🔄 [AUTH] Profile not found, retry ${retries}/${maxRetries}...`)
+                  setTimeout(tryFetchProfile, retryInterval)
+                }
+              } catch (error) {
+                console.error('❌ [AUTH] Profile fetch error:', error)
+                if (retries < maxRetries) {
+                  retries++
+                  setTimeout(tryFetchProfile, retryInterval)
+                }
+              }
+            }
+
+            tryFetchProfile()
+          } else {
+            await fetchUserProfile(session.user.id)
+          }
         } else {
           console.log('👤 [AUTH] No user, clearing profile')
           setProfile(null)
@@ -260,8 +290,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   ) => {
     try {
+      console.log('🔐 [SIGNUP] Starting signup process for:', email)
+
       // Validate super admin constraint
       if (userData.role === 'super_admin') {
+        console.log('🔍 [SIGNUP] Checking for existing super admin...')
         const { data: existingSuperAdmin } = await supabase
           .from('user_profiles')
           .select('id')
@@ -269,35 +302,57 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           .limit(1)
 
         if (existingSuperAdmin && existingSuperAdmin.length > 0) {
+          console.log('❌ [SIGNUP] Super admin already exists')
           return { error: new Error('Super admin already exists. Only one super admin is allowed.') as any }
         }
       }
 
       // Validate HR manager has organization name
       if (userData.role === 'hr_manager' && (!userData.organization_name || userData.organization_name.trim() === '')) {
+        console.log('❌ [SIGNUP] HR Manager missing organization name')
         return { error: new Error('HR Manager must provide an organization name') as any }
       }
 
-      // Sign up the user
+      console.log('📤 [SIGNUP] Creating auth user with profile data...')
+
+      // Sign up the user with metadata - Supabase will handle this properly
       const { data, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          data: {
-            full_name: userData.full_name,
-            role: userData.role,
-            organization_name: userData.organization_name,
-            phone: userData.phone
-          }
+          data: userData // Pass all user data as metadata
         }
       })
 
       if (signUpError) {
+        console.error('❌ [SIGNUP] Auth signup failed:', signUpError.message)
         return { error: signUpError }
       }
 
+      if (!data.user) {
+        console.error('❌ [SIGNUP] No user data returned')
+        return { error: new Error('User creation failed - no user data returned') as any }
+      }
+
+      console.log('✅ [SIGNUP] Auth user created:', data.user.id)
+
+      // Create profile immediately - no need for setTimeout
+      try {
+        console.log('👤 [SIGNUP] Creating user profile...')
+        await createUserProfile(data.user.id, userData)
+        console.log('✅ [SIGNUP] User profile created successfully')
+
+        // Refresh the profile after creation
+        await fetchUserProfile(data.user.id)
+      } catch (profileError) {
+        console.error('❌ [SIGNUP] Profile creation failed:', profileError)
+        return { error: new Error(`Profile creation failed: ${profileError instanceof Error ? profileError.message : 'Unknown error'}`) as any }
+      }
+
+      console.log('🎉 [SIGNUP] Signup process completed successfully')
       return { error: null }
     } catch (error) {
+      console.error('💥 [SIGNUP] Unexpected error:', error)
       return { error: error as AuthError }
     }
   }

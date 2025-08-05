@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { SimpleThemeToggle } from "@/components/theme/ThemeToggle";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   ChevronLeft,
   ChevronRight,
@@ -64,6 +65,16 @@ export const ModernSidebar = ({
   }
 }: ModernSidebarProps) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const { signOut } = useAuth();
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      // Navigation will be handled by the auth context
+    } catch (error) {
+      console.error('Sign out error:', error);
+    }
+  };
 
   return (
     <div className={cn(
@@ -184,7 +195,13 @@ export const ModernSidebar = ({
                 <Settings className="w-4 h-4 mr-2" />
                 Settings
               </Button>
-              <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground hover:bg-accent p-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-muted-foreground hover:text-foreground hover:bg-accent p-2"
+                onClick={handleSignOut}
+                title="Sign Out"
+              >
                 <LogOut className="w-4 h-4" />
               </Button>
             </div>

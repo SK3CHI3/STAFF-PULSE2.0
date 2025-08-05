@@ -646,32 +646,46 @@ export const useDepartmentsList = () => {
   return state
 }
 
-// Hook for AI insights
+// Enhanced Hook for AI insights with filtering
 export const useAIInsights = () => {
   const { profile } = useAuth()
   const [state, setState] = useState<{
     insights: any[]
+    employees: any[]
     loading: boolean
     error: string | null
     generating: boolean
+    scope: 'organization' | 'individual' | 'all'
+    selectedEmployee: string | null
   }>({
     insights: [],
+    employees: [],
     loading: true,
     error: null,
-    generating: false
+    generating: false,
+    scope: 'all',
+    selectedEmployee: null
   })
 
-  const generateNewInsights = async () => {
+  const generateNewInsights = async (employeeId?: string) => {
     if (!profile?.organization_id) return
 
     setState(prev => ({ ...prev, generating: true, error: null }))
 
     try {
       const { aiInsightsService } = await import('../services/aiInsightsService')
-      await aiInsightsService.generateInsights(profile.organization_id)
+
+      if (employeeId) {
+        // Generate individual employee insights
+        await aiInsightsService.generateEmployeeInsights(profile.organization_id, employeeId)
+      } else {
+        // Generate organization insights
+        await aiInsightsService.generateInsights(profile.organization_id)
+      }
 
       // Fetch updated insights
       await fetchInsights()
+      await fetchEmployees()
     } catch (error) {
       setState(prev => ({
         ...prev,
@@ -681,21 +695,26 @@ export const useAIInsights = () => {
     }
   }
 
-  const fetchInsights = async () => {
+  const fetchInsights = async (scope?: 'organization' | 'individual', employeeId?: string) => {
     if (!profile?.organization_id) return
 
     setState(prev => ({ ...prev, loading: true, error: null }))
 
     try {
       const { aiInsightsService } = await import('../services/aiInsightsService')
-      const insights = await aiInsightsService.getStoredInsights(profile.organization_id)
+      const insights = await aiInsightsService.getStoredInsights(
+        profile.organization_id,
+        scope,
+        employeeId
+      )
 
-      setState({
+      setState(prev => ({
+        ...prev,
         insights: insights || [],
         loading: false,
         error: null,
         generating: false
-      })
+      }))
     } catch (error) {
       setState(prev => ({
         ...prev,
@@ -706,14 +725,54 @@ export const useAIInsights = () => {
     }
   }
 
+  const fetchEmployees = async () => {
+    if (!profile?.organization_id) return
+
+    try {
+      const { aiInsightsService } = await import('../services/aiInsightsService')
+      const employees = await aiInsightsService.getAllEmployeesWithInsights(profile.organization_id)
+
+      setState(prev => ({
+        ...prev,
+        employees: employees || []
+      }))
+    } catch (error) {
+      console.error('Failed to fetch employees:', error)
+    }
+  }
+
+  const setScope = (newScope: 'organization' | 'individual' | 'all') => {
+    setState(prev => ({ ...prev, scope: newScope, selectedEmployee: null }))
+
+    if (newScope === 'all') {
+      fetchInsights()
+    } else {
+      fetchInsights(newScope)
+    }
+  }
+
+  const setSelectedEmployee = (employeeId: string | null) => {
+    setState(prev => ({ ...prev, selectedEmployee: employeeId }))
+
+    if (employeeId) {
+      fetchInsights('individual', employeeId)
+    } else {
+      fetchInsights(state.scope === 'all' ? undefined : state.scope)
+    }
+  }
+
   useEffect(() => {
     fetchInsights()
+    fetchEmployees()
   }, [profile?.organization_id])
 
   return {
     ...state,
     generateNewInsights,
-    refreshInsights: fetchInsights
+    refreshInsights: fetchInsights,
+    setScope,
+    setSelectedEmployee,
+    refreshEmployees: fetchEmployees
   }
 }
 
