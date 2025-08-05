@@ -112,16 +112,15 @@ export const EnhancedPlanCards: React.FC<EnhancedPlanCardsProps> = ({
                     ? 'bg-purple-50 border border-purple-200 text-purple-700 hover:bg-purple-100 hover:border-purple-300'
                     : 'bg-indigo-50 border border-indigo-200 text-indigo-700 hover:bg-indigo-100 hover:border-indigo-300'
                 }`}
-                data-amount={plan.price.toString()}
+                data-amount={plan.price}
                 data-currency="KES"
-                data-email={user?.email || "hr@company.com"}
-                data-api_ref={`staffpulse-${plan.id}-upgrade`}
-                data-comment={`StaffPulse ${plan.name} Plan Upgrade`}
-                data-first_name={profile?.full_name?.split(' ')[0] || "HR"}
-                data-last_name={profile?.full_name?.split(' ')[1] || "Manager"}
+                data-email={user?.email || "test@staffpulse.com"}
+                data-api_ref={`SP-${plan.id.toUpperCase()}-${Date.now()}`}
+                data-comment={`StaffPulse ${plan.name} Plan`}
+                data-first_name={profile?.full_name?.split(' ')[0] || "Test"}
+                data-last_name={profile?.full_name?.split(' ')[1] || "User"}
+                data-phone_number="+254700000000"
                 data-country="KE"
-                data-card_tarrif="BUSINESS-PAYS"
-                data-mobile_tarrif="BUSINESS-PAYS"
               >
                 <span>Upgrade to {plan.name}</span>
               </button>

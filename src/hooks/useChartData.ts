@@ -154,6 +154,8 @@ export const useDepartmentWellnessData = (timeline: TimelineOption) => {
             cleaned: cleanedData.length,
             removed: data.length - cleanedData.length
           })
+          console.log('Sample original data:', data.slice(0, 2))
+          console.log('Sample cleaned data:', cleanedData.slice(0, 2))
         }
 
         setState({

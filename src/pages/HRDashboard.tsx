@@ -78,6 +78,7 @@ import {
   FileText,
   Save,
   History,
+  LayoutDashboard,
   UserPlus,
   LineChart,
   Play,
@@ -180,25 +181,24 @@ const HRDashboard = () => {
   // Upgrade notice hook
   const { showNotice, noticeProps, showUpgradeNotice, hideUpgradeNotice } = useUpgradeNotice();
 
-  // IntaSend integration - Corrected implementation based on official docs
+  // IntaSend integration - Fixed implementation
   useEffect(() => {
     console.log('🔄 IntaSend useEffect triggered');
-    console.log('📋 Profile organization ID:', profile?.organization_id);
-    console.log('🌐 Window IntaSend available:', !!window.IntaSend);
 
     // Function to initialize IntaSend
     const initializeIntaSend = () => {
       try {
         const apiKey = import.meta.env.VITE_INTASEND_PUBLIC_API_KEY || "ISPubKey_test_39c6a0b0-629e-4ac0-94d9-9b9c6e2f8c5a";
-        console.log('Initializing IntaSend payment system...');
+        console.log('🚀 Initializing IntaSend with API key:', apiKey.substring(0, 20) + '...');
 
-        // Initialize IntaSend according to official documentation
+        // Initialize IntaSend with proper configuration
         const intaSend = new window.IntaSend({
           publicAPIKey: apiKey,
-          live: false
+          live: false, // Set to true for production
+          test: true   // Enable test mode
         });
 
-        console.log('✅ IntaSend instance created:', intaSend);
+        console.log('✅ IntaSend instance created successfully');
 
         // Set up event handlers
         intaSend.on("COMPLETE", async (results) => {
@@ -4342,11 +4342,70 @@ const HRDashboard = () => {
     </div>
   );
 
+  // Generate dynamic sidebar items with real counts
+  const getDynamicHRDashboardItems = () => {
+    const totalResponses = allEmployeeResponses.length;
+    const newInsights = aiInsights.insights.length;
+
+    return [
+      {
+        id: "overview",
+        label: "Overview",
+        icon: LayoutDashboard,
+        active: activeSection === "overview"
+      },
+      {
+        id: "employee-management",
+        label: "Employee Management",
+        icon: Users,
+        active: activeSection === "employee-management"
+      },
+      {
+        id: "checkins",
+        label: "Send Check-ins",
+        icon: MessageSquare,
+        active: activeSection === "checkins"
+      },
+      {
+        id: "reports",
+        label: "Team Reports",
+        icon: FileText,
+        badge: totalResponses > 0 ? totalResponses.toString() : undefined,
+        active: activeSection === "reports"
+      },
+      {
+        id: "analytics",
+        label: "Team Analytics",
+        icon: BarChart3,
+        active: activeSection === "analytics"
+      },
+      {
+        id: "ai-insights",
+        label: "AI Insights",
+        icon: Brain,
+        badge: newInsights > 0 ? newInsights.toString() : "New",
+        active: activeSection === "ai-insights"
+      },
+      {
+        id: "billing",
+        label: "Billing",
+        icon: CreditCard,
+        active: activeSection === "billing"
+      },
+      {
+        id: "feedback",
+        label: "Send Feedback",
+        icon: Shield,
+        active: activeSection === "feedback"
+      }
+    ];
+  };
+
   return (
     <div className="flex h-screen bg-gradient-dashboard">
       {/* Modern Sidebar */}
       <ModernSidebar
-        items={hrDashboardItems}
+        items={getDynamicHRDashboardItems()}
         activeItem={activeSection}
         onItemClick={setActiveSection}
         onSettingsClick={() => setActiveSection("settings")}
