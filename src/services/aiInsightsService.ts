@@ -112,7 +112,7 @@ export class AIInsightsService {
           'X-Title': 'StaffPulse AI Insights'
         },
         body: JSON.stringify({
-          model: 'deepseek/deepseek-chat',
+          model: 'deepseek/deepseek-r1-0528:free',
           messages: [
             {
               role: 'system',
@@ -132,6 +132,9 @@ export class AIInsightsService {
       })
 
       if (!response.ok) {
+        if (response.status === 402) {
+          throw new Error(`OpenRouter API Credits Required: Your account has insufficient credits. Please add credits at https://openrouter.ai/settings/credits to use AI insights.`)
+        }
         throw new Error(`OpenRouter API error: ${response.status} ${response.statusText}`)
       }
 

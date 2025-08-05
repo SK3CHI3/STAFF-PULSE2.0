@@ -160,12 +160,15 @@ export const MoodTrendChart: React.FC<{
           });
         }}
       />
-      <YAxis 
-        domain={[0, 10]} 
+      <YAxis
+        domain={[0, 10]}
         stroke="hsl(var(--muted-foreground))"
         fontSize={12}
         tickLine={false}
         axisLine={false}
+        width={50}
+        tickFormatter={(value) => value.toString()}
+        ticks={[0, 2, 4, 6, 8, 10]}
       />
       <Tooltip 
         contentStyle={{ 
@@ -258,6 +261,9 @@ export const DepartmentWellnessChart: React.FC<{
           fontSize={12}
           tickLine={false}
           axisLine={false}
+          width={50}
+          tickFormatter={(value) => value.toString()}
+          ticks={[0, 2, 4, 6, 8, 10]}
         />
         <Tooltip
           contentStyle={{
@@ -338,11 +344,14 @@ export const EngagementChart: React.FC<{
           });
         }}
       />
-      <YAxis 
+      <YAxis
         stroke="hsl(var(--muted-foreground))"
         fontSize={12}
         tickLine={false}
         axisLine={false}
+        width={60}
+        tickFormatter={(value) => `${value}%`}
+        domain={[0, 'dataMax']}
       />
       <Tooltip
         contentStyle={{

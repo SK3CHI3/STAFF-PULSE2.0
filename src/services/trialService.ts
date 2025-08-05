@@ -39,32 +39,55 @@ export class TrialService {
         .eq('status', 'active')
         .order('started_at', { ascending: false })
         .limit(1)
-        .single()
 
-      if (error && error.code !== 'PGRST116') throw error
+      // Handle the case where no subscription exists (don't use .single())
+      if (error) {
+        console.error('Error fetching subscription:', error)
+        throw error
+      }
 
-      if (!data || !data.is_trial) {
+      // If no subscription data found, return default non-trial status
+      if (!data || data.length === 0) {
         return {
           isOnTrial: false,
           trialEndsAt: null,
           daysRemaining: 0,
-          planName: data?.plan_name || 'business',
+          planName: 'business',
           hasExpired: false,
           isExpiringSoon: false
         }
       }
 
-      const trialEndsAt = new Date(data.trial_ends_at)
+      const subscription = data[0] // Get first result instead of using .single()
+
+      if (!subscription || !subscription.is_trial) {
+        return {
+          isOnTrial: false,
+          trialEndsAt: null,
+          daysRemaining: 0,
+          planName: subscription?.plan_name || 'business',
+          hasExpired: false,
+          isExpiringSoon: false
+        }
+      }
+
+      const trialEndsAt = new Date(subscription.trial_ends_at)
       const now = new Date()
       const daysRemaining = Math.ceil((trialEndsAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
       const hasExpired = daysRemaining <= 0
       const isExpiringSoon = daysRemaining > 0 && daysRemaining <= 3
 
+      // Auto-handle expired trials
+      if (hasExpired) {
+        console.log(`🔴 Trial expired for organization ${organizationId}, handling expiration...`)
+        await this.handleExpiredTrial(organizationId)
+      }
+
       return {
-        isOnTrial: true,
+        isOnTrial: !hasExpired, // If expired, no longer on trial
         trialEndsAt,
         daysRemaining: Math.max(0, daysRemaining),
-        planName: data.plan_name,
+        planName: subscription.plan_name,
         hasExpired,
         isExpiringSoon
       }
@@ -125,7 +148,7 @@ export class TrialService {
       // Update trial subscription to expired
       const { error } = await supabase
         .from('subscriptions')
-        .update({ 
+        .update({
           status: 'expired',
           updated_at: new Date().toISOString()
         })
@@ -147,10 +170,80 @@ export class TrialService {
           }
         })
 
-      console.log('Trial expired for organization:', organizationId)
+      console.log('🔴 Trial expired for organization:', organizationId)
+      console.log('� Organization access suspended - subscription required to continue')
     } catch (error) {
       console.error('Error handling expired trial:', error)
     }
+  }
+
+  // Check if organization can use any features (NO FREE TIER)
+  async canUseFeature(organizationId: string, _feature?: string): Promise<{ allowed: boolean, reason?: string }> {
+    try {
+      const trialStatus = await this.getTrialStatus(organizationId)
+
+      // If on active trial, allow all features
+      if (trialStatus.isOnTrial && !trialStatus.hasExpired) {
+        return { allowed: true }
+      }
+
+      // If trial expired, check if they have paid subscription
+      const { data: paidSubscription } = await supabase
+        .from('subscriptions')
+        .select('plan_name, status')
+        .eq('organization_id', organizationId)
+        .eq('status', 'active')
+        .eq('is_trial', false)
+        .limit(1)
+
+      if (paidSubscription && paidSubscription.length > 0) {
+        return { allowed: true }
+      }
+
+      // NO FREE TIER - Trial expired and no paid subscription = NO ACCESS
+      return {
+        allowed: false,
+        reason: 'Your trial has expired. Please upgrade to a paid plan to continue using StaffPulse.'
+      }
+    } catch (error) {
+      console.error('Error checking feature access:', error)
+      return { allowed: false, reason: 'Unable to verify feature access' }
+    }
+  }
+
+  // Check if organization has any active subscription (trial or paid)
+  async hasActiveSubscription(organizationId: string): Promise<boolean> {
+    try {
+      const trialStatus = await this.getTrialStatus(organizationId)
+
+      // Active trial counts as active subscription
+      if (trialStatus.isOnTrial && !trialStatus.hasExpired) {
+        return true
+      }
+
+      // Check for paid subscription
+      const { data: paidSubscription } = await supabase
+        .from('subscriptions')
+        .select('id')
+        .eq('organization_id', organizationId)
+        .eq('status', 'active')
+        .eq('is_trial', false)
+        .limit(1)
+
+      return paidSubscription && paidSubscription.length > 0
+    } catch (error) {
+      console.error('Error checking subscription status:', error)
+      return false
+    }
+  }
+
+  // Get available plans for upgrade
+  getAvailablePlans(): string[] {
+    return [
+      'startup',
+      'business',
+      'enterprise'
+    ]
   }
 
   // Get trial conversion rate (for analytics)

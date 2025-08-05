@@ -1,5 +1,4 @@
 import { supabaseConfig } from '../lib/supabase'
-import { getWebhookUrls } from './webhookService'
 
 // Twilio configuration from environment variables
 const TWILIO_ACCOUNT_SID = import.meta.env.VITE_TWILIO_ACCOUNT_SID
@@ -161,9 +160,10 @@ export class TwilioService {
       // Create basic auth header
       const credentials = btoa(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`)
 
-      // Get webhook URLs - use production domain for Twilio callbacks
-      const baseUrl = 'https://staff-pulse.netlify.app'
-      const webhooks = getWebhookUrls(baseUrl)
+      // Note: StatusCallback is for delivery status, not incoming messages
+      // Incoming message webhook must be configured in Twilio Console:
+      // https://console.twilio.com/us1/develop/sms/senders/whatsapp
+      // Set webhook URL to: https://kietxkkxhdwhkdiemuor.supabase.co/functions/v1/twilio-webhook
 
       const response = await fetch(TWILIO_MESSAGES_ENDPOINT, {
         method: 'POST',
@@ -174,8 +174,8 @@ export class TwilioService {
         body: new URLSearchParams({
           From: whatsappFrom,
           To: whatsappTo,
-          Body: message.trim(),
-          StatusCallback: webhooks.messageStatus
+          Body: message.trim()
+          // StatusCallback removed - incoming messages are handled via Console webhook configuration
         })
       })
 

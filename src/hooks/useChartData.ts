@@ -572,8 +572,8 @@ export const useEmployeesList = () => {
       setState(prev => ({ ...prev, loading: true, error: null }))
 
       try {
-        // Use direct query instead of stored procedure for better control
-        const response = await fetch(`${supabaseConfig.url}/rest/v1/employees?organization_id=eq.${profile.organization_id}&select=id,name,email,phone,department,position,is_active,created_at&order=created_at.desc`, {
+        // Use direct query - table has both department (text) and department_id (foreign key)
+        const response = await fetch(`${supabaseConfig.url}/rest/v1/employees?organization_id=eq.${profile.organization_id}&select=id,name,email,phone,department,position,is_active,created_at,department_id,departments(name)&order=created_at.desc`, {
           headers: {
             'apikey': supabaseConfig.anonKey,
             'Authorization': `Bearer ${supabaseConfig.anonKey}`
@@ -587,11 +587,13 @@ export const useEmployeesList = () => {
         const data = await response.json()
 
         // Add initials field for each employee
+        // Note: department field already exists in table, departments.name is backup
         const processedData = (data || []).map((employee: any) => ({
           ...employee,
           initials: employee.name
             ? employee.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()
-            : '??'
+            : '??',
+          department: employee.department || employee.departments?.name || null
         }))
 
         setState({
@@ -854,7 +856,7 @@ export const useCheckInCampaigns = () => {
         },
         body: JSON.stringify({
           org_id: profile.organization_id,
-          limit_count: 50
+          limit_count: 2
         })
       })
 

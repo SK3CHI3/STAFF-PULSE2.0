@@ -16,9 +16,12 @@ import {
   Bar
 } from 'recharts';
 import { useMoodTrendData, useDepartmentWellnessData, useEngagementData, useDashboardStats, useRecentResponses, useMoodDistribution, useEmployeeStats, useEmployeesList, useDepartmentsList, useAIInsights, useCheckInCampaigns, useCheckInTargets } from '@/hooks/useChartData';
+import { useUnreadReports } from '@/hooks/useUnreadReports';
 import { usePlan } from '@/hooks/usePlan';
 import { usePaymentHistory } from '@/hooks/usePaymentHistory';
 import { useTrialStatus, TrialStatusBanner } from '@/components/TrialStatusBanner';
+import { TrialExpiredScreen } from '@/components/TrialExpiredScreen';
+import { trialService } from '@/services/trialService';
 import { EnhancedPlanCards } from '@/components/EnhancedPlanCards';
 import { UpgradeNotice, useUpgradeNotice } from '@/components/UpgradeNotice';
 import { PLANS } from '@/services/planService';
@@ -85,12 +88,39 @@ import {
   Pause,
   User,
   Globe,
-  Lock
+  Lock,
+  ChevronLeft,
+  ChevronRight
 } from "lucide-react";
 
 const HRDashboard = () => {
   const { user, profile } = useAuth();
   const [activeSection, setActiveSection] = useState("overview");
+  const [currentInsightPage, setCurrentInsightPage] = useState(0);
+  const [hasActiveSubscription, setHasActiveSubscription] = useState(true);
+  const [checkingSubscription, setCheckingSubscription] = useState(true);
+
+  // Handle section changes and mark reports as viewed
+  const handleSectionChange = (sectionId: string) => {
+    setActiveSection(sectionId);
+
+    // Mark reports as viewed when reports section is opened
+    if (sectionId === "reports") {
+      markReportsAsViewed();
+    }
+
+    // Mark AI insights as viewed when AI insights section is opened
+    if (sectionId === "ai-insights") {
+      markInsightsAsViewed();
+    }
+
+    // Reinitialize IntaSend when switching to billing section
+    if (sectionId === 'billing') {
+      setTimeout(() => {
+        reinitializeIntaSend();
+      }, 100);
+    }
+  };
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedDepartment, setSelectedDepartment] = useState("all");
   const [selectedEmployeeDepartment, setSelectedEmployeeDepartment] = useState("all");
@@ -129,7 +159,6 @@ const HRDashboard = () => {
   const [automationFrequency, setAutomationFrequency] = useState<'daily' | 'weekly' | 'monthly'>('weekly');
   const [automationDays, setAutomationDays] = useState<string[]>(['monday']);
   const [automationTime, setAutomationTime] = useState('09:00');
-  const [isTestingConnection, setIsTestingConnection] = useState(false);
 
   // Message types - only 2 types as requested
   const messageTypes = [
@@ -169,6 +198,59 @@ const HRDashboard = () => {
   // AI insights hook
   const aiInsights = useAIInsights();
 
+  // Unread reports hook
+  const { unreadCount, markReportsAsViewed, refreshUnreadCount } = useUnreadReports();
+
+  // Track unread AI insights
+  const [unreadInsightsCount, setUnreadInsightsCount] = useState(0);
+  const [lastViewedInsights, setLastViewedInsights] = useState<string | null>(null);
+
+  // Get last viewed AI insights timestamp
+  const getLastViewedInsightsTimestamp = (): string | null => {
+    if (!profile?.organization_id) return null;
+    return localStorage.getItem(`ai_insights_last_viewed_${profile.organization_id}`);
+  };
+
+  // Mark AI insights as viewed
+  const markInsightsAsViewed = (): void => {
+    if (!profile?.organization_id) return;
+    const timestamp = new Date().toISOString();
+    localStorage.setItem(`ai_insights_last_viewed_${profile.organization_id}`, timestamp);
+    setUnreadInsightsCount(0);
+    setLastViewedInsights(timestamp);
+  };
+
+  // Calculate unread insights count
+  useEffect(() => {
+    if (!aiInsights.insights || aiInsights.insights.length === 0) {
+      setUnreadInsightsCount(0);
+      return;
+    }
+
+    const lastViewed = getLastViewedInsightsTimestamp();
+    if (!lastViewed) {
+      // If never viewed, all insights are new
+      setUnreadInsightsCount(aiInsights.insights.length);
+      return;
+    }
+
+    // Count insights created after last viewed timestamp
+    const lastViewedDate = new Date(lastViewed);
+    const newInsights = aiInsights.insights.filter((insight: any) => {
+      const insightDate = new Date(insight.created_at);
+      return insightDate > lastViewedDate;
+    });
+
+    setUnreadInsightsCount(newInsights.length);
+  }, [aiInsights.insights, profile?.organization_id]);
+
+  // Refresh unread count when recent responses change
+  useEffect(() => {
+    if (recentResponses.data && recentResponses.data.length > 0) {
+      refreshUnreadCount();
+    }
+  }, [recentResponses.data?.length]);
+
   // Plan restrictions hook
   const { currentPlan, canUseFeature, getRestrictionMessage } = usePlan();
 
@@ -180,6 +262,66 @@ const HRDashboard = () => {
 
   // Upgrade notice hook
   const { showNotice, noticeProps, showUpgradeNotice, hideUpgradeNotice } = useUpgradeNotice();
+
+  // Function to reinitialize IntaSend when switching to billing section
+  const reinitializeIntaSend = () => {
+    console.log('🔄 Reinitializing IntaSend for billing section...');
+
+    if (!window.IntaSend) {
+      console.log('❌ IntaSend not available, skipping reinitialization');
+      return;
+    }
+
+    try {
+      // Find all payment buttons
+      const buttons = document.querySelectorAll('.intaSendPayButton');
+      console.log('🔍 Found payment buttons:', buttons.length);
+
+      if (buttons.length === 0) {
+        console.log('⚠️ No payment buttons found');
+        return;
+      }
+
+      // Create a fresh IntaSend instance
+      const apiKey = import.meta.env.VITE_INTASEND_PUBLIC_API_KEY || "ISPubKey_test_39c6a0b0-629e-4ac0-94d9-9b9c6e2f8c5a";
+
+      const freshInstance = new window.IntaSend({
+        publicAPIKey: apiKey,
+        live: false,
+        test: true
+      });
+
+      // Set up event handlers for the fresh instance
+      freshInstance.on("COMPLETE", (results) => {
+        console.log("💰 Payment completed (fresh instance):", results);
+        // Handle payment completion
+        window.location.reload(); // Simple reload for now
+      });
+
+      freshInstance.on("FAILED", (results) => {
+        console.log("❌ Payment failed (fresh instance):", results);
+        alert("Payment failed. Please try again.");
+      });
+
+      freshInstance.on("IN-PROGRESS", (results) => {
+        console.log("⏳ Payment in progress (fresh instance):", results);
+      });
+
+      // Force IntaSend to scan for buttons
+      setTimeout(() => {
+        if (typeof window.IntaSend.init === 'function') {
+          window.IntaSend.init();
+        }
+        if (typeof window.IntaSend.scan === 'function') {
+          window.IntaSend.scan();
+        }
+      }, 200);
+
+      console.log('✅ IntaSend reinitialized successfully');
+    } catch (error) {
+      console.error('💥 Error reinitializing IntaSend:', error);
+    }
+  };
 
   // IntaSend integration - Fixed implementation
   useEffect(() => {
@@ -744,6 +886,49 @@ const HRDashboard = () => {
     };
   }, [profile?.organization_id]);
 
+  // Additional useEffect to handle IntaSend when billing section becomes active
+  useEffect(() => {
+    if (activeSection === 'billing') {
+      console.log('📋 Billing section activated, checking IntaSend...');
+
+      // Wait a bit for the DOM to render the billing section
+      const timer = setTimeout(() => {
+        if (window.IntaSend) {
+          reinitializeIntaSend();
+        } else {
+          console.log('⚠️ IntaSend not loaded yet, will be handled by main useEffect');
+        }
+      }, 300);
+
+      return () => clearTimeout(timer);
+    }
+  }, [activeSection]);
+
+  // Check subscription status to determine if user can access dashboard
+  useEffect(() => {
+    const checkSubscriptionStatus = async () => {
+      if (!profile?.organization_id) return
+
+      try {
+        setCheckingSubscription(true)
+        const hasAccess = await trialService.hasActiveSubscription(profile.organization_id)
+        setHasActiveSubscription(hasAccess)
+      } catch (error) {
+        console.error('Error checking subscription status:', error)
+        setHasActiveSubscription(false)
+      } finally {
+        setCheckingSubscription(false)
+      }
+    }
+
+    checkSubscriptionStatus()
+
+    // Check every 5 minutes for subscription changes
+    const interval = setInterval(checkSubscriptionStatus, 5 * 60 * 1000)
+
+    return () => clearInterval(interval)
+  }, [profile?.organization_id])
+
   // Helper function to get user-friendly payment error messages
   const getPaymentErrorMessage = (results: any): string => {
     const provider = results.provider || 'Payment';
@@ -1207,7 +1392,12 @@ const HRDashboard = () => {
               <Download className="w-4 h-4 mr-2 group-hover:scale-110 transition-transform" />
               Export
             </Button>
-            <Button variant="hero" size="sm" className="group">
+            <Button
+              variant="hero"
+              size="sm"
+              className="group"
+              onClick={() => handleSectionChange('checkins')}
+            >
               <Send className="w-4 h-4 mr-2 group-hover:rotate-12 transition-transform" />
               Send Check-in
             </Button>
@@ -1967,23 +2157,7 @@ const HRDashboard = () => {
 
   const renderCheckinsContent = () => {
 
-    const handleTestConnection = async () => {
-      setIsTestingConnection(true);
-      setConnectionStatus(null);
 
-      try {
-        const { twilioService } = await import('../services/twilioService');
-        const result = await twilioService.testConnection();
-        setConnectionStatus(result);
-      } catch (error) {
-        setConnectionStatus({
-          success: false,
-          error: error instanceof Error ? error.message : 'Unknown error occurred'
-        });
-      } finally {
-        setIsTestingConnection(false);
-      }
-    };
 
     const handleSendCheckIn = async () => {
       if (selectedMessageType === 'custom' && !checkInMessage.trim()) {
@@ -2367,29 +2541,8 @@ const HRDashboard = () => {
                 <Send className="w-5 h-5 text-blue-500" />
                 <span>Send Check-in Campaign</span>
               </div>
-              <div className="flex items-center space-x-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleTestConnection}
-                  disabled={isTestingConnection}
-                  className="text-xs"
-                >
-                  {isTestingConnection ? (
-                    <>
-                      <div className="w-3 h-3 border border-current border-t-transparent rounded-full animate-spin mr-1" />
-                      Testing...
-                    </>
-                  ) : (
-                    <>
-                      <Phone className="w-3 h-3 mr-1" />
-                      Test WhatsApp
-                    </>
-                  )}
-                </Button>
-                <div className="text-xs text-muted-foreground">
-                  📱 Platform WhatsApp service enabled - just add employee numbers!
-                </div>
+              <div className="text-xs text-muted-foreground">
+                📱 Platform WhatsApp service enabled - just add employee numbers!
               </div>
             </CardTitle>
             <CardDescription>Send wellness check-ins via WhatsApp to your team</CardDescription>
@@ -3483,84 +3636,196 @@ const HRDashboard = () => {
             </Card>
           </div>
 
-          {/* Insights Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {aiInsights.insights.map((insight: any) => (
-              <Card key={insight.id} className="bg-gradient-card border-0 shadow-soft hover:shadow-lg transition-shadow">
-                <CardHeader>
+          {/* AI Insights - Professional Paginated View */}
+          {(() => {
+            const currentInsight = aiInsights.insights[currentInsightPage];
+            const totalInsights = aiInsights.insights.length;
+
+            if (totalInsights === 0) return null;
+
+            return (
+              <div className="space-y-6">
+                {/* Report Header */}
+                <div className="bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 rounded-xl p-6 border border-purple-100 dark:border-purple-800">
                   <div className="flex items-center justify-between">
-                    <CardTitle className="flex items-center space-x-2">
-                      {insight.insight_type === 'summary' && <Brain className="w-5 h-5 text-purple-500" />}
-                      {insight.insight_type === 'personal_insight' && <User className="w-5 h-5 text-purple-500" />}
-                      {insight.insight_type === 'recommendation' && <Zap className="w-5 h-5 text-yellow-500" />}
-                      {insight.insight_type === 'trend_analysis' && <TrendingUp className="w-5 h-5 text-blue-500" />}
-                      {insight.insight_type === 'risk_alert' && <AlertTriangle className="w-5 h-5 text-red-500" />}
-                      <span className="text-sm">{insight.title}</span>
-                    </CardTitle>
-                    <div className="flex items-center space-x-2">
-                      {insight.scope === 'individual' && (
-                        <Badge variant="outline" className="text-xs">
-                          <User className="w-3 h-3 mr-1" />
-                          Personal
-                        </Badge>
-                      )}
+                    <div className="flex items-center space-x-4">
+                      <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-blue-500 rounded-xl flex items-center justify-center">
+                        <Brain className="w-6 h-6 text-white" />
+                      </div>
+                      <div>
+                        <h3 className="text-xl font-bold text-gray-800 dark:text-gray-200">
+                          AI Wellness Report
+                        </h3>
+                        <div className="flex items-center space-x-4 text-sm text-gray-600 dark:text-gray-400">
+                          <div className="flex items-center space-x-1">
+                            <Calendar className="w-4 h-4" />
+                            <span>{new Date(currentInsight.created_at).toLocaleDateString('en-US', {
+                              weekday: 'long',
+                              year: 'numeric',
+                              month: 'long',
+                              day: 'numeric'
+                            })}</span>
+                          </div>
+                          <div className="flex items-center space-x-1">
+                            <Clock className="w-4 h-4" />
+                            <span>{new Date(currentInsight.created_at).toLocaleTimeString('en-US', {
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}</span>
+                          </div>
+                          <div className="flex items-center space-x-1">
+                            <TrendingUp className="w-4 h-4" />
+                            <span>{Math.round(currentInsight.confidence_score * 100)}% Confidence</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Page Navigation */}
+                    <div className="flex items-center space-x-4">
+                      <div className="text-sm text-gray-600 dark:text-gray-400">
+                        Report {currentInsightPage + 1} of {totalInsights}
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setCurrentInsightPage(Math.max(0, currentInsightPage - 1))}
+                          disabled={currentInsightPage === 0}
+                          className="h-8 w-8 p-0"
+                        >
+                          <ChevronLeft className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setCurrentInsightPage(Math.min(totalInsights - 1, currentInsightPage + 1))}
+                          disabled={currentInsightPage === totalInsights - 1}
+                          className="h-8 w-8 p-0"
+                        >
+                          <ChevronRight className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Report Content */}
+                <Card className="bg-white dark:bg-gray-900 border-0 shadow-lg">
+                  <CardContent className="p-8">
+                    {/* Report Type Badge */}
+                    <div className="flex items-center justify-between mb-6">
                       <Badge
                         variant={
-                          insight.priority === 'critical' ? 'destructive' :
-                          insight.priority === 'high' ? 'default' :
-                          insight.priority === 'medium' ? 'secondary' : 'outline'
+                          currentInsight.priority === 'critical' ? 'destructive' :
+                          currentInsight.priority === 'high' ? 'default' :
+                          currentInsight.priority === 'medium' ? 'secondary' : 'outline'
                         }
-                        className="text-xs"
+                        className="text-sm px-3 py-1"
                       >
-                        {insight.priority}
+                        {currentInsight.priority} Priority
                       </Badge>
+
+                      {currentInsight.scope === 'individual' && (
+                        <Badge variant="outline" className="text-sm">
+                          <User className="w-3 h-3 mr-1" />
+                          Individual Analysis
+                        </Badge>
+                      )}
                     </div>
-                  </div>
-                  <CardDescription className="flex items-center space-x-2 text-xs">
-                    <Calendar className="w-3 h-3" />
-                    <span>{new Date(insight.created_at).toLocaleDateString()}</span>
-                    <span>•</span>
-                    <span>{Math.round(insight.confidence_score * 100)}% confidence</span>
-                    {insight.employee_name && (
-                      <>
-                        <span>•</span>
-                        <span>{insight.employee_name} ({insight.department})</span>
-                      </>
-                    )}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="prose dark:prose-invert max-w-none text-sm">
-                    <div className="whitespace-pre-wrap">{insight.content}</div>
-                  </div>
-                  <div className="mt-4 flex items-center justify-between">
-                    <div className="flex items-center space-x-2 text-xs text-muted-foreground">
-                      <Clock className="w-3 h-3" />
-                      <span>
-                        {insight.data_period_start && insight.data_period_end
-                          ? `${new Date(insight.data_period_start).toLocaleDateString()} - ${new Date(insight.data_period_end).toLocaleDateString()}`
-                          : 'Recent data'
+
+                    {/* Report Content */}
+                    <div className="prose dark:prose-invert max-w-none">
+                      <div className="text-base leading-relaxed space-y-6">
+                        {currentInsight.content
+                          // Remove all markdown headers and numbers
+                          .replace(/### \d+\. /g, '')
+                          .replace(/### /g, '')
+                          .replace(/\*\*(.*?)\*\*/g, '$1') // Remove ** bold formatting
+                          .replace(/---[\s\S]*$/g, '') // Remove everything after ---
+
+                          // Split into sections and clean up
+                          .split('\n')
+                          .filter(line => line.trim() !== '' && !line.includes('---'))
+                          .map((line, index) => {
+                            const trimmedLine = line.trim();
+
+                            // Skip empty lines
+                            if (!trimmedLine) return null;
+
+                            // Section headers (like "Overall Wellness Assessment")
+                            if (trimmedLine.match(/^[A-Z][a-zA-Z\s]+:?$/) && !trimmedLine.includes('-')) {
+                              return (
+                                <div key={index} className="font-bold text-lg text-gray-800 dark:text-gray-200 mt-8 mb-4 pb-3 border-b-2 border-blue-200 dark:border-blue-700">
+                                  {trimmedLine.replace(':', '')}
+                                </div>
+                              );
+                            }
+
+                            // Bullet points
+                            if (trimmedLine.startsWith('-')) {
+                              return (
+                                <div key={index} className="flex items-start space-x-4 mb-4 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                                  <span className="text-blue-500 font-bold mt-1 text-lg">•</span>
+                                  <span className="flex-1 text-gray-700 dark:text-gray-300 leading-relaxed">
+                                    {trimmedLine.substring(1).trim()}
+                                  </span>
+                                </div>
+                              );
+                            }
+
+                            // Regular paragraphs
+                            return (
+                              <p key={index} className="text-gray-700 dark:text-gray-300 mb-4 leading-relaxed text-base">
+                                {trimmedLine}
+                              </p>
+                            );
+                          })
+                          .filter(Boolean)
                         }
-                      </span>
+                      </div>
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-xs"
-                      onClick={() => {
-                        import('../utils/exportUtils').then(({ exportSingleInsight }) => {
-                          exportSingleInsight(insight)
-                        })
-                      }}
-                    >
-                      <Download className="w-3 h-3 mr-1" />
-                      Export
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+
+                    {/* Report Footer */}
+                    <div className="mt-8 pt-6 border-t-2 border-gray-200 dark:border-gray-700">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-6 text-sm text-gray-600 dark:text-gray-400">
+                          <div className="flex items-center space-x-2">
+                            <Clock className="w-4 h-4" />
+                            <span>
+                              {currentInsight.data_period_start && currentInsight.data_period_end
+                                ? `Data Period: ${new Date(currentInsight.data_period_start).toLocaleDateString()} - ${new Date(currentInsight.data_period_end).toLocaleDateString()}`
+                                : 'Recent data analysis'
+                              }
+                            </span>
+                          </div>
+                          {currentInsight.employee_name && (
+                            <div className="flex items-center space-x-2">
+                              <User className="w-4 h-4" />
+                              <span>{currentInsight.employee_name} ({currentInsight.department})</span>
+                            </div>
+                          )}
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="hover:bg-blue-50 hover:border-blue-300"
+                          onClick={() => {
+                            import('../utils/exportUtils').then(({ exportSingleInsight }) => {
+                              exportSingleInsight(currentInsight)
+                            })
+                          }}
+                        >
+                          <Download className="w-4 h-4 mr-2" />
+                          Export Report
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            );
+          })()}
         </div>
       )}
     </div>
@@ -4350,9 +4615,6 @@ const HRDashboard = () => {
 
   // Generate dynamic sidebar items with real counts
   const getDynamicHRDashboardItems = () => {
-    const totalResponses = allEmployeeResponses.length;
-    const newInsights = aiInsights.insights.length;
-
     return [
       {
         id: "overview",
@@ -4376,7 +4638,7 @@ const HRDashboard = () => {
         id: "reports",
         label: "Team Reports",
         icon: FileText,
-        badge: totalResponses > 0 ? totalResponses.toString() : undefined,
+        badge: unreadCount > 0 ? unreadCount.toString() : undefined,
         active: activeSection === "reports"
       },
       {
@@ -4389,7 +4651,7 @@ const HRDashboard = () => {
         id: "ai-insights",
         label: "AI Insights",
         icon: Brain,
-        badge: newInsights > 0 ? newInsights.toString() : "New",
+        badge: unreadInsightsCount > 0 ? unreadInsightsCount.toString() : (aiInsights.insights.length > 0 ? undefined : "New"),
         active: activeSection === "ai-insights"
       },
       {
@@ -4407,14 +4669,37 @@ const HRDashboard = () => {
     ];
   };
 
+  // Show loading while checking subscription
+  if (checkingSubscription) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  // Show trial expired screen if no active subscription
+  if (!hasActiveSubscription) {
+    return (
+      <TrialExpiredScreen
+        onUpgradeClick={() => {
+          // For now, just redirect to billing section
+          // In a real app, this would open a payment modal or redirect to Stripe
+          setHasActiveSubscription(true) // Temporary for demo
+          setActiveSection('billing')
+        }}
+      />
+    );
+  }
+
   return (
     <div className="flex h-screen bg-gradient-dashboard">
       {/* Modern Sidebar */}
       <ModernSidebar
         items={getDynamicHRDashboardItems()}
         activeItem={activeSection}
-        onItemClick={setActiveSection}
-        onSettingsClick={() => setActiveSection("settings")}
+        onItemClick={handleSectionChange}
+        onSettingsClick={() => handleSectionChange("settings")}
         userInfo={{
           name: profile?.full_name || "User",
           email: user?.email || "user@company.com",

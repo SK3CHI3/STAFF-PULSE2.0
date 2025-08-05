@@ -40,7 +40,24 @@ export const handleIncomingMessage = async (twilioData: any) => {
       profileName: ProfileName
     })
 
-    // Store in database
+    // First, find the employee to get organization_id for proper data isolation
+    const cleanNumber = From.replace('whatsapp:', '')
+    const employeeResponse = await fetch(`${supabaseConfig.url}/rest/v1/employees?phone=eq.${cleanNumber}`, {
+      headers: {
+        'apikey': supabaseConfig.anonKey,
+        'Authorization': `Bearer ${supabaseConfig.anonKey}`
+      }
+    })
+
+    let organizationId = null
+    if (employeeResponse.ok) {
+      const employees = await employeeResponse.json()
+      if (employees.length > 0) {
+        organizationId = employees[0].organization_id
+      }
+    }
+
+    // Store in database with organization_id for proper isolation
     const messageData = {
       message_sid: MessageSid,
       from_number: From,
@@ -51,7 +68,8 @@ export const handleIncomingMessage = async (twilioData: any) => {
       profile_name: ProfileName || null,
       direction: 'inbound',
       status: 'received',
-      received_at: new Date().toISOString()
+      received_at: new Date().toISOString(),
+      organization_id: organizationId  // Add organization_id for proper isolation
     }
 
     const response = await fetch(`${supabaseConfig.url}/rest/v1/twilio_messages`, {

@@ -213,6 +213,11 @@ export const useTrialStatus = () => {
     }
 
     fetchTrialStatus()
+
+    // Set up real-time monitoring - check every hour
+    const interval = setInterval(fetchTrialStatus, 60 * 60 * 1000)
+
+    return () => clearInterval(interval)
   }, [profile?.organization_id])
 
   const refreshTrialStatus = async () => {
