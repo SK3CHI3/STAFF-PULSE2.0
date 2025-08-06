@@ -21,7 +21,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onToggleMode }) => {
     confirmPassword: '',
     full_name: '',
     phone: '',
-    role: '' as UserRole | '',
+    role: 'hr_manager' as UserRole, // Default to hr_manager, no selection needed
     organization_name: ''
   })
   const [showPassword, setShowPassword] = useState(false)
@@ -35,7 +35,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onToggleMode }) => {
   }
 
   const validateForm = () => {
-    if (!formData.email || !formData.password || !formData.full_name || !formData.role) {
+    if (!formData.email || !formData.password || !formData.full_name) {
       return 'Please fill in all required fields'
     }
 
@@ -47,8 +47,8 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onToggleMode }) => {
       return 'Passwords do not match'
     }
 
-    if (formData.role === 'hr_manager' && !formData.organization_name) {
-      return 'Organization name is required for HR Managers'
+    if (!formData.organization_name) {
+      return 'Organization name is required'
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -182,40 +182,20 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onToggleMode }) => {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="role">Role *</Label>
-            <Select value={formData.role} onValueChange={(value) => handleInputChange('role', value)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select your role" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="hr_manager">HR Manager</SelectItem>
-                <SelectItem value="super_admin">Super Admin</SelectItem>
-              </SelectContent>
-            </Select>
-            {formData.role === 'super_admin' && (
-              <p className="text-xs text-amber-600 dark:text-amber-400">
-                ⚠️ Only one Super Admin is allowed per system
-              </p>
-            )}
-          </div>
-
-          {formData.role === 'hr_manager' && (
-            <div className="space-y-2">
-              <Label htmlFor="organization_name">Organization Name *</Label>
-              <div className="relative">
-                <Building className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="organization_name"
-                  type="text"
-                  placeholder="TechCorp Kenya"
-                  value={formData.organization_name}
-                  onChange={(e) => handleInputChange('organization_name', e.target.value)}
-                  className="pl-10"
-                  required
-                />
-              </div>
+            <Label htmlFor="organization_name">Organization Name *</Label>
+            <div className="relative">
+              <Building className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+              <Input
+                id="organization_name"
+                type="text"
+                placeholder="TechCorp Kenya"
+                value={formData.organization_name}
+                onChange={(e) => handleInputChange('organization_name', e.target.value)}
+                className="pl-10"
+                required
+              />
             </div>
-          )}
+          </div>
 
           <div className="space-y-2">
             <Label htmlFor="password">Password *</Label>

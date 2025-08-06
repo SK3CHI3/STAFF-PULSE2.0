@@ -81,10 +81,42 @@ export const useMoodTrendData = (timeline: TimelineOption) => {
 
     fetchMoodTrendData()
 
-    // Set up auto-refresh every 30 seconds for real-time updates
-    const interval = setInterval(fetchMoodTrendData, 30000)
+    // Set up real-time subscription to detect new data
+    if (profile?.organization_id) {
+      const channel = supabase
+        .channel('mood-trend-updates')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'check_ins',
+            filter: `organization_id=eq.${profile.organization_id}`
+          },
+          () => {
+            console.log('📊 New check-in detected, refreshing mood trend data...')
+            fetchMoodTrendData()
+          }
+        )
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'twilio_messages',
+            filter: `organization_id=eq.${profile.organization_id}`
+          },
+          () => {
+            console.log('📱 New WhatsApp response detected, refreshing mood trend data...')
+            fetchMoodTrendData()
+          }
+        )
+        .subscribe()
 
-    return () => clearInterval(interval)
+      return () => {
+        supabase.removeChannel(channel)
+      }
+    }
   }, [timeline, profile])
 
   return state
