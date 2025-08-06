@@ -139,8 +139,8 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-gradient-page">
       {/* Navigation */}
-      <nav className="sticky top-0 z-50 bg-background/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-border/50 shadow-lg">
-        <div className="container mx-auto px-6 py-4">
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-white/10 backdrop-blur-md border-b border-white/20">
+        <div className="container mx-auto px-4 sm:px-6 py-3 sm:py-4">
           <div className="flex items-center justify-between">
             {/* Logo Section */}
             <div className="flex items-center space-x-3">
@@ -148,35 +148,37 @@ const Index = () => {
                 <span className="text-white font-bold text-lg">SP</span>
               </div>
               <div>
-                <span className="text-2xl font-black bg-gradient-to-r from-blue-600 to-cyan-600 dark:from-blue-400 dark:to-cyan-400 bg-clip-text text-transparent">
+                <span className="text-2xl font-black text-white">
                   StaffPulse
                 </span>
                 <div className="flex items-center space-x-1">
-                  <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
-                  <span className="text-xs text-muted-foreground font-medium">Online</span>
+                  <div className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></div>
+                  <span className="text-xs text-white/80 font-medium">Online</span>
                 </div>
               </div>
             </div>
 
             {/* Navigation Links */}
             <div className="hidden md:flex items-center space-x-8">
-              <a href="#features" className="text-muted-foreground hover:text-foreground transition-colors font-medium hover:scale-105 transform duration-200">
+              <a href="#features" className="text-white/80 hover:text-white transition-colors font-medium hover:scale-105 transform duration-200">
                 Features
               </a>
-              <a href="#pricing" className="text-muted-foreground hover:text-foreground transition-colors font-medium hover:scale-105 transform duration-200">
+              <a href="#pricing" className="text-white/80 hover:text-white transition-colors font-medium hover:scale-105 transform duration-200">
                 Pricing
               </a>
-              <a href="#testimonials" className="text-muted-foreground hover:text-foreground transition-colors font-medium hover:scale-105 transform duration-200">
+              <a href="#testimonials" className="text-white/80 hover:text-white transition-colors font-medium hover:scale-105 transform duration-200">
                 Testimonials
               </a>
-              <ThemeToggle />
+              <div className="[&>div>button]:border-white/30 [&>div>button]:text-white [&>div>button]:hover:bg-white/10">
+                <ThemeToggle />
+              </div>
               <Link to="/auth">
-                <Button variant="outline" size="sm" className="hover:bg-accent/50 transition-all duration-300">
+                <Button variant="outline" size="sm" className="border-white/40 text-white hover:bg-white/15 hover:border-white/60 transition-all duration-300">
                   Login
                 </Button>
               </Link>
               <Link to="/auth">
-                <Button variant="hero" size="sm" className="group shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
+                <Button size="sm" className="bg-gradient-to-r from-cyan-500 to-blue-500 text-white hover:from-cyan-600 hover:to-blue-600 group shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
                   Start Free Trial
                   <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform duration-300" />
                 </Button>
@@ -187,70 +189,72 @@ const Index = () => {
       </nav>
 
       {/* Hero Section with RGB Gradient - Full Screen */}
-      <section className="relative min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-600 via-blue-600 to-cyan-500 overflow-hidden">
+      <section className="relative h-screen flex items-center justify-center bg-gradient-to-br from-purple-600 via-blue-600 to-cyan-500 overflow-hidden">
         {/* RGB Gradient Background Elements */}
         <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-bl from-pink-500/30 via-purple-500/20 to-transparent rounded-full blur-3xl"></div>
         <div className="absolute bottom-0 left-0 w-80 h-80 bg-gradient-to-tr from-cyan-500/30 via-blue-500/20 to-transparent rounded-full blur-3xl"></div>
         <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-gradient-to-r from-purple-500/10 via-pink-500/10 to-cyan-500/10 rounded-full blur-3xl"></div>
 
-        <div className="container mx-auto px-6 relative z-10">
-          <div className="grid lg:grid-cols-2 gap-16 items-center max-w-7xl mx-auto">
+        <div className="container mx-auto px-4 sm:px-6 relative z-10 h-full">
+          <div className="grid lg:grid-cols-2 gap-8 lg:gap-16 items-center max-w-7xl mx-auto h-full">
             {/* Left Content */}
-            <div className="space-y-8">
+            <div className="space-y-6 sm:space-y-8 text-center lg:text-left">
               {/* Simple Badge */}
-              <div className="inline-flex items-center space-x-2 px-4 py-2 bg-white/20 backdrop-blur-sm rounded-full border border-white/30">
-                <span className="text-sm font-medium text-white">✨ Welcome to StaffPulse</span>
+              <div className="inline-flex items-center space-x-2 px-3 sm:px-4 py-2 bg-white/20 backdrop-blur-sm rounded-full border border-white/30">
+                <span className="text-xs sm:text-sm font-medium text-white">✨ Welcome to StaffPulse</span>
               </div>
 
               {/* Clean Main Title */}
-              <div className="space-y-6">
-                <h1 className="text-5xl lg:text-7xl font-bold leading-tight text-white">
+              <div className="space-y-4 sm:space-y-6">
+                <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold leading-tight text-white">
                   Transform Your Team's
                   <span className="block text-yellow-300">Wellness</span>
                 </h1>
 
-                <p className="text-xl lg:text-2xl text-white/90 leading-relaxed">
+                <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-white/90 leading-relaxed max-w-2xl mx-auto lg:mx-0">
                   Simple employee mood tracking through WhatsApp. Get real insights into team wellness without awkward conversations.
                 </p>
               </div>
 
               {/* Action Buttons */}
-              <div className="flex flex-col sm:flex-row gap-4">
-                <Button size="lg" className="bg-white text-purple-600 hover:bg-gray-100 px-8 py-4 text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300">
-                  Get Started
-                  <ArrowRight className="w-5 h-5 ml-2" />
-                </Button>
-                <Button variant="outline" size="lg" className="px-8 py-4 text-lg font-semibold rounded-xl border-2 border-white/30 text-white hover:bg-white/10 backdrop-blur-sm transition-all duration-300">
-                  <Play className="w-5 h-5 mr-2" />
+              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center lg:justify-start">
+                <Link to="/auth" className="w-full sm:w-auto">
+                  <Button size="lg" className="w-full sm:w-auto bg-white text-purple-600 hover:bg-white/90 px-6 sm:px-8 py-3 sm:py-4 text-base sm:text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
+                    Get Started
+                    <ArrowRight className="w-4 sm:w-5 h-4 sm:h-5 ml-2" />
+                  </Button>
+                </Link>
+                <Button variant="outline" size="lg" className="w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-4 text-base sm:text-lg font-semibold rounded-xl border-2 border-white/40 text-white hover:bg-white/15 hover:border-white/60 backdrop-blur-sm transition-all duration-300 hover:scale-105">
+                  <Play className="w-4 sm:w-5 h-4 sm:h-5 mr-2" />
                   Watch Demo
                 </Button>
               </div>
 
               {/* Social Proof */}
-              <div className="flex items-center space-x-6">
+              <div className="flex items-center justify-center lg:justify-start space-x-4 sm:space-x-6">
                 <div className="flex -space-x-2">
-                  <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full border-2 border-white flex items-center justify-center">
-                    <Users className="w-5 h-5 text-white" />
+                  <div className="w-8 sm:w-10 h-8 sm:h-10 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full border-2 border-white flex items-center justify-center">
+                    <Users className="w-4 sm:w-5 h-4 sm:h-5 text-white" />
                   </div>
-                  <div className="w-10 h-10 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full border-2 border-white flex items-center justify-center">
-                    <CheckCircle className="w-5 h-5 text-white" />
+                  <div className="w-8 sm:w-10 h-8 sm:h-10 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full border-2 border-white flex items-center justify-center">
+                    <CheckCircle className="w-4 sm:w-5 h-4 sm:h-5 text-white" />
                   </div>
-                  <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full border-2 border-white flex items-center justify-center">
-                    <Star className="w-5 h-5 text-white" />
+                  <div className="w-8 sm:w-10 h-8 sm:h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full border-2 border-white flex items-center justify-center">
+                    <Star className="w-4 sm:w-5 h-4 sm:h-5 text-white" />
                   </div>
-                  <div className="w-10 h-10 bg-gradient-to-r from-orange-500 to-red-500 rounded-full border-2 border-white flex items-center justify-center">
-                    <TrendingUp className="w-5 h-5 text-white" />
+                  <div className="w-8 sm:w-10 h-8 sm:h-10 bg-gradient-to-r from-orange-500 to-red-500 rounded-full border-2 border-white flex items-center justify-center">
+                    <TrendingUp className="w-4 sm:w-5 h-4 sm:h-5 text-white" />
                   </div>
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-white">500+ Companies</p>
-                  <p className="text-sm text-white/70">Trust StaffPulse</p>
+                  <p className="text-xs sm:text-sm font-semibold text-white">500+ Companies</p>
+                  <p className="text-xs sm:text-sm text-white/70">Trust StaffPulse</p>
                 </div>
               </div>
             </div>
 
             {/* Right Content - Modern Feature Carousel */}
-            <div className="relative">
+            <div className="relative mt-8 lg:mt-0">
               <Carousel
                 plugins={[
                   Autoplay({
