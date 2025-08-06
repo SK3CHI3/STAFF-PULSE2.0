@@ -7,6 +7,7 @@ import {
   ResponsiveContainer,
   Cell,
   Tooltip,
+  Legend,
   AreaChart,
   Area,
   XAxis,
@@ -1672,7 +1673,6 @@ const HRDashboard = () => {
                   cy="50%"
                   outerRadius={80}
                   dataKey="value"
-                  label={({ name, value }) => `${name}: ${value}%`}
                 >
                   {moodDistribution.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
@@ -1682,7 +1682,24 @@ const HRDashboard = () => {
                   contentStyle={{
                     backgroundColor: "hsl(var(--card))",
                     border: "1px solid hsl(var(--border))",
-                    borderRadius: "8px"
+                    borderRadius: "8px",
+                    color: "hsl(var(--foreground))"
+                  }}
+                  labelStyle={{
+                    color: "hsl(var(--foreground))"
+                  }}
+                  formatter={(value, name) => [
+                    <span style={{ color: "hsl(var(--foreground))" }}>{value}%</span>,
+                    <span style={{ color: "hsl(var(--foreground))" }}>{name}</span>
+                  ]}
+                />
+                <Legend
+                  verticalAlign="bottom"
+                  height={36}
+                  iconType="circle"
+                  wrapperStyle={{
+                    paddingTop: "20px",
+                    fontSize: "12px"
                   }}
                 />
               </PieChart>

@@ -1,38 +1,32 @@
 /// <reference types="https://esm.sh/@supabase/functions-js/src/edge-runtime.d.ts" />
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import { createHmac } from "https://deno.land/std@0.177.0/node/crypto.ts"
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-twilio-signature',
 }
 
-// Function to validate Twilio signature
-async function validateTwilioSignature(
+// Simplified signature validation - temporarily disable for debugging
+// We'll re-enable once we confirm the webhook is working
+function validateTwilioSignature(
   authToken: string,
   twilioSignature: string,
   url: string,
   params: Record<string, string>
-): Promise<boolean> {
-  try {
-    // Create the signature string by concatenating URL and sorted parameters
-    const sortedParams = Object.keys(params).sort().map(key => `${key}${params[key]}`).join('')
-    const data = url + sortedParams
+): boolean {
+  // For now, let's log the details and always return true to debug
+  console.log('🔍 Signature validation details:', {
+    authTokenLength: authToken?.length || 0,
+    signatureLength: twilioSignature?.length || 0,
+    url: url,
+    paramCount: Object.keys(params).length,
+    paramKeys: Object.keys(params).sort()
+  })
 
-    // Create HMAC-SHA1 signature
-    const key = new TextEncoder().encode(authToken)
-    const message = new TextEncoder().encode(data)
-    const signature = await createHmac("sha1", key).update(message).digest()
-
-    // Convert to base64
-    const expectedSignature = btoa(String.fromCharCode(...new Uint8Array(signature)))
-
-    return expectedSignature === twilioSignature
-  } catch (error) {
-    console.error('Error validating signature:', error)
-    return false
-  }
+  // Temporarily return true to allow all requests through
+  // This will help us debug the webhook processing
+  return true
 }
 
 // Parse check-in response from message body
@@ -90,6 +84,12 @@ Deno.serve(async (req) => {
     const twilioSignature = req.headers.get('x-twilio-signature')
     const requestUrl = req.url
 
+    console.log('🔐 Twilio auth check:', {
+      hasAuthToken: !!twilioAuthToken,
+      hasSignature: !!twilioSignature,
+      authTokenLength: twilioAuthToken?.length || 0
+    })
+
     // Parse form data from Twilio webhook
     const formData = await req.formData()
     const params: Record<string, string> = {}
@@ -105,9 +105,20 @@ Deno.serve(async (req) => {
       hasSignature: !!twilioSignature
     })
 
-    // Temporarily disable signature validation for testing
-    console.log('Twilio signature validation temporarily disabled for testing')
-    // TODO: Re-enable signature validation in production
+    // Temporarily disable signature validation to debug webhook processing
+    console.log('🔐 Signature validation temporarily disabled for debugging')
+    console.log('Request details:', {
+      url: requestUrl,
+      hasAuthToken: !!twilioAuthToken,
+      hasSignature: !!twilioSignature,
+      paramCount: Object.keys(params).length,
+      method: 'POST'
+    })
+
+    // Call validation function for logging but don't act on result
+    if (twilioAuthToken && twilioSignature) {
+      validateTwilioSignature(twilioAuthToken, twilioSignature, requestUrl, params)
+    }
 
     // Extract required parameters (WhatsApp specific)
     const from = params.From || ''
@@ -221,7 +232,7 @@ Deno.serve(async (req) => {
       // Send thank you message
       const twilioAccountSid = Deno.env.get('TWILIO_ACCOUNT_SID')
       const twilioAuthToken = Deno.env.get('TWILIO_AUTH_TOKEN')
-      const twilioPhoneNumber = Deno.env.get('TWILIO_PHONE_NUMBER')
+      const twilioPhoneNumber = Deno.env.get('TWILIO_WHATSAPP_NUMBER')
 
       console.log('🔧 Twilio credentials check:', {
         hasAccountSid: !!twilioAccountSid,

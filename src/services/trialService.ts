@@ -72,11 +72,12 @@ export class TrialService {
       }
 
       const trialEndsAt = new Date(subscription.trial_ends_at)
-      // Use East African Time for accurate countdown
+      // Calculate days remaining using proper timezone handling
       const now = new Date()
-      const eatOffset = 3 * 60 * 60 * 1000 // EAT is UTC+3
-      const nowEAT = new Date(now.getTime() + eatOffset)
-      const daysRemaining = Math.ceil((trialEndsAt.getTime() - nowEAT.getTime()) / (1000 * 60 * 60 * 24))
+
+      // Both dates are in UTC, so we can compare directly
+      const timeDiff = trialEndsAt.getTime() - now.getTime()
+      const daysRemaining = Math.ceil(timeDiff / (1000 * 60 * 60 * 24))
       const hasExpired = daysRemaining <= 0
       const isExpiringSoon = daysRemaining > 0 && daysRemaining <= 3
 

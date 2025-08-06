@@ -80,6 +80,11 @@ export const useMoodTrendData = (timeline: TimelineOption) => {
     }
 
     fetchMoodTrendData()
+
+    // Set up auto-refresh every 30 seconds for real-time updates
+    const interval = setInterval(fetchMoodTrendData, 30000)
+
+    return () => clearInterval(interval)
   }, [timeline, profile])
 
   return state

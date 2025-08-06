@@ -145,7 +145,7 @@ export const MoodTrendChart: React.FC<{
         dataKey="date"
         stroke="hsl(var(--muted-foreground))"
         tick={{ fontSize: 11 }}
-        interval={0}
+        interval={Math.max(0, Math.floor(data.length / 6))}
         angle={-45}
         textAnchor="end"
         height={70}
@@ -191,12 +191,7 @@ export const MoodTrendChart: React.FC<{
         stroke="#10b981"
         fill="url(#moodGradient)"
         strokeWidth={2.5}
-        dot={{
-          fill: "#10b981",
-          strokeWidth: 2,
-          stroke: "#ffffff",
-          r: 4
-        }}
+        dot={false}
         activeDot={{
           r: 6,
           fill: "#10b981",
