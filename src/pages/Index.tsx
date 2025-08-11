@@ -169,11 +169,11 @@ const Index = () => {
               <a href="#testimonials" className="text-white/80 hover:text-white transition-colors font-medium hover:scale-105 transform duration-200">
                 Testimonials
               </a>
-              <div className="[&>div>button]:border-white/30 [&>div>button]:text-white [&>div>button]:hover:bg-white/10">
+              <div className="[&>div>button]:bg-white/15 [&>div>button]:text-white [&>div>button]:hover:bg-white/25 [&>div>button]:border-0">
                 <ThemeToggle />
               </div>
               <Link to="/auth">
-                <Button variant="outline" size="sm" className="border-white/40 text-white hover:bg-white/15 hover:border-white/60 transition-all duration-300">
+                <Button variant="outline" size="sm" className="bg-white/15 border-white/60 text-white hover:bg-white/25 hover:border-white/80 transition-all duration-300">
                   Login
                 </Button>
               </Link>
@@ -224,7 +224,7 @@ const Index = () => {
                     <ArrowRight className="w-4 sm:w-5 h-4 sm:h-5 ml-2" />
                   </Button>
                 </Link>
-                <Button variant="outline" size="lg" className="w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-4 text-base sm:text-lg font-semibold rounded-xl border-2 border-white/40 text-white hover:bg-white/15 hover:border-white/60 backdrop-blur-sm transition-all duration-300 hover:scale-105">
+                <Button variant="outline" size="lg" className="w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-4 text-base sm:text-lg font-semibold rounded-xl bg-white/15 border-white/60 text-white hover:bg-white/25 hover:border-white/80 backdrop-blur-sm transition-all duration-300 hover:scale-105">
                   <Play className="w-4 sm:w-5 h-4 sm:h-5 mr-2" />
                   Watch Demo
                 </Button>
@@ -258,10 +258,11 @@ const Index = () => {
               <Carousel
                 plugins={[
                   Autoplay({
-                    delay: 6000,
+                    delay: 5000,
+                    stopOnInteraction: false,
                   }),
                 ]}
-                className="w-full max-w-xl mx-auto"
+                className="w-full max-w-xl mx-auto group"
               >
                 <CarouselContent>
                   {/* WhatsApp Integration Feature */}
@@ -275,24 +276,24 @@ const Index = () => {
 
                       {/* Content */}
                       <div className="space-y-4 flex-1 flex flex-col justify-between">
-                        <h3 className="text-2xl font-bold text-white">Seamless Communication</h3>
+                        <h3 className="text-2xl font-bold text-white">WhatsApp Native Integration</h3>
                         <p className="text-white/80 leading-relaxed">
-                          Reach employees directly through WhatsApp. No apps to download, no accounts to create. Just simple, instant mood tracking.
+                          Built natively for WhatsApp Business API. Your employees receive mood check-ins directly in their WhatsApp - no external apps, no friction, just seamless communication.
                         </p>
 
                         {/* Feature Points */}
                         <div className="space-y-2">
                           <div className="flex items-center space-x-2">
                             <CheckCircle className="w-4 h-4 text-green-400" />
-                            <span className="text-white/90 text-sm">Works on any phone</span>
+                            <span className="text-white/90 text-sm">Native WhatsApp experience</span>
                           </div>
                           <div className="flex items-center space-x-2">
                             <CheckCircle className="w-4 h-4 text-green-400" />
-                            <span className="text-white/90 text-sm">Instant notifications</span>
+                            <span className="text-white/90 text-sm">Zero app downloads required</span>
                           </div>
                           <div className="flex items-center space-x-2">
                             <CheckCircle className="w-4 h-4 text-green-400" />
-                            <span className="text-white/90 text-sm">Anonymous responses</span>
+                            <span className="text-white/90 text-sm">Instant delivery & responses</span>
                           </div>
                         </div>
                       </div>
@@ -310,24 +311,24 @@ const Index = () => {
 
                       {/* Content */}
                       <div className="space-y-4 flex-1 flex flex-col justify-between">
-                        <h3 className="text-2xl font-bold text-white">Smart Analytics</h3>
+                        <h3 className="text-2xl font-bold text-white">AI-Powered Intelligence</h3>
                         <p className="text-white/80 leading-relaxed">
-                          AI-powered insights identify patterns, predict trends, and provide actionable recommendations for team wellness.
+                          Advanced machine learning algorithms analyze mood patterns, predict wellness trends, and automatically generate personalized recommendations for each team member.
                         </p>
 
                         {/* Feature Points */}
                         <div className="space-y-2">
                           <div className="flex items-center space-x-2">
                             <Zap className="w-4 h-4 text-purple-400" />
-                            <span className="text-white/90 text-sm">Sentiment analysis</span>
+                            <span className="text-white/90 text-sm">Real-time sentiment analysis</span>
                           </div>
                           <div className="flex items-center space-x-2">
                             <TrendingUp className="w-4 h-4 text-purple-400" />
-                            <span className="text-white/90 text-sm">Trend predictions</span>
+                            <span className="text-white/90 text-sm">Predictive wellness modeling</span>
                           </div>
                           <div className="flex items-center space-x-2">
                             <Target className="w-4 h-4 text-purple-400" />
-                            <span className="text-white/90 text-sm">Actionable insights</span>
+                            <span className="text-white/90 text-sm">Automated intervention alerts</span>
                           </div>
                         </div>
                       </div>
@@ -344,25 +345,25 @@ const Index = () => {
                       </div>
 
                       {/* Content */}
-                      <div className="space-y-4">
-                        <h3 className="text-2xl font-bold text-white">Enhanced Performance</h3>
+                      <div className="space-y-4 flex-1 flex flex-col justify-between">
+                        <h3 className="text-2xl font-bold text-white">Measurable Business Impact</h3>
                         <p className="text-white/80 leading-relaxed">
-                          Happy teams are productive teams. Track wellness metrics and watch productivity soar as team satisfaction improves.
+                          Transform workplace culture with data-driven wellness initiatives. Companies using StaffPulse report 40% higher employee satisfaction and 25% improved retention rates.
                         </p>
 
                         {/* Feature Points */}
                         <div className="space-y-2">
                           <div className="flex items-center space-x-2">
                             <Award className="w-4 h-4 text-blue-400" />
-                            <span className="text-white/90 text-sm">Performance tracking</span>
+                            <span className="text-white/90 text-sm">40% boost in satisfaction</span>
                           </div>
                           <div className="flex items-center space-x-2">
                             <Users className="w-4 h-4 text-blue-400" />
-                            <span className="text-white/90 text-sm">Team collaboration</span>
+                            <span className="text-white/90 text-sm">25% better retention</span>
                           </div>
                           <div className="flex items-center space-x-2">
                             <Clock className="w-4 h-4 text-blue-400" />
-                            <span className="text-white/90 text-sm">Real-time monitoring</span>
+                            <span className="text-white/90 text-sm">Real-time culture insights</span>
                           </div>
                         </div>
                       </div>
@@ -370,9 +371,9 @@ const Index = () => {
                   </CarouselItem>
                 </CarouselContent>
 
-                {/* Custom Navigation */}
-                <CarouselPrevious className="left-4 bg-white/10 border-white/20 text-white hover:bg-white/20 backdrop-blur-sm" />
-                <CarouselNext className="right-4 bg-white/10 border-white/20 text-white hover:bg-white/20 backdrop-blur-sm" />
+                {/* Custom Navigation - Hidden by default, visible on hover */}
+                <CarouselPrevious className="left-4 bg-white/10 border-white/20 text-white hover:bg-white/20 backdrop-blur-sm invisible group-hover:visible transition-all duration-300" />
+                <CarouselNext className="right-4 bg-white/10 border-white/20 text-white hover:bg-white/20 backdrop-blur-sm invisible group-hover:visible transition-all duration-300" />
               </Carousel>
             </div>
           </div>
