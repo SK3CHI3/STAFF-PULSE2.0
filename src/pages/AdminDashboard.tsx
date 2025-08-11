@@ -527,7 +527,7 @@ const AdminDashboard = () => {
                   </linearGradient>
                 </defs>
                 <Area
-                  type="monotone"
+                  type="monotoneX"
                   dataKey="organizations"
                   stroke="#3b82f6"
                   fill="url(#organizationsGradient)"
@@ -537,7 +537,7 @@ const AdminDashboard = () => {
                   connectNulls={false}
                 />
                 <Area
-                  type="monotone"
+                  type="monotoneX"
                   dataKey="employees"
                   stroke="#10b981"
                   fill="url(#employeesGradient)"
@@ -600,7 +600,7 @@ const AdminDashboard = () => {
                   </linearGradient>
                 </defs>
                 <Area
-                  type="monotone"
+                  type="monotoneX"
                   dataKey="revenue"
                   stroke="#10b981"
                   fill="url(#revenueGradient)"
@@ -789,7 +789,7 @@ const AdminDashboard = () => {
                   </linearGradient>
                 </defs>
                 <Area
-                  type="monotone"
+                  type="monotoneX"
                   dataKey="organizations"
                   stroke="#8b5cf6"
                   fill="url(#organizationsGradientAnalytics)"
@@ -799,7 +799,7 @@ const AdminDashboard = () => {
                   connectNulls={false}
                 />
                 <Area
-                  type="monotone"
+                  type="monotoneX"
                   dataKey="employees"
                   stroke="#06b6d4"
                   fill="url(#employeesGradientAnalytics)"
@@ -861,7 +861,7 @@ const AdminDashboard = () => {
                   </linearGradient>
                 </defs>
                 <Area
-                  type="monotone"
+                  type="monotoneX"
                   dataKey="revenue"
                   stroke="#f59e0b"
                   fill="url(#revenueGradientAnalytics)"
@@ -947,7 +947,7 @@ const AdminDashboard = () => {
                   </linearGradient>
                 </defs>
                 <Area
-                  type="monotone"
+                  type="monotoneX"
                   dataKey="checkIns"
                   stroke="#8b5cf6"
                   fill="url(#checkInsGradient)"
@@ -957,7 +957,7 @@ const AdminDashboard = () => {
                   connectNulls={false}
                 />
                 <Area
-                  type="monotone"
+                  type="monotoneX"
                   dataKey="responses"
                   stroke="#06b6d4"
                   fill="url(#responsesGradient)"
@@ -967,7 +967,7 @@ const AdminDashboard = () => {
                   connectNulls={false}
                 />
                 <Area
-                  type="monotone"
+                  type="monotoneX"
                   dataKey="avgMood"
                   stroke="#f59e0b"
                   fill="url(#avgMoodGradient)"
@@ -977,7 +977,7 @@ const AdminDashboard = () => {
                   connectNulls={false}
                 />
                 <Area
-                  type="monotone"
+                  type="monotoneX"
                   dataKey="activeUsers"
                   stroke="#10b981"
                   fill="url(#activeUsersGradient)"

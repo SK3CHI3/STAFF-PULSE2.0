@@ -64,9 +64,14 @@ export const useMoodTrendData = (timeline: TimelineOption) => {
 
         const data = await response.json()
 
-        // Data is already formatted by the database function
+        // Format the dates to match revenue analytics (e.g., "Aug 04", "Aug 05")
+        const formattedData = (data || []).map((item: any) => ({
+          ...item,
+          date: formatDateLabel(item.date, grouping)
+        }))
+
         setState({
-          data: data || [],
+          data: formattedData,
           loading: false,
           error: null
         })
@@ -231,6 +236,9 @@ export const useEngagementData = (timeline: TimelineOption) => {
       setState(prev => ({ ...prev, loading: true, error: null }))
 
       try {
+        const { startDate, endDate } = getDateRange(timeline)
+        const grouping = getDateGrouping(timeline)
+
         const daysMap = {
           '7d': 7,
           '1m': 30,
@@ -266,8 +274,14 @@ export const useEngagementData = (timeline: TimelineOption) => {
 
         const data = await response.json()
 
+        // Format the dates to match revenue analytics (e.g., "Aug 04", "Aug 05")
+        const formattedData = (data || []).map((item: any) => ({
+          ...item,
+          date: formatDateLabel(item.date, grouping)
+        }))
+
         setState({
-          data: data || [],
+          data: formattedData,
           loading: false,
           error: null
         })
@@ -1056,12 +1070,12 @@ const calculateEngagementMetrics = (checkIns: any[], employees: any[], grouping:
 
 const formatDateLabel = (dateStr: string, grouping: 'day' | 'week' | 'month'): string => {
   const date = new Date(dateStr)
-  
+
   switch (grouping) {
     case 'day':
       return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
     case 'week':
-      return `Week of ${date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
+      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
     case 'month':
       return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
     default:

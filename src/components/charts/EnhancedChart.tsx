@@ -109,7 +109,7 @@ export const MoodTrendChart: React.FC<{
   description?: string
   timeline?: string
 }> = ({ data, loading, error, title = "Team Mood Trend", description = "Wellness patterns over time", timeline = '7d' }) => {
-  // Helper function to get appropriate interval for X-axis labels
+  // Helper function to get appropriate interval for X-axis labels (same as revenue analytics)
   const getXAxisInterval = (timeline: string, dataLength: number) => {
     if (dataLength <= 7) return 0; // Show all labels for 7 or fewer points
 
@@ -144,60 +144,47 @@ export const MoodTrendChart: React.FC<{
       <XAxis
         dataKey="date"
         stroke="hsl(var(--muted-foreground))"
-        tick={{ fontSize: 11 }}
-        interval={Math.max(0, Math.floor(data.length / 6))}
-        angle={-45}
-        textAnchor="end"
-        height={70}
+        tick={{ fontSize: 12 }}
+        interval={getXAxisInterval(timeline, data.length)}
+        angle={timeline === '7d' ? 0 : -45}
+        textAnchor={timeline === '7d' ? 'middle' : 'end'}
+        height={timeline === '7d' ? 40 : 60}
         tickLine={false}
         axisLine={false}
-        tickFormatter={(value) => {
-          if (!value) return '';
-          const date = new Date(value);
-          return date.toLocaleDateString('en-US', {
-            month: 'short',
-            day: 'numeric'
-          });
-        }}
       />
       <YAxis
         domain={[0, 10]}
         stroke="hsl(var(--muted-foreground))"
-        fontSize={12}
+        tick={{ fontSize: 12 }}
         tickLine={false}
         axisLine={false}
         width={50}
         tickFormatter={(value) => value.toString()}
         ticks={[0, 2, 4, 6, 8, 10]}
       />
-      <Tooltip 
-        contentStyle={{ 
+      <Tooltip
+        contentStyle={{
           backgroundColor: "hsl(var(--card))",
           border: "1px solid hsl(var(--border))",
-          borderRadius: "8px",
-          fontSize: "12px"
+          borderRadius: "8px"
         }}
         labelStyle={{ color: "hsl(var(--foreground))" }}
+        formatter={(value) => [`${value}/10`, 'Mood Score']}
       />
       <defs>
         <linearGradient id="moodGradient" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
-          <stop offset="95%" stopColor="#10b981" stopOpacity={0.05}/>
+          <stop offset="5%" stopColor="#10b981" stopOpacity={0.2}/>
+          <stop offset="95%" stopColor="#10b981" stopOpacity={0.02}/>
         </linearGradient>
       </defs>
       <Area
-        type="monotone"
+        type="monotoneX"
         dataKey="mood"
         stroke="#10b981"
         fill="url(#moodGradient)"
         strokeWidth={2.5}
-        dot={false}
-        activeDot={{
-          r: 6,
-          fill: "#10b981",
-          stroke: "#ffffff",
-          strokeWidth: 2
-        }}
+        dot={{ fill: "#10b981", strokeWidth: 1, r: 2.5 }}
+        activeDot={{ r: 4, stroke: "#10b981", strokeWidth: 2, fill: "#ffffff" }}
       />
     </AreaChart>
   </EnhancedChart>
@@ -299,7 +286,7 @@ export const EngagementChart: React.FC<{
   description?: string
   timeline?: string
 }> = ({ data, loading, error, title = "Engagement Metrics", description = "Response rates and participation over time", timeline = '7d' }) => {
-  // Helper function to get appropriate interval for X-axis labels
+  // Helper function to get appropriate interval for X-axis labels (same as revenue analytics)
   const getXAxisInterval = (timeline: string, dataLength: number) => {
     if (dataLength <= 7) return 0; // Show all labels for 7 or fewer points
 
@@ -334,25 +321,17 @@ export const EngagementChart: React.FC<{
       <XAxis
         dataKey="date"
         stroke="hsl(var(--muted-foreground))"
-        tick={{ fontSize: 11 }}
-        interval={Math.max(0, Math.floor(data.length / 6))}
-        angle={-45}
-        textAnchor="end"
-        height={70}
+        tick={{ fontSize: 12 }}
+        interval={getXAxisInterval(timeline, data.length)}
+        angle={timeline === '7d' ? 0 : -45}
+        textAnchor={timeline === '7d' ? 'middle' : 'end'}
+        height={timeline === '7d' ? 40 : 60}
         tickLine={false}
         axisLine={false}
-        tickFormatter={(value) => {
-          if (!value) return '';
-          const date = new Date(value);
-          return date.toLocaleDateString('en-US', {
-            month: 'short',
-            day: 'numeric'
-          });
-        }}
       />
       <YAxis
         stroke="hsl(var(--muted-foreground))"
-        fontSize={12}
+        tick={{ fontSize: 12 }}
         tickLine={false}
         axisLine={false}
         width={60}
@@ -363,8 +342,7 @@ export const EngagementChart: React.FC<{
         contentStyle={{
           backgroundColor: "hsl(var(--card))",
           border: "1px solid hsl(var(--border))",
-          borderRadius: "8px",
-          fontSize: "12px"
+          borderRadius: "8px"
         }}
         labelStyle={{ color: "hsl(var(--foreground))" }}
         formatter={(value, name) => {
@@ -374,30 +352,32 @@ export const EngagementChart: React.FC<{
       />
       <defs>
         <linearGradient id="responsesGradientHR" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3}/>
-          <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0.05}/>
+          <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.2}/>
+          <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0.02}/>
         </linearGradient>
         <linearGradient id="responseRateGradientHR" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="5%" stopColor="#06b6d4" stopOpacity={0.3}/>
-          <stop offset="95%" stopColor="#06b6d4" stopOpacity={0.05}/>
+          <stop offset="5%" stopColor="#06b6d4" stopOpacity={0.2}/>
+          <stop offset="95%" stopColor="#06b6d4" stopOpacity={0.02}/>
         </linearGradient>
       </defs>
       <Area
-        type="monotone"
+        type="monotoneX"
         dataKey="responses"
         stroke="#8b5cf6"
         fill="url(#responsesGradientHR)"
         strokeWidth={2.5}
-        dot={false}
+        dot={{ fill: "#8b5cf6", strokeWidth: 1, r: 2.5 }}
+        activeDot={{ r: 4, stroke: "#8b5cf6", strokeWidth: 2, fill: "#ffffff" }}
         name="Responses"
       />
       <Area
-        type="monotone"
+        type="monotoneX"
         dataKey="responseRate"
         stroke="#06b6d4"
         fill="url(#responseRateGradientHR)"
         strokeWidth={2.5}
-        dot={false}
+        dot={{ fill: "#06b6d4", strokeWidth: 1, r: 2.5 }}
+        activeDot={{ r: 4, stroke: "#06b6d4", strokeWidth: 2, fill: "#ffffff" }}
         name="Response Rate %"
       />
     </AreaChart>
