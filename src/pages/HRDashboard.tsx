@@ -1595,6 +1595,7 @@ const HRDashboard = () => {
             timeline === '3m' ? 'last 3 months' :
             timeline === '6m' ? 'last 6 months' : 'last year'
           }`}
+          timeline={timeline}
         />
       </div>
     </div>
@@ -1643,6 +1644,7 @@ const HRDashboard = () => {
           error={departmentWellnessChartData.error}
           title="Department Wellness"
           description={`Average wellness scores by department over the ${timeline === '7d' ? 'last 7 days' : timeline === '1m' ? 'last month' : timeline === '3m' ? 'last 3 months' : timeline === '6m' ? 'last 6 months' : 'last year'}`}
+          timeline={timeline}
         />
 
         {/* 3. Response Rate & Engagement */}
@@ -1662,7 +1664,12 @@ const HRDashboard = () => {
               <Heart className="w-5 h-5 text-pink-500" />
               <span>Wellness Distribution</span>
             </CardTitle>
-            <CardDescription>How your team is feeling today</CardDescription>
+            <CardDescription>Team mood distribution over the {
+              timeline === '7d' ? 'last 7 days' :
+              timeline === '1m' ? 'last month' :
+              timeline === '3m' ? 'last 3 months' :
+              timeline === '6m' ? 'last 6 months' : 'last year'
+            }</CardDescription>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>

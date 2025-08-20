@@ -138,49 +138,58 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-gradient-page">
-      {/* Navigation */}
+      {/* Navigation - Mobile Optimized */}
       <nav className="fixed top-0 left-0 right-0 z-50 bg-white/10 backdrop-blur-md border-b border-white/20">
         <div className="container mx-auto px-4 sm:px-6 py-3 sm:py-4">
           <div className="flex items-center justify-between">
-            {/* Logo Section */}
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center shadow-lg">
-                <span className="text-white font-bold text-lg">SP</span>
+            {/* Logo Section - Mobile Optimized */}
+            <div className="flex items-center space-x-2 sm:space-x-3">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-lg sm:rounded-xl flex items-center justify-center shadow-lg">
+                <span className="text-white font-bold text-sm sm:text-lg">SP</span>
               </div>
               <div>
-                <span className="text-2xl font-black text-white">
+                <span className="text-lg sm:text-2xl font-black text-white">
                   StaffPulse
                 </span>
                 <div className="flex items-center space-x-1">
-                  <div className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></div>
+                  <div className="w-1 h-1 sm:w-1.5 sm:h-1.5 bg-green-400 rounded-full animate-pulse"></div>
                   <span className="text-xs text-white/80 font-medium">Online</span>
                 </div>
               </div>
             </div>
 
-            {/* Navigation Links */}
-            <div className="hidden md:flex items-center space-x-8">
-              <a href="#features" className="text-white/80 hover:text-white transition-colors font-medium hover:scale-105 transform duration-200">
+            {/* Navigation Links - Mobile Optimized */}
+            <div className="hidden lg:flex items-center space-x-4 xl:space-x-8">
+              <a href="#features" className="text-white/80 hover:text-white transition-colors font-medium hover:scale-105 transform duration-200 text-sm">
                 Features
               </a>
-              <a href="#pricing" className="text-white/80 hover:text-white transition-colors font-medium hover:scale-105 transform duration-200">
+              <a href="#pricing" className="text-white/80 hover:text-white transition-colors font-medium hover:scale-105 transform duration-200 text-sm">
                 Pricing
               </a>
-              <a href="#testimonials" className="text-white/80 hover:text-white transition-colors font-medium hover:scale-105 transform duration-200">
+              <a href="#testimonials" className="text-white/80 hover:text-white transition-colors font-medium hover:scale-105 transform duration-200 text-sm">
                 Testimonials
               </a>
               <div className="[&>div>button]:bg-white/15 [&>div>button]:text-white [&>div>button]:hover:bg-white/25 [&>div>button]:border-0">
                 <ThemeToggle />
               </div>
-              <Link to="/auth">
-                <Button variant="outline" size="sm" className="bg-white/15 border-white/60 text-white hover:bg-white/25 hover:border-white/80 transition-all duration-300">
+              <Link to="/auth" className="hidden md:block">
+                <Button variant="outline" size="sm" className="bg-white/15 border-white/60 text-white hover:bg-white/25 hover:border-white/80 transition-all duration-300 text-xs">
                   Login
                 </Button>
               </Link>
               <Link to="/auth">
-                <Button size="sm" className="bg-gradient-to-r from-cyan-500 to-blue-500 text-white hover:from-cyan-600 hover:to-blue-600 group shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
+                <Button size="sm" className="bg-gradient-to-r from-cyan-500 to-blue-500 text-white hover:from-cyan-600 hover:to-blue-600 group shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 text-xs px-3">
                   Start Free Trial
-                  <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform duration-300" />
+                  <ArrowRight className="w-3 h-3 ml-1 group-hover:translate-x-1 transition-transform duration-300" />
+                </Button>
+              </Link>
+            </div>
+
+            {/* Mobile Menu Button */}
+            <div className="lg:hidden">
+              <Link to="/auth">
+                <Button size="sm" className="bg-gradient-to-r from-cyan-500 to-blue-500 text-white hover:from-cyan-600 hover:to-blue-600 shadow-lg text-xs px-3 py-2">
+                  Get Started
                 </Button>
               </Link>
             </div>
@@ -188,43 +197,43 @@ const Index = () => {
         </div>
       </nav>
 
-      {/* Hero Section with RGB Gradient - Full Screen */}
-      <section className="relative h-screen flex items-center justify-center bg-gradient-to-br from-purple-600 via-blue-600 to-cyan-500 overflow-hidden">
-        {/* RGB Gradient Background Elements */}
-        <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-bl from-pink-500/30 via-purple-500/20 to-transparent rounded-full blur-3xl"></div>
-        <div className="absolute bottom-0 left-0 w-80 h-80 bg-gradient-to-tr from-cyan-500/30 via-blue-500/20 to-transparent rounded-full blur-3xl"></div>
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-gradient-to-r from-purple-500/10 via-pink-500/10 to-cyan-500/10 rounded-full blur-3xl"></div>
+      {/* Hero Section with RGB Gradient - Mobile Optimized */}
+      <section className="relative hero-mobile-height min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-600 via-blue-600 to-cyan-500 overflow-hidden py-16 sm:py-20 lg:py-0">
+        {/* RGB Gradient Background Elements - Mobile Responsive */}
+        <div className="absolute top-0 right-0 w-48 h-48 sm:w-72 sm:h-72 lg:w-96 lg:h-96 bg-gradient-to-bl from-pink-500/30 via-purple-500/20 to-transparent rounded-full blur-3xl"></div>
+        <div className="absolute bottom-0 left-0 w-40 h-40 sm:w-60 sm:h-60 lg:w-80 lg:h-80 bg-gradient-to-tr from-cyan-500/30 via-blue-500/20 to-transparent rounded-full blur-3xl"></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[300px] h-[150px] sm:w-[450px] sm:h-[225px] lg:w-[600px] lg:h-[300px] bg-gradient-to-r from-purple-500/10 via-pink-500/10 to-cyan-500/10 rounded-full blur-3xl"></div>
 
-        <div className="container mx-auto px-4 sm:px-6 relative z-10 h-full">
-          <div className="grid lg:grid-cols-2 gap-8 lg:gap-16 items-center max-w-7xl mx-auto h-full">
+        <div className="container mx-auto px-4 sm:px-6 relative z-10 min-h-screen flex items-center">
+          <div className="grid lg:grid-cols-2 gap-8 sm:gap-12 lg:gap-16 items-center max-w-7xl mx-auto w-full">
             {/* Left Content */}
-            <div className="space-y-6 sm:space-y-8 text-center lg:text-left">
+            <div className="space-y-6 sm:space-y-8 text-center lg:text-left order-1 lg:order-1">
               {/* Simple Badge */}
               <div className="inline-flex items-center space-x-2 px-3 sm:px-4 py-2 bg-white/20 backdrop-blur-sm rounded-full border border-white/30">
                 <span className="text-xs sm:text-sm font-medium text-white">✨ Welcome to StaffPulse</span>
               </div>
 
-              {/* Clean Main Title */}
+              {/* Clean Main Title - Mobile Optimized */}
               <div className="space-y-4 sm:space-y-6">
-                <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold leading-tight text-white">
+                <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold leading-tight text-white">
                   Transform Your Team's
                   <span className="block text-yellow-300">Wellness</span>
                 </h1>
 
-                <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-white/90 leading-relaxed max-w-2xl mx-auto lg:mx-0">
+                <p className="text-sm sm:text-base md:text-lg lg:text-xl text-white/90 leading-relaxed max-w-xl mx-auto lg:mx-0">
                   Simple employee mood tracking through WhatsApp. Get real insights into team wellness without awkward conversations.
                 </p>
               </div>
 
-              {/* Action Buttons */}
+              {/* Action Buttons - Mobile Optimized */}
               <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center lg:justify-start">
                 <Link to="/auth" className="w-full sm:w-auto">
-                  <Button size="lg" className="w-full sm:w-auto bg-white text-purple-600 hover:bg-white/90 px-6 sm:px-8 py-3 sm:py-4 text-base sm:text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
+                  <Button size="lg" className="w-full sm:w-auto bg-white text-purple-600 hover:bg-white/90 px-6 sm:px-8 py-3 sm:py-4 text-sm sm:text-base font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
                     Get Started
                     <ArrowRight className="w-4 sm:w-5 h-4 sm:h-5 ml-2" />
                   </Button>
                 </Link>
-                <Button variant="outline" size="lg" className="w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-4 text-base sm:text-lg font-semibold rounded-xl bg-white/15 border-white/60 text-white hover:bg-white/25 hover:border-white/80 backdrop-blur-sm transition-all duration-300 hover:scale-105">
+                <Button variant="outline" size="lg" className="w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-4 text-sm sm:text-base font-semibold rounded-xl bg-white/15 border-white/60 text-white hover:bg-white/25 hover:border-white/80 backdrop-blur-sm transition-all duration-300 hover:scale-105">
                   <Play className="w-4 sm:w-5 h-4 sm:h-5 mr-2" />
                   Watch Demo
                 </Button>
@@ -253,8 +262,8 @@ const Index = () => {
               </div>
             </div>
 
-            {/* Right Content - Modern Feature Carousel */}
-            <div className="relative mt-8 lg:mt-0">
+            {/* Right Content - Modern Feature Carousel - Mobile Optimized */}
+            <div className="relative mt-8 lg:mt-0 order-2 lg:order-2">
               <Carousel
                 plugins={[
                   Autoplay({
@@ -262,108 +271,108 @@ const Index = () => {
                     stopOnInteraction: false,
                   }),
                 ]}
-                className="w-full max-w-xl mx-auto group"
+                className="w-full max-w-sm sm:max-w-md lg:max-w-xl mx-auto group"
               >
                 <CarouselContent>
-                  {/* WhatsApp Integration Feature */}
+                  {/* WhatsApp Integration Feature - Mobile Optimized */}
                   <CarouselItem>
-                    <div className="relative bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl rounded-3xl p-8 border border-white/20 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.4)] hover:shadow-[0_35px_60px_-12px_rgba(0,0,0,0.5)] transition-all duration-500 h-[380px] flex flex-col w-full">
+                    <div className="relative bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl rounded-2xl sm:rounded-3xl p-4 sm:p-6 lg:p-8 border border-white/20 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.4)] hover:shadow-[0_35px_60px_-12px_rgba(0,0,0,0.5)] transition-all duration-500 min-h-[320px] sm:min-h-[350px] lg:h-[380px] flex flex-col w-full">
 
                       {/* Icon */}
-                      <div className="w-20 h-20 bg-gradient-to-r from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center mb-6 shadow-[0_20px_25px_-5px_rgba(34,197,94,0.4)] hover:shadow-[0_25px_35px_-5px_rgba(34,197,94,0.5)] transition-all duration-300">
-                        <MessageSquare className="w-10 h-10 text-white" />
+                      <div className="w-16 h-16 sm:w-18 sm:h-18 lg:w-20 lg:h-20 bg-gradient-to-r from-green-500 to-emerald-600 rounded-xl sm:rounded-2xl flex items-center justify-center mb-4 sm:mb-6 shadow-[0_20px_25px_-5px_rgba(34,197,94,0.4)] hover:shadow-[0_25px_35px_-5px_rgba(34,197,94,0.5)] transition-all duration-300">
+                        <MessageSquare className="w-8 h-8 sm:w-9 sm:h-9 lg:w-10 lg:h-10 text-white" />
                       </div>
 
                       {/* Content */}
-                      <div className="space-y-4 flex-1 flex flex-col justify-between">
-                        <h3 className="text-2xl font-bold text-white">WhatsApp Native Integration</h3>
-                        <p className="text-white/80 leading-relaxed">
+                      <div className="space-y-3 sm:space-y-4 flex-1 flex flex-col justify-between">
+                        <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-white">WhatsApp Native Integration</h3>
+                        <p className="text-sm sm:text-base text-white/80 leading-relaxed">
                           Built natively for WhatsApp Business API. Your employees receive mood check-ins directly in their WhatsApp - no external apps, no friction, just seamless communication.
                         </p>
 
                         {/* Feature Points */}
                         <div className="space-y-2">
                           <div className="flex items-center space-x-2">
-                            <CheckCircle className="w-4 h-4 text-green-400" />
-                            <span className="text-white/90 text-sm">Native WhatsApp experience</span>
+                            <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4 text-green-400 flex-shrink-0" />
+                            <span className="text-white/90 text-xs sm:text-sm">Native WhatsApp experience</span>
                           </div>
                           <div className="flex items-center space-x-2">
-                            <CheckCircle className="w-4 h-4 text-green-400" />
-                            <span className="text-white/90 text-sm">Zero app downloads required</span>
+                            <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4 text-green-400 flex-shrink-0" />
+                            <span className="text-white/90 text-xs sm:text-sm">Zero app downloads required</span>
                           </div>
                           <div className="flex items-center space-x-2">
-                            <CheckCircle className="w-4 h-4 text-green-400" />
-                            <span className="text-white/90 text-sm">Instant delivery & responses</span>
+                            <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4 text-green-400 flex-shrink-0" />
+                            <span className="text-white/90 text-xs sm:text-sm">Instant delivery & responses</span>
                           </div>
                         </div>
                       </div>
                     </div>
                   </CarouselItem>
 
-                  {/* AI Insights Feature */}
+                  {/* AI Insights Feature - Mobile Optimized */}
                   <CarouselItem>
-                    <div className="relative bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl rounded-3xl p-8 border border-white/20 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.4)] hover:shadow-[0_35px_60px_-12px_rgba(0,0,0,0.5)] transition-all duration-500 h-[380px] flex flex-col w-full">
+                    <div className="relative bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl rounded-2xl sm:rounded-3xl p-4 sm:p-6 lg:p-8 border border-white/20 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.4)] hover:shadow-[0_35px_60px_-12px_rgba(0,0,0,0.5)] transition-all duration-500 min-h-[320px] sm:min-h-[350px] lg:h-[380px] flex flex-col w-full">
 
                       {/* Icon */}
-                      <div className="w-20 h-20 bg-gradient-to-r from-purple-500 to-pink-600 rounded-2xl flex items-center justify-center mb-6 shadow-[0_20px_25px_-5px_rgba(168,85,247,0.4)] hover:shadow-[0_25px_35px_-5px_rgba(168,85,247,0.5)] transition-all duration-300">
-                        <BarChart3 className="w-10 h-10 text-white" />
+                      <div className="w-16 h-16 sm:w-18 sm:h-18 lg:w-20 lg:h-20 bg-gradient-to-r from-purple-500 to-pink-600 rounded-xl sm:rounded-2xl flex items-center justify-center mb-4 sm:mb-6 shadow-[0_20px_25px_-5px_rgba(168,85,247,0.4)] hover:shadow-[0_25px_35px_-5px_rgba(168,85,247,0.5)] transition-all duration-300">
+                        <BarChart3 className="w-8 h-8 sm:w-9 sm:h-9 lg:w-10 lg:h-10 text-white" />
                       </div>
 
                       {/* Content */}
-                      <div className="space-y-4 flex-1 flex flex-col justify-between">
-                        <h3 className="text-2xl font-bold text-white">AI-Powered Intelligence</h3>
-                        <p className="text-white/80 leading-relaxed">
+                      <div className="space-y-3 sm:space-y-4 flex-1 flex flex-col justify-between">
+                        <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-white">AI-Powered Intelligence</h3>
+                        <p className="text-sm sm:text-base text-white/80 leading-relaxed">
                           Advanced machine learning algorithms analyze mood patterns, predict wellness trends, and automatically generate personalized recommendations for each team member.
                         </p>
 
                         {/* Feature Points */}
                         <div className="space-y-2">
                           <div className="flex items-center space-x-2">
-                            <Zap className="w-4 h-4 text-purple-400" />
-                            <span className="text-white/90 text-sm">Real-time sentiment analysis</span>
+                            <Zap className="w-3 h-3 sm:w-4 sm:h-4 text-purple-400 flex-shrink-0" />
+                            <span className="text-white/90 text-xs sm:text-sm">Real-time sentiment analysis</span>
                           </div>
                           <div className="flex items-center space-x-2">
-                            <TrendingUp className="w-4 h-4 text-purple-400" />
-                            <span className="text-white/90 text-sm">Predictive wellness modeling</span>
+                            <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 text-purple-400 flex-shrink-0" />
+                            <span className="text-white/90 text-xs sm:text-sm">Predictive wellness modeling</span>
                           </div>
                           <div className="flex items-center space-x-2">
-                            <Target className="w-4 h-4 text-purple-400" />
-                            <span className="text-white/90 text-sm">Automated intervention alerts</span>
+                            <Target className="w-3 h-3 sm:w-4 sm:h-4 text-purple-400 flex-shrink-0" />
+                            <span className="text-white/90 text-xs sm:text-sm">Automated intervention alerts</span>
                           </div>
                         </div>
                       </div>
                     </div>
                   </CarouselItem>
 
-                  {/* Productivity Boost Feature */}
+                  {/* Productivity Boost Feature - Mobile Optimized */}
                   <CarouselItem>
-                    <div className="relative bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl rounded-3xl p-8 border border-white/20 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.4)] hover:shadow-[0_35px_60px_-12px_rgba(0,0,0,0.5)] transition-all duration-500 h-[380px] flex flex-col w-full">
+                    <div className="relative bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl rounded-2xl sm:rounded-3xl p-4 sm:p-6 lg:p-8 border border-white/20 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.4)] hover:shadow-[0_35px_60px_-12px_rgba(0,0,0,0.5)] transition-all duration-500 min-h-[320px] sm:min-h-[350px] lg:h-[380px] flex flex-col w-full">
 
                       {/* Icon */}
-                      <div className="w-20 h-20 bg-gradient-to-r from-blue-500 to-cyan-600 rounded-2xl flex items-center justify-center mb-6 shadow-[0_20px_25px_-5px_rgba(59,130,246,0.4)] hover:shadow-[0_25px_35px_-5px_rgba(59,130,246,0.5)] transition-all duration-300">
-                        <TrendingUp className="w-10 h-10 text-white" />
+                      <div className="w-16 h-16 sm:w-18 sm:h-18 lg:w-20 lg:h-20 bg-gradient-to-r from-blue-500 to-cyan-600 rounded-xl sm:rounded-2xl flex items-center justify-center mb-4 sm:mb-6 shadow-[0_20px_25px_-5px_rgba(59,130,246,0.4)] hover:shadow-[0_25px_35px_-5px_rgba(59,130,246,0.5)] transition-all duration-300">
+                        <TrendingUp className="w-8 h-8 sm:w-9 sm:h-9 lg:w-10 lg:h-10 text-white" />
                       </div>
 
                       {/* Content */}
-                      <div className="space-y-4 flex-1 flex flex-col justify-between">
-                        <h3 className="text-2xl font-bold text-white">Measurable Business Impact</h3>
-                        <p className="text-white/80 leading-relaxed">
+                      <div className="space-y-3 sm:space-y-4 flex-1 flex flex-col justify-between">
+                        <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-white">Measurable Business Impact</h3>
+                        <p className="text-sm sm:text-base text-white/80 leading-relaxed">
                           Transform workplace culture with data-driven wellness initiatives. Companies using StaffPulse report 40% higher employee satisfaction and 25% improved retention rates.
                         </p>
 
                         {/* Feature Points */}
                         <div className="space-y-2">
                           <div className="flex items-center space-x-2">
-                            <Award className="w-4 h-4 text-blue-400" />
-                            <span className="text-white/90 text-sm">40% boost in satisfaction</span>
+                            <Award className="w-3 h-3 sm:w-4 sm:h-4 text-blue-400 flex-shrink-0" />
+                            <span className="text-white/90 text-xs sm:text-sm">40% boost in satisfaction</span>
                           </div>
                           <div className="flex items-center space-x-2">
-                            <Users className="w-4 h-4 text-blue-400" />
-                            <span className="text-white/90 text-sm">25% better retention</span>
+                            <Users className="w-3 h-3 sm:w-4 sm:h-4 text-blue-400 flex-shrink-0" />
+                            <span className="text-white/90 text-xs sm:text-sm">25% better retention</span>
                           </div>
                           <div className="flex items-center space-x-2">
-                            <Clock className="w-4 h-4 text-blue-400" />
-                            <span className="text-white/90 text-sm">Real-time culture insights</span>
+                            <Clock className="w-3 h-3 sm:w-4 sm:h-4 text-blue-400 flex-shrink-0" />
+                            <span className="text-white/90 text-xs sm:text-sm">Real-time culture insights</span>
                           </div>
                         </div>
                       </div>

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { supabase, supabaseConfig } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
-import { TimelineOption, getDateRange, formatDateForQuery, getDateGrouping } from '../components/charts/TimelineSelector'
+import { TimelineOption, getDateRange, formatDateForQuery } from '../components/charts/TimelineSelector'
 
 interface ChartDataState<T> {
   data: T[]
@@ -25,26 +25,13 @@ export const useMoodTrendData = (timeline: TimelineOption) => {
       setState(prev => ({ ...prev, loading: true, error: null }))
 
       try {
-        const { startDate, endDate } = getDateRange(timeline)
-        const grouping = getDateGrouping(timeline)
-
-        // Use REST API approach since Supabase client was hanging
-        const daysMap = {
-          '7d': 7,
-          '1m': 30,
-          '3m': 90,
-          '6m': 180,
-          '1y': 365
-        }
-
-        const days = daysMap[timeline]
         const orgId = profile.role === 'hr_manager' ? profile.organization_id : null
 
         if (!orgId) {
           throw new Error('Organization ID not found')
         }
 
-        // Use the database function via REST API
+        // Use the database function via REST API with timeline parameter
         const response = await fetch(`${supabaseConfig.url}/rest/v1/rpc/get_mood_trend_data`, {
           method: 'POST',
           headers: {
@@ -54,7 +41,7 @@ export const useMoodTrendData = (timeline: TimelineOption) => {
           },
           body: JSON.stringify({
             org_id: orgId,
-            days_back: days
+            timeline: timeline
           })
         })
 
@@ -64,14 +51,9 @@ export const useMoodTrendData = (timeline: TimelineOption) => {
 
         const data = await response.json()
 
-        // Format the dates to match revenue analytics (e.g., "Aug 04", "Aug 05")
-        const formattedData = (data || []).map((item: any) => ({
-          ...item,
-          date: formatDateLabel(item.date, grouping)
-        }))
-
+        // Database function now returns properly formatted dates, no need to format again
         setState({
-          data: formattedData,
+          data: data || [],
           loading: false,
           error: null
         })
@@ -158,7 +140,7 @@ export const useDepartmentWellnessData = (timeline: TimelineOption) => {
           throw new Error('Organization ID not found')
         }
 
-        // Use the database function via REST API
+        // Use the database function via REST API (department wellness doesn't need timeline grouping)
         const response = await fetch(`${supabaseConfig.url}/rest/v1/rpc/get_department_wellness_data`, {
           method: 'POST',
           headers: {
@@ -236,25 +218,13 @@ export const useEngagementData = (timeline: TimelineOption) => {
       setState(prev => ({ ...prev, loading: true, error: null }))
 
       try {
-        const { startDate, endDate } = getDateRange(timeline)
-        const grouping = getDateGrouping(timeline)
-
-        const daysMap = {
-          '7d': 7,
-          '1m': 30,
-          '3m': 90,
-          '6m': 180,
-          '1y': 365
-        }
-
-        const days = daysMap[timeline]
         const orgId = profile.role === 'hr_manager' ? profile.organization_id : null
 
         if (!orgId) {
           throw new Error('Organization ID not found')
         }
 
-        // Use the database function via REST API
+        // Use the database function via REST API with timeline parameter
         const response = await fetch(`${supabaseConfig.url}/rest/v1/rpc/get_engagement_data`, {
           method: 'POST',
           headers: {
@@ -264,7 +234,7 @@ export const useEngagementData = (timeline: TimelineOption) => {
           },
           body: JSON.stringify({
             org_id: orgId,
-            days_back: days
+            timeline: timeline
           })
         })
 
@@ -274,14 +244,9 @@ export const useEngagementData = (timeline: TimelineOption) => {
 
         const data = await response.json()
 
-        // Format the dates to match revenue analytics (e.g., "Aug 04", "Aug 05")
-        const formattedData = (data || []).map((item: any) => ({
-          ...item,
-          date: formatDateLabel(item.date, grouping)
-        }))
-
+        // Database function now returns properly formatted dates, no need to format again
         setState({
-          data: formattedData,
+          data: data || [],
           loading: false,
           error: null
         })

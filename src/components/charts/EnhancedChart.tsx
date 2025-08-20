@@ -197,7 +197,8 @@ export const DepartmentWellnessChart: React.FC<{
   error: string | null
   title?: string
   description?: string
-}> = ({ data, loading, error, title = "Department Wellness", description = "Average wellness scores by department" }) => {
+  timeline?: string
+}> = ({ data, loading, error, title = "Department Wellness", description = "Average wellness scores by department", timeline = '7d' }) => {
   // Clean and deduplicate data to prevent duplicate keys
   const cleanData = React.useMemo(() => {
     if (!data || !Array.isArray(data)) return []
