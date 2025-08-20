@@ -108,7 +108,7 @@ export const MoodTrendChart: React.FC<{
   title?: string
   description?: string
   timeline?: string
-}> = ({ data, loading, error, title = "Team Mood Trend", description = "Wellness patterns over time", timeline = '7d' }) => {
+}> = ({ data, loading, error, title = "Team Engagement Trend", description = "Engagement patterns over time", timeline = '7d' }) => {
   // Helper function to get appropriate interval for X-axis labels (same as revenue analytics)
   const getXAxisInterval = (timeline: string, dataLength: number) => {
     if (dataLength <= 7) return 0; // Show all labels for 7 or fewer points
@@ -169,10 +169,10 @@ export const MoodTrendChart: React.FC<{
           borderRadius: "8px"
         }}
         labelStyle={{ color: "hsl(var(--foreground))" }}
-        formatter={(value) => [`${value}/10`, 'Mood Score']}
+        formatter={(value) => [`${value}/10`, 'Engagement Score']}
       />
       <defs>
-        <linearGradient id="moodGradient" x1="0" y1="0" x2="0" y2="1">
+        <linearGradient id="engagementGradient" x1="0" y1="0" x2="0" y2="1">
           <stop offset="5%" stopColor="#10b981" stopOpacity={0.2}/>
           <stop offset="95%" stopColor="#10b981" stopOpacity={0.02}/>
         </linearGradient>
@@ -181,7 +181,7 @@ export const MoodTrendChart: React.FC<{
         type="monotoneX"
         dataKey="mood"
         stroke="#10b981"
-        fill="url(#moodGradient)"
+        fill="url(#engagementGradient)"
         strokeWidth={2.5}
         dot={{ fill: "#10b981", strokeWidth: 1, r: 2.5 }}
         activeDot={{ r: 4, stroke: "#10b981", strokeWidth: 2, fill: "#ffffff" }}
@@ -198,7 +198,7 @@ export const DepartmentWellnessChart: React.FC<{
   title?: string
   description?: string
   timeline?: string
-}> = ({ data, loading, error, title = "Department Wellness", description = "Average wellness scores by department", timeline = '7d' }) => {
+}> = ({ data, loading, error, title = "Department Engagement", description = "Average engagement scores by department", timeline = '7d' }) => {
   // Clean and deduplicate data to prevent duplicate keys
   const cleanData = React.useMemo(() => {
     if (!data || !Array.isArray(data)) return []
@@ -267,7 +267,7 @@ export const DepartmentWellnessChart: React.FC<{
             fontSize: "12px"
           }}
           labelStyle={{ color: "hsl(var(--foreground))" }}
-          formatter={(value, name) => [`${value}/10`, 'Mood Score']}
+          formatter={(value, name) => [`${value}/10`, 'Engagement Score']}
         />
         <Bar
           dataKey="mood"

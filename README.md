@@ -1,6 +1,6 @@
-# 📊 Staff Pulse - Employee Wellness Management Platform
+# 📊 Staff Pulse - Employee Engagement Management Platform
 
-A comprehensive employee wellness and engagement platform built with React, TypeScript, and Vite. Staff Pulse helps organizations monitor employee wellbeing, conduct check-ins, and gain insights into team health.
+A comprehensive employee engagement and participation platform built with React, TypeScript, and Vite. Staff Pulse helps organizations monitor employee engagement, conduct check-ins, and gain insights into team performance.
 
 ## ✨ Features
 
@@ -11,12 +11,12 @@ A comprehensive employee wellness and engagement platform built with React, Type
 
 ### 📱 **Communication & Check-ins**
 - **WhatsApp/SMS Integration** - Send check-in messages via Twilio
-- **Automated Campaigns** - Schedule and automate wellness check-ins
+- **Automated Campaigns** - Schedule and automate engagement check-ins
 - **Multi-channel Support** - WhatsApp and SMS messaging options
 
 ### 📊 **Analytics & Insights**
-- **Real-time Dashboard** - Monitor employee engagement and wellness metrics
-- **Mood Tracking** - Track team mood trends over time
+- **Real-time Dashboard** - Monitor employee engagement and participation metrics
+- **Engagement Tracking** - Track team engagement trends over time
 - **AI-powered Insights** - Get intelligent recommendations using OpenRouter AI
 - **Response Analytics** - Analyze check-in responses and feedback
 

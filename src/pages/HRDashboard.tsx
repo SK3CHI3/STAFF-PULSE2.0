@@ -1391,7 +1391,7 @@ const HRDashboard = () => {
               <h1 className="text-2xl font-bold bg-gradient-to-r from-green-600 to-blue-600 dark:from-green-400 dark:to-blue-400 bg-clip-text text-transparent">
                 HR Dashboard
               </h1>
-              <p className="text-sm text-muted-foreground">Team wellness and engagement insights</p>
+              <p className="text-sm text-muted-foreground">Team engagement and participation insights</p>
             </div>
           </div>
 
@@ -1557,7 +1557,7 @@ const HRDashboard = () => {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h3 className="text-lg font-semibold">Team Analytics</h3>
-          <p className="text-sm text-muted-foreground">Wellness and engagement trends</p>
+          <p className="text-sm text-muted-foreground">Engagement and participation trends</p>
         </div>
         <TimelineSelector
           value={timeline}
@@ -1574,7 +1574,7 @@ const HRDashboard = () => {
           loading={moodTrendChartData.loading}
           error={moodTrendChartData.error}
           title="Team Mood Trend"
-          description={`Wellness patterns over the ${
+          description={`Engagement patterns over the ${
             timeline === '7d' ? 'last 7 days' :
             timeline === '1m' ? 'last month' :
             timeline === '3m' ? 'last 3 months' :
@@ -1588,7 +1588,7 @@ const HRDashboard = () => {
           data={departmentWellnessChartData.data}
           loading={departmentWellnessChartData.loading}
           error={departmentWellnessChartData.error}
-          title="Department Wellness"
+          title="Department Engagement"
           description={`Average mood scores by department over the ${
             timeline === '7d' ? 'last 7 days' :
             timeline === '1m' ? 'last month' :
@@ -1614,7 +1614,7 @@ const HRDashboard = () => {
               <h2 className="text-2xl font-bold bg-gradient-to-r from-green-600 to-blue-600 dark:from-green-400 dark:to-blue-400 bg-clip-text text-transparent">
                 Team Analytics
               </h2>
-              <p className="text-sm text-muted-foreground">Comprehensive wellness insights for your team</p>
+              <p className="text-sm text-muted-foreground">Comprehensive engagement insights for your team</p>
             </div>
           </div>
           <TimelineSelector
@@ -1627,23 +1627,23 @@ const HRDashboard = () => {
 
       {/* Four Analytics Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* 1. Team Mood Trends */}
+        {/* 1. Team Engagement Trends */}
         <MoodTrendChart
           data={moodTrendChartData.data}
           loading={moodTrendChartData.loading}
           error={moodTrendChartData.error}
-          title="Team Mood Trends"
-          description={`Wellness patterns over the ${timeline === '7d' ? 'last 7 days' : timeline === '1m' ? 'last month' : timeline === '3m' ? 'last 3 months' : timeline === '6m' ? 'last 6 months' : 'last year'}`}
+          title="Team Engagement Trends"
+          description={`Engagement patterns over the ${timeline === '7d' ? 'last 7 days' : timeline === '1m' ? 'last month' : timeline === '3m' ? 'last 3 months' : timeline === '6m' ? 'last 6 months' : 'last year'}`}
           timeline={timeline}
         />
 
-        {/* 2. Department Wellness Comparison */}
+        {/* 2. Department Engagement Comparison */}
         <DepartmentWellnessChart
           data={departmentWellnessChartData.data}
           loading={departmentWellnessChartData.loading}
           error={departmentWellnessChartData.error}
-          title="Department Wellness"
-          description={`Average wellness scores by department over the ${timeline === '7d' ? 'last 7 days' : timeline === '1m' ? 'last month' : timeline === '3m' ? 'last 3 months' : timeline === '6m' ? 'last 6 months' : 'last year'}`}
+          title="Department Engagement"
+          description={`Average engagement scores by department over the ${timeline === '7d' ? 'last 7 days' : timeline === '1m' ? 'last month' : timeline === '3m' ? 'last 3 months' : timeline === '6m' ? 'last 6 months' : 'last year'}`}
           timeline={timeline}
         />
 
@@ -1657,12 +1657,12 @@ const HRDashboard = () => {
           timeline={timeline}
         />
 
-        {/* 4. Wellness Distribution */}
+        {/* 4. Engagement Distribution */}
         <Card className="bg-gradient-card border-0 shadow-soft">
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <Heart className="w-5 h-5 text-pink-500" />
-              <span>Wellness Distribution</span>
+              <span>Engagement Distribution</span>
             </CardTitle>
             <CardDescription>Team mood distribution over the {
               timeline === '7d' ? 'last 7 days' :
@@ -1777,7 +1777,7 @@ const HRDashboard = () => {
 
         <Card className="bg-gradient-card border-0 shadow-soft">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm">Team Wellness</CardTitle>
+            <CardTitle className="text-sm">Team Engagement</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center space-x-2">
@@ -1794,7 +1794,7 @@ const HRDashboard = () => {
                 );
               })()}
             </div>
-            <p className="text-xs text-muted-foreground">Overall team wellness status</p>
+            <p className="text-xs text-muted-foreground">Overall team engagement status</p>
           </CardContent>
         </Card>
       </div>
@@ -1812,7 +1812,7 @@ const HRDashboard = () => {
             <h2 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 dark:from-purple-400 dark:to-pink-400 bg-clip-text text-transparent">
               Team Reports
             </h2>
-            <p className="text-sm text-muted-foreground">Employee feedback and wellness reports</p>
+            <p className="text-sm text-muted-foreground">Employee feedback and engagement reports</p>
           </div>
         </div>
       </div>
@@ -2453,7 +2453,7 @@ const HRDashboard = () => {
                 <h2 className="text-2xl font-bold bg-gradient-to-r from-green-600 to-blue-600 dark:from-green-400 dark:to-blue-400 bg-clip-text text-transparent">
                   Send Check-ins
                 </h2>
-                <p className="text-sm text-muted-foreground">Send wellness check-ins via WhatsApp to your team</p>
+                <p className="text-sm text-muted-foreground">Send engagement check-ins via WhatsApp to your team</p>
               </div>
             </div>
             <div className="text-right">
@@ -2599,7 +2599,7 @@ const HRDashboard = () => {
                 📱 Platform WhatsApp service enabled - just add employee numbers!
               </div>
             </CardTitle>
-            <CardDescription>Send wellness check-ins via WhatsApp to your team</CardDescription>
+            <CardDescription>Send engagement check-ins via WhatsApp to your team</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             {/* Send Mode Selection */}
@@ -3368,7 +3368,7 @@ const HRDashboard = () => {
                 <h2 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 dark:from-purple-400 dark:to-pink-400 bg-clip-text text-transparent">
                   AI Insights
                 </h2>
-                <p className="text-sm text-muted-foreground">Advanced AI-powered team wellness analysis</p>
+                <p className="text-sm text-muted-foreground">Advanced AI-powered team engagement analysis</p>
               </div>
             </div>
           </div>
@@ -3405,7 +3405,7 @@ const HRDashboard = () => {
           </div>
           <div>
             <h1 className="text-2xl font-bold text-foreground">AI Insights</h1>
-            <p className="text-sm text-muted-foreground">AI-powered team wellness analysis</p>
+            <p className="text-sm text-muted-foreground">AI-powered team engagement analysis</p>
           </div>
         </div>
         <div className="flex space-x-2">
@@ -3417,7 +3417,7 @@ const HRDashboard = () => {
                   featureName: 'Team AI Insights',
                   currentPlan: currentPlan?.name || 'Current',
                   requiredPlan: 'Business',
-                  description: 'Get AI-powered insights about your team\'s wellness, mood trends, and actionable recommendations to improve employee satisfaction.'
+                  description: 'Get AI-powered insights about your team\'s engagement, participation trends, and actionable recommendations to improve employee satisfaction.'
                 })
                 return
               }
@@ -3496,7 +3496,7 @@ const HRDashboard = () => {
                           featureName: 'Employee AI Insights',
                           currentPlan: currentPlan?.name || 'Current',
                           requiredPlan: 'Enterprise',
-                          description: 'Get personalized AI insights for individual employees including wellness trends, performance indicators, and personalized recommendations.'
+                          description: 'Get personalized AI insights for individual employees including engagement trends, performance indicators, and personalized recommendations.'
                         })
                         return
                       }
@@ -3603,7 +3603,7 @@ const HRDashboard = () => {
             <Brain className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
             <h3 className="text-lg font-semibold mb-2">No AI Insights Available</h3>
             <p className="text-muted-foreground mb-4">
-              Generate your first AI insights to get personalized recommendations for your team's wellness.
+              Generate your first AI insights to get personalized recommendations for your team's engagement.
             </p>
             <Button
               onClick={() => aiInsights.generateNewInsights(aiInsights.selectedEmployee || undefined)}
@@ -3708,7 +3708,7 @@ const HRDashboard = () => {
                       </div>
                       <div>
                         <h3 className="text-xl font-bold text-gray-800 dark:text-gray-200">
-                          AI Wellness Report
+                          AI Engagement Report
                         </h3>
                         <div className="flex items-center space-x-4 text-sm text-gray-600 dark:text-gray-400">
                           <div className="flex items-center space-x-1">
@@ -3807,7 +3807,7 @@ const HRDashboard = () => {
                             // Skip empty lines
                             if (!trimmedLine) return null;
 
-                            // Section headers (like "Overall Wellness Assessment")
+                            // Section headers (like "Overall Engagement Assessment")
                             if (trimmedLine.match(/^[A-Z][a-zA-Z\s]+:?$/) && !trimmedLine.includes('-')) {
                               return (
                                 <div key={index} className="font-bold text-lg text-gray-800 dark:text-gray-200 mt-8 mb-4 pb-3 border-b-2 border-blue-200 dark:border-blue-700">

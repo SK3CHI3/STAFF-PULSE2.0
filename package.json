@@ -2,7 +2,7 @@
   "name": "staff-pulse",
   "private": true,
   "version": "1.0.0",
-  "description": "Employee wellness and engagement platform",
+  "description": "Employee engagement and participation platform",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -17,8 +17,8 @@
   },
   "keywords": [
     "employee",
-    "wellness",
     "engagement",
+    "participation",
     "hr",
     "dashboard",
     "react",

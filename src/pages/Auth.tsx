@@ -55,7 +55,7 @@ const Auth = () => {
           <div className="relative z-10 flex flex-col justify-center px-12 text-white">
             <div className="max-w-md">
               <h1 className="text-4xl font-bold mb-6">
-                Transform Your Team's Wellness
+                Boost Your Team's Engagement
               </h1>
               <p className="text-xl mb-8 text-white/90">
                 Monitor employee wellbeing through WhatsApp check-ins and AI-powered insights.

@@ -74,9 +74,9 @@ The system supports Kenyan phone numbers in these formats:
 
 The system includes pre-built templates:
 
-1. **Daily Check-in**: Standard wellness check
+1. **Daily Check-in**: Standard engagement check
 2. **Weekly Pulse**: Comprehensive weekly check
-3. **Project Feedback**: Project-specific wellness
+3. **Project Feedback**: Project-specific engagement
 4. **Custom Message**: Fully customizable
 
 ## Rate Limits

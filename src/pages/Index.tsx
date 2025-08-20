@@ -12,46 +12,46 @@ const Index = () => {
     {
       icon: MessageSquare,
       title: "WhatsApp & SMS Integration",
-      description: "Reach employees directly through their phones. Works perfectly across all mobile networks.",
+      description: "Engage employees directly through their preferred communication channels. Works perfectly across all mobile networks.",
       gradient: "from-green-500 to-emerald-600"
     },
     {
       icon: BarChart3,
-      title: "Real-time Analytics",
-      description: "Beautiful dashboards showing team mood trends, response rates, and wellness insights.",
+      title: "Real-time Engagement Analytics",
+      description: "Beautiful dashboards showing participation trends, response rates, and engagement insights.",
       gradient: "from-blue-500 to-cyan-600"
     },
     {
       icon: Users,
-      title: "Team Management",
-      description: "Organize employees by departments, branches, and custom groups for targeted insights.",
+      title: "Team Engagement Management",
+      description: "Organize employees by departments, branches, and custom groups for targeted engagement initiatives.",
       gradient: "from-purple-500 to-violet-600"
     },
     {
       icon: Shield,
-      title: "Anonymous Responses",
-      description: "Employees can share honestly without fear. Complete privacy guaranteed.",
+      title: "Anonymous Feedback",
+      description: "Employees can share honestly without fear. Complete privacy guaranteed for authentic engagement.",
       gradient: "from-orange-500 to-red-600"
     },
     {
       icon: TrendingUp,
-      title: "Trend Analysis",
-      description: "Spot patterns, identify concerns early, and track improvement over time.",
+      title: "Engagement Trend Analysis",
+      description: "Spot engagement patterns, identify disengagement early, and track improvement over time.",
       gradient: "from-teal-500 to-cyan-600"
     },
     {
       icon: Zap,
       title: "Zero Setup for Employees",
-      description: "No accounts, no passwords. Just click a link and share how you're feeling.",
+      description: "No accounts, no passwords. Just click a link and share your engagement level instantly.",
       gradient: "from-yellow-500 to-orange-600"
     }
   ];
 
   const heroSlides = [
     {
-      title: "Transform Your Team's Wellness",
-      subtitle: "Simple employee mood tracking through WhatsApp",
-      description: "Get real insights into team wellness without awkward conversations. Built for Kenyan businesses.",
+      title: "Boost Employee Engagement",
+      subtitle: "Drive participation, connection, and performance through smart communication",
+      description: "Increase employee engagement by 40% with data-driven feedback loops and real-time insights. Built for modern businesses.",
       cta: "Start Free Trial"
     },
     {
@@ -81,7 +81,7 @@ const Index = () => {
       name: "John Kiprotich",
       role: "People Operations at Safari Logistics",
       company: "Safari Logistics",
-      content: "Finally, a wellness tool that works for our field teams. The WhatsApp integration is perfect for Kenya.",
+      content: "Finally, an engagement tool that works for our field teams. The WhatsApp integration is perfect for Kenya.",
       rating: 5,
       location: "Mombasa"
     },
@@ -216,12 +216,12 @@ const Index = () => {
               {/* Clean Main Title - Mobile Optimized */}
               <div className="space-y-3 sm:space-y-4 md:space-y-6">
                 <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold leading-[1.1] sm:leading-tight text-white px-2 sm:px-0">
-                  Transform Your Team's
-                  <span className="block text-yellow-300 mt-1">Wellness</span>
+                  Boost Employee
+                  <span className="block text-yellow-300 mt-1">Engagement</span>
                 </h1>
 
                 <p className="text-sm sm:text-base md:text-lg lg:text-xl text-white/90 leading-relaxed max-w-lg sm:max-w-xl mx-auto lg:mx-0 px-2 sm:px-0">
-                  Simple employee mood tracking through WhatsApp. Get real insights into team wellness without awkward conversations.
+                  Drive participation, connection, and performance through smart communication. Increase engagement by 40% with data-driven insights.
                 </p>
               </div>
 
@@ -287,7 +287,7 @@ const Index = () => {
                       <div className="space-y-2 sm:space-y-3 md:space-y-4 flex-1 flex flex-col justify-between">
                         <h3 className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-white leading-tight">WhatsApp Native Integration</h3>
                         <p className="text-xs sm:text-sm md:text-base text-white/80 leading-relaxed">
-                          Built natively for WhatsApp Business API. Your employees receive mood check-ins directly in their WhatsApp - no external apps, no friction, just seamless communication.
+                          Built natively for WhatsApp Business API. Engage employees directly through their preferred communication channel - no external apps, no friction, just seamless engagement.
                         </p>
 
                         {/* Feature Points */}
@@ -320,24 +320,24 @@ const Index = () => {
 
                       {/* Content */}
                       <div className="space-y-2 sm:space-y-3 md:space-y-4 flex-1 flex flex-col justify-between">
-                        <h3 className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-white leading-tight">AI-Powered Intelligence</h3>
+                        <h3 className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-white leading-tight">AI-Powered Engagement Intelligence</h3>
                         <p className="text-xs sm:text-sm md:text-base text-white/80 leading-relaxed">
-                          Advanced machine learning algorithms analyze mood patterns, predict wellness trends, and automatically generate personalized recommendations for each team member.
+                          Advanced machine learning algorithms analyze engagement patterns, predict participation trends, and automatically generate personalized recommendations to boost team engagement.
                         </p>
 
                         {/* Feature Points */}
                         <div className="space-y-1.5 sm:space-y-2">
                           <div className="flex items-center space-x-2">
                             <Zap className="w-3 h-3 sm:w-4 sm:h-4 text-purple-400 flex-shrink-0" />
-                            <span className="text-white/90 text-xs sm:text-sm">Real-time sentiment analysis</span>
+                            <span className="text-white/90 text-xs sm:text-sm">Real-time engagement analysis</span>
                           </div>
                           <div className="flex items-center space-x-2">
                             <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 text-purple-400 flex-shrink-0" />
-                            <span className="text-white/90 text-xs sm:text-sm">Predictive wellness modeling</span>
+                            <span className="text-white/90 text-xs sm:text-sm">Predictive participation modeling</span>
                           </div>
                           <div className="flex items-center space-x-2">
                             <Target className="w-3 h-3 sm:w-4 sm:h-4 text-purple-400 flex-shrink-0" />
-                            <span className="text-white/90 text-xs sm:text-sm">Automated intervention alerts</span>
+                            <span className="text-white/90 text-xs sm:text-sm">Automated engagement alerts</span>
                           </div>
                         </div>
                       </div>
@@ -357,14 +357,14 @@ const Index = () => {
                       <div className="space-y-2 sm:space-y-3 md:space-y-4 flex-1 flex flex-col justify-between">
                         <h3 className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-white leading-tight">Measurable Business Impact</h3>
                         <p className="text-xs sm:text-sm md:text-base text-white/80 leading-relaxed">
-                          Transform workplace culture with data-driven wellness initiatives. Companies using StaffPulse report 40% higher employee satisfaction and 25% improved retention rates.
+                          Transform workplace culture with data-driven engagement initiatives. Companies using StaffPulse report 40% higher employee engagement and 25% improved retention rates.
                         </p>
 
                         {/* Feature Points */}
                         <div className="space-y-1.5 sm:space-y-2">
                           <div className="flex items-center space-x-2">
                             <Award className="w-3 h-3 sm:w-4 sm:h-4 text-blue-400 flex-shrink-0" />
-                            <span className="text-white/90 text-xs sm:text-sm">40% boost in satisfaction</span>
+                            <span className="text-white/90 text-xs sm:text-sm">40% boost in engagement</span>
                           </div>
                           <div className="flex items-center space-x-2">
                             <Users className="w-3 h-3 sm:w-4 sm:h-4 text-blue-400 flex-shrink-0" />
@@ -372,7 +372,7 @@ const Index = () => {
                           </div>
                           <div className="flex items-center space-x-2">
                             <Clock className="w-3 h-3 sm:w-4 sm:h-4 text-blue-400 flex-shrink-0" />
-                            <span className="text-white/90 text-xs sm:text-sm">Real-time culture insights</span>
+                            <span className="text-white/90 text-xs sm:text-sm">Real-time engagement insights</span>
                           </div>
                         </div>
                       </div>
@@ -398,9 +398,9 @@ const Index = () => {
               Powerful Features
             </Badge>
             <h2 className="text-4xl lg:text-5xl font-bold">Everything You Need for</h2>
-            <h3 className="text-4xl lg:text-5xl font-bold bg-gradient-primary bg-clip-text text-transparent">Team Wellness</h3>
+            <h3 className="text-4xl lg:text-5xl font-bold bg-gradient-primary bg-clip-text text-transparent">Employee Engagement</h3>
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-              Powerful features designed to make employee wellness tracking simple, effective, and engaging for modern organizations.
+              Powerful features designed to make employee engagement tracking simple, effective, and impactful for modern organizations.
             </p>
           </div>
 
@@ -455,7 +455,7 @@ const Index = () => {
               {
                 step: "3",
                 title: "View Insights",
-                description: "Beautiful dashboards showing mood trends, alerts, and actionable team insights in real-time.",
+                description: "Beautiful dashboards showing engagement trends, alerts, and actionable team insights in real-time.",
                 icon: BarChart3,
                 color: "from-purple-500 to-violet-600"
               }
@@ -487,7 +487,7 @@ const Index = () => {
             </Badge>
             <h2 className="text-4xl lg:text-5xl font-bold">Loved by HR Teams Worldwide</h2>
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-              See how organizations around the world are improving team wellness with StaffPulse
+              See how organizations around the world are improving team engagement with StaffPulse
             </p>
           </div>
 
@@ -607,11 +607,11 @@ const Index = () => {
               Join 500+ Organizations Worldwide
             </Badge>
             <h2 className="text-4xl lg:text-6xl font-bold leading-tight">
-              Ready to Transform Your 
-              <span className="block">Team's Wellness?</span>
+              Ready to Boost Your
+              <span className="block">Team's Engagement?</span>
             </h2>
             <p className="text-xl lg:text-2xl opacity-90 leading-relaxed">
-              Join hundreds of organizations worldwide using StaffPulse to build happier, healthier teams across the globe.
+              Join hundreds of organizations worldwide using StaffPulse to build more engaged, productive teams across the globe.
             </p>
             <div className="flex flex-col sm:flex-row gap-6 justify-center pt-4">
               <Button variant="secondary" size="lg" className="text-lg px-10 py-6 shadow-strong">
@@ -653,8 +653,8 @@ const Index = () => {
                 <span className="text-2xl font-bold">StaffPulse</span>
               </div>
               <p className="text-muted-foreground leading-relaxed max-w-md">
-                Simple employee wellness tracking built for modern organizations worldwide.
-                Transform your team's wellness with WhatsApp-based check-ins.
+                Simple employee engagement tracking built for modern organizations worldwide.
+                Transform your team's engagement with WhatsApp-based check-ins.
               </p>
 
             </div>

@@ -1,7 +1,7 @@
 {
-  "name": "StaffPulse - Employee Wellness Platform",
+  "name": "StaffPulse - Employee Engagement Platform",
   "short_name": "StaffPulse",
-  "description": "Employee wellness tracking platform with WhatsApp integration and real-time analytics",
+  "description": "Employee engagement platform with WhatsApp integration and real-time analytics",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
