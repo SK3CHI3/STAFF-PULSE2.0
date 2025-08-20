@@ -14,7 +14,7 @@ A comprehensive employee engagement and participation platform built with React,
 - **Automated Campaigns** - Schedule and automate engagement check-ins 
 - **Multi-channel Support** - WhatsApp and SMS messaging options
 
-### 📊 **Analytics & Insights**
+### 📊 **Analytics & Insights** 
 - **Real-time Dashboard** - Monitor employee engagement and participation metrics
 - **Engagement Tracking** - Track team engagement trends over time
 - **AI-powered Insights** - Get intelligent recommendations using OpenRouter AI
