@@ -147,6 +147,8 @@ All colors MUST be HSL.
   html {
     -webkit-text-size-adjust: 100%;
     -ms-text-size-adjust: 100%;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
   /* Prevent horizontal scroll on mobile */
@@ -159,6 +161,75 @@ All colors MUST be HSL.
     .hero-mobile-height {
       min-height: 100vh;
       min-height: 100dvh; /* Dynamic viewport height for mobile browsers */
+    }
+
+    /* Improve touch targets on mobile */
+    button, a {
+      touch-action: manipulation;
+    }
+
+    /* Better text rendering on mobile */
+    h1, h2, h3 {
+      text-rendering: optimizeLegibility;
+    }
+
+    /* Prevent zoom on input focus */
+    input, select, textarea {
+      font-size: 16px;
+    }
+  }
+
+  /* Extra small mobile devices */
+  @media (max-width: 375px) {
+    .hero-mobile-height {
+      padding-top: 1.5rem;
+      padding-bottom: 1.5rem;
+    }
+
+    /* Smaller text on very small screens */
+    .hero-mobile-height h1 {
+      font-size: 1.75rem !important;
+      line-height: 1.1 !important;
+    }
+
+    .hero-mobile-height p {
+      font-size: 0.875rem !important;
+    }
+  }
+
+  /* Landscape mobile orientation */
+  @media (max-height: 500px) and (orientation: landscape) {
+    .hero-mobile-height {
+      min-height: auto;
+      padding-top: 0.5rem;
+      padding-bottom: 0.5rem;
+    }
+
+    /* Stack content horizontally in landscape */
+    .hero-mobile-height .flex.flex-col {
+      flex-direction: row !important;
+      align-items: center !important;
+      gap: 2rem !important;
+    }
+
+    .hero-mobile-height .order-1,
+    .hero-mobile-height .order-2 {
+      order: unset !important;
+      flex: 1 !important;
+    }
+  }
+
+  /* Very short screens (like iPhone in landscape) */
+  @media (max-height: 400px) {
+    .hero-mobile-height {
+      min-height: auto !important;
+      padding: 0.5rem 0 !important;
+    }
+
+    .hero-mobile-height .space-y-4,
+    .hero-mobile-height .space-y-6,
+    .hero-mobile-height .space-y-8 {
+      gap: 0.75rem !important;
     }
   }
 }

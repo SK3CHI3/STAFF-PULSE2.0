@@ -198,61 +198,61 @@ const Index = () => {
       </nav>
 
       {/* Hero Section with RGB Gradient - Mobile Optimized */}
-      <section className="relative hero-mobile-height min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-600 via-blue-600 to-cyan-500 overflow-hidden py-16 sm:py-20 lg:py-0">
+      <section className="relative hero-mobile-height min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-600 via-blue-600 to-cyan-500 overflow-hidden py-12 sm:py-16 lg:py-0">
         {/* RGB Gradient Background Elements - Mobile Responsive */}
-        <div className="absolute top-0 right-0 w-48 h-48 sm:w-72 sm:h-72 lg:w-96 lg:h-96 bg-gradient-to-bl from-pink-500/30 via-purple-500/20 to-transparent rounded-full blur-3xl"></div>
-        <div className="absolute bottom-0 left-0 w-40 h-40 sm:w-60 sm:h-60 lg:w-80 lg:h-80 bg-gradient-to-tr from-cyan-500/30 via-blue-500/20 to-transparent rounded-full blur-3xl"></div>
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[300px] h-[150px] sm:w-[450px] sm:h-[225px] lg:w-[600px] lg:h-[300px] bg-gradient-to-r from-purple-500/10 via-pink-500/10 to-cyan-500/10 rounded-full blur-3xl"></div>
+        <div className="absolute top-0 right-0 w-32 h-32 sm:w-48 sm:h-48 md:w-72 md:h-72 lg:w-96 lg:h-96 bg-gradient-to-bl from-pink-500/30 via-purple-500/20 to-transparent rounded-full blur-3xl"></div>
+        <div className="absolute bottom-0 left-0 w-28 h-28 sm:w-40 sm:h-40 md:w-60 md:h-60 lg:w-80 lg:h-80 bg-gradient-to-tr from-cyan-500/30 via-blue-500/20 to-transparent rounded-full blur-3xl"></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[200px] h-[100px] sm:w-[300px] sm:h-[150px] md:w-[450px] md:h-[225px] lg:w-[600px] lg:h-[300px] bg-gradient-to-r from-purple-500/10 via-pink-500/10 to-cyan-500/10 rounded-full blur-3xl"></div>
 
-        <div className="container mx-auto px-4 sm:px-6 relative z-10 min-h-screen flex items-center">
-          <div className="grid lg:grid-cols-2 gap-8 sm:gap-12 lg:gap-16 items-center max-w-7xl mx-auto w-full">
-            {/* Left Content */}
-            <div className="space-y-6 sm:space-y-8 text-center lg:text-left order-1 lg:order-1">
+        <div className="container mx-auto px-3 sm:px-4 md:px-6 relative z-10 min-h-screen flex items-center">
+          <div className="flex flex-col lg:grid lg:grid-cols-2 gap-6 sm:gap-8 md:gap-12 lg:gap-16 items-center max-w-7xl mx-auto w-full">
+            {/* Left Content - Mobile First */}
+            <div className="space-y-4 sm:space-y-6 md:space-y-8 text-center lg:text-left order-1 lg:order-1 w-full">
               {/* Simple Badge */}
-              <div className="inline-flex items-center space-x-2 px-3 sm:px-4 py-2 bg-white/20 backdrop-blur-sm rounded-full border border-white/30">
+              <div className="inline-flex items-center space-x-2 px-3 sm:px-4 py-1.5 sm:py-2 bg-white/20 backdrop-blur-sm rounded-full border border-white/30">
                 <span className="text-xs sm:text-sm font-medium text-white">✨ Welcome to StaffPulse</span>
               </div>
 
               {/* Clean Main Title - Mobile Optimized */}
-              <div className="space-y-4 sm:space-y-6">
-                <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold leading-tight text-white">
+              <div className="space-y-3 sm:space-y-4 md:space-y-6">
+                <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold leading-[1.1] sm:leading-tight text-white px-2 sm:px-0">
                   Transform Your Team's
-                  <span className="block text-yellow-300">Wellness</span>
+                  <span className="block text-yellow-300 mt-1">Wellness</span>
                 </h1>
 
-                <p className="text-sm sm:text-base md:text-lg lg:text-xl text-white/90 leading-relaxed max-w-xl mx-auto lg:mx-0">
+                <p className="text-sm sm:text-base md:text-lg lg:text-xl text-white/90 leading-relaxed max-w-lg sm:max-w-xl mx-auto lg:mx-0 px-2 sm:px-0">
                   Simple employee mood tracking through WhatsApp. Get real insights into team wellness without awkward conversations.
                 </p>
               </div>
 
               {/* Action Buttons - Mobile Optimized */}
-              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center lg:justify-start">
+              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center lg:justify-start px-2 sm:px-0">
                 <Link to="/auth" className="w-full sm:w-auto">
-                  <Button size="lg" className="w-full sm:w-auto bg-white text-purple-600 hover:bg-white/90 px-6 sm:px-8 py-3 sm:py-4 text-sm sm:text-base font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
+                  <Button size="lg" className="w-full sm:w-auto bg-white text-purple-600 hover:bg-white/90 px-6 sm:px-8 py-3.5 sm:py-4 text-sm sm:text-base font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 min-h-[48px] touch-manipulation">
                     Get Started
                     <ArrowRight className="w-4 sm:w-5 h-4 sm:h-5 ml-2" />
                   </Button>
                 </Link>
-                <Button variant="outline" size="lg" className="w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-4 text-sm sm:text-base font-semibold rounded-xl bg-white/15 border-white/60 text-white hover:bg-white/25 hover:border-white/80 backdrop-blur-sm transition-all duration-300 hover:scale-105">
+                <Button variant="outline" size="lg" className="w-full sm:w-auto px-6 sm:px-8 py-3.5 sm:py-4 text-sm sm:text-base font-semibold rounded-xl bg-white/15 border-white/60 text-white hover:bg-white/25 hover:border-white/80 backdrop-blur-sm transition-all duration-300 hover:scale-105 min-h-[48px] touch-manipulation">
                   <Play className="w-4 sm:w-5 h-4 sm:h-5 mr-2" />
                   Watch Demo
                 </Button>
               </div>
 
-              {/* Social Proof */}
-              <div className="flex items-center justify-center lg:justify-start space-x-4 sm:space-x-6">
-                <div className="flex -space-x-2">
-                  <div className="w-8 sm:w-10 h-8 sm:h-10 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full border-2 border-white flex items-center justify-center">
-                    <Users className="w-4 sm:w-5 h-4 sm:h-5 text-white" />
+              {/* Social Proof - Mobile Optimized */}
+              <div className="flex items-center justify-center lg:justify-start space-x-3 sm:space-x-4 md:space-x-6 px-2 sm:px-0">
+                <div className="flex -space-x-1 sm:-space-x-2">
+                  <div className="w-7 h-7 sm:w-8 sm:h-8 md:w-10 md:h-10 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full border-2 border-white flex items-center justify-center">
+                    <Users className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 text-white" />
                   </div>
-                  <div className="w-8 sm:w-10 h-8 sm:h-10 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full border-2 border-white flex items-center justify-center">
-                    <CheckCircle className="w-4 sm:w-5 h-4 sm:h-5 text-white" />
+                  <div className="w-7 h-7 sm:w-8 sm:h-8 md:w-10 md:h-10 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full border-2 border-white flex items-center justify-center">
+                    <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 text-white" />
                   </div>
-                  <div className="w-8 sm:w-10 h-8 sm:h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full border-2 border-white flex items-center justify-center">
-                    <Star className="w-4 sm:w-5 h-4 sm:h-5 text-white" />
+                  <div className="w-7 h-7 sm:w-8 sm:h-8 md:w-10 md:h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full border-2 border-white flex items-center justify-center">
+                    <Star className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 text-white" />
                   </div>
-                  <div className="w-8 sm:w-10 h-8 sm:h-10 bg-gradient-to-r from-orange-500 to-red-500 rounded-full border-2 border-white flex items-center justify-center">
-                    <TrendingUp className="w-4 sm:w-5 h-4 sm:h-5 text-white" />
+                  <div className="w-7 h-7 sm:w-8 sm:h-8 md:w-10 md:h-10 bg-gradient-to-r from-orange-500 to-red-500 rounded-full border-2 border-white flex items-center justify-center">
+                    <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 text-white" />
                   </div>
                 </div>
                 <div>
@@ -263,7 +263,7 @@ const Index = () => {
             </div>
 
             {/* Right Content - Modern Feature Carousel - Mobile Optimized */}
-            <div className="relative mt-8 lg:mt-0 order-2 lg:order-2">
+            <div className="relative mt-6 sm:mt-8 lg:mt-0 order-2 lg:order-2 w-full px-2 sm:px-0">
               <Carousel
                 plugins={[
                   Autoplay({
@@ -271,27 +271,27 @@ const Index = () => {
                     stopOnInteraction: false,
                   }),
                 ]}
-                className="w-full max-w-sm sm:max-w-md lg:max-w-xl mx-auto group"
+                className="w-full max-w-xs sm:max-w-sm md:max-w-md lg:max-w-xl mx-auto group"
               >
                 <CarouselContent>
                   {/* WhatsApp Integration Feature - Mobile Optimized */}
                   <CarouselItem>
-                    <div className="relative bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl rounded-2xl sm:rounded-3xl p-4 sm:p-6 lg:p-8 border border-white/20 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.4)] hover:shadow-[0_35px_60px_-12px_rgba(0,0,0,0.5)] transition-all duration-500 min-h-[320px] sm:min-h-[350px] lg:h-[380px] flex flex-col w-full">
+                    <div className="relative bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl rounded-xl sm:rounded-2xl md:rounded-3xl p-3 sm:p-4 md:p-6 lg:p-8 border border-white/20 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.4)] hover:shadow-[0_35px_60px_-12px_rgba(0,0,0,0.5)] transition-all duration-500 min-h-[280px] sm:min-h-[320px] md:min-h-[350px] lg:h-[380px] flex flex-col w-full">
 
                       {/* Icon */}
-                      <div className="w-16 h-16 sm:w-18 sm:h-18 lg:w-20 lg:h-20 bg-gradient-to-r from-green-500 to-emerald-600 rounded-xl sm:rounded-2xl flex items-center justify-center mb-4 sm:mb-6 shadow-[0_20px_25px_-5px_rgba(34,197,94,0.4)] hover:shadow-[0_25px_35px_-5px_rgba(34,197,94,0.5)] transition-all duration-300">
-                        <MessageSquare className="w-8 h-8 sm:w-9 sm:h-9 lg:w-10 lg:h-10 text-white" />
+                      <div className="w-12 h-12 sm:w-16 sm:h-16 md:w-18 md:h-18 lg:w-20 lg:h-20 bg-gradient-to-r from-green-500 to-emerald-600 rounded-lg sm:rounded-xl md:rounded-2xl flex items-center justify-center mb-3 sm:mb-4 md:mb-6 shadow-[0_20px_25px_-5px_rgba(34,197,94,0.4)] hover:shadow-[0_25px_35px_-5px_rgba(34,197,94,0.5)] transition-all duration-300">
+                        <MessageSquare className="w-6 h-6 sm:w-8 sm:h-8 md:w-9 md:h-9 lg:w-10 lg:h-10 text-white" />
                       </div>
 
                       {/* Content */}
-                      <div className="space-y-3 sm:space-y-4 flex-1 flex flex-col justify-between">
-                        <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-white">WhatsApp Native Integration</h3>
-                        <p className="text-sm sm:text-base text-white/80 leading-relaxed">
+                      <div className="space-y-2 sm:space-y-3 md:space-y-4 flex-1 flex flex-col justify-between">
+                        <h3 className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-white leading-tight">WhatsApp Native Integration</h3>
+                        <p className="text-xs sm:text-sm md:text-base text-white/80 leading-relaxed">
                           Built natively for WhatsApp Business API. Your employees receive mood check-ins directly in their WhatsApp - no external apps, no friction, just seamless communication.
                         </p>
 
                         {/* Feature Points */}
-                        <div className="space-y-2">
+                        <div className="space-y-1.5 sm:space-y-2">
                           <div className="flex items-center space-x-2">
                             <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4 text-green-400 flex-shrink-0" />
                             <span className="text-white/90 text-xs sm:text-sm">Native WhatsApp experience</span>
@@ -311,22 +311,22 @@ const Index = () => {
 
                   {/* AI Insights Feature - Mobile Optimized */}
                   <CarouselItem>
-                    <div className="relative bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl rounded-2xl sm:rounded-3xl p-4 sm:p-6 lg:p-8 border border-white/20 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.4)] hover:shadow-[0_35px_60px_-12px_rgba(0,0,0,0.5)] transition-all duration-500 min-h-[320px] sm:min-h-[350px] lg:h-[380px] flex flex-col w-full">
+                    <div className="relative bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl rounded-xl sm:rounded-2xl md:rounded-3xl p-3 sm:p-4 md:p-6 lg:p-8 border border-white/20 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.4)] hover:shadow-[0_35px_60px_-12px_rgba(0,0,0,0.5)] transition-all duration-500 min-h-[280px] sm:min-h-[320px] md:min-h-[350px] lg:h-[380px] flex flex-col w-full">
 
                       {/* Icon */}
-                      <div className="w-16 h-16 sm:w-18 sm:h-18 lg:w-20 lg:h-20 bg-gradient-to-r from-purple-500 to-pink-600 rounded-xl sm:rounded-2xl flex items-center justify-center mb-4 sm:mb-6 shadow-[0_20px_25px_-5px_rgba(168,85,247,0.4)] hover:shadow-[0_25px_35px_-5px_rgba(168,85,247,0.5)] transition-all duration-300">
-                        <BarChart3 className="w-8 h-8 sm:w-9 sm:h-9 lg:w-10 lg:h-10 text-white" />
+                      <div className="w-12 h-12 sm:w-16 sm:h-16 md:w-18 md:h-18 lg:w-20 lg:h-20 bg-gradient-to-r from-purple-500 to-pink-600 rounded-lg sm:rounded-xl md:rounded-2xl flex items-center justify-center mb-3 sm:mb-4 md:mb-6 shadow-[0_20px_25px_-5px_rgba(168,85,247,0.4)] hover:shadow-[0_25px_35px_-5px_rgba(168,85,247,0.5)] transition-all duration-300">
+                        <BarChart3 className="w-6 h-6 sm:w-8 sm:h-8 md:w-9 md:h-9 lg:w-10 lg:h-10 text-white" />
                       </div>
 
                       {/* Content */}
-                      <div className="space-y-3 sm:space-y-4 flex-1 flex flex-col justify-between">
-                        <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-white">AI-Powered Intelligence</h3>
-                        <p className="text-sm sm:text-base text-white/80 leading-relaxed">
+                      <div className="space-y-2 sm:space-y-3 md:space-y-4 flex-1 flex flex-col justify-between">
+                        <h3 className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-white leading-tight">AI-Powered Intelligence</h3>
+                        <p className="text-xs sm:text-sm md:text-base text-white/80 leading-relaxed">
                           Advanced machine learning algorithms analyze mood patterns, predict wellness trends, and automatically generate personalized recommendations for each team member.
                         </p>
 
                         {/* Feature Points */}
-                        <div className="space-y-2">
+                        <div className="space-y-1.5 sm:space-y-2">
                           <div className="flex items-center space-x-2">
                             <Zap className="w-3 h-3 sm:w-4 sm:h-4 text-purple-400 flex-shrink-0" />
                             <span className="text-white/90 text-xs sm:text-sm">Real-time sentiment analysis</span>
@@ -346,22 +346,22 @@ const Index = () => {
 
                   {/* Productivity Boost Feature - Mobile Optimized */}
                   <CarouselItem>
-                    <div className="relative bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl rounded-2xl sm:rounded-3xl p-4 sm:p-6 lg:p-8 border border-white/20 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.4)] hover:shadow-[0_35px_60px_-12px_rgba(0,0,0,0.5)] transition-all duration-500 min-h-[320px] sm:min-h-[350px] lg:h-[380px] flex flex-col w-full">
+                    <div className="relative bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl rounded-xl sm:rounded-2xl md:rounded-3xl p-3 sm:p-4 md:p-6 lg:p-8 border border-white/20 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.4)] hover:shadow-[0_35px_60px_-12px_rgba(0,0,0,0.5)] transition-all duration-500 min-h-[280px] sm:min-h-[320px] md:min-h-[350px] lg:h-[380px] flex flex-col w-full">
 
                       {/* Icon */}
-                      <div className="w-16 h-16 sm:w-18 sm:h-18 lg:w-20 lg:h-20 bg-gradient-to-r from-blue-500 to-cyan-600 rounded-xl sm:rounded-2xl flex items-center justify-center mb-4 sm:mb-6 shadow-[0_20px_25px_-5px_rgba(59,130,246,0.4)] hover:shadow-[0_25px_35px_-5px_rgba(59,130,246,0.5)] transition-all duration-300">
-                        <TrendingUp className="w-8 h-8 sm:w-9 sm:h-9 lg:w-10 lg:h-10 text-white" />
+                      <div className="w-12 h-12 sm:w-16 sm:h-16 md:w-18 md:h-18 lg:w-20 lg:h-20 bg-gradient-to-r from-blue-500 to-cyan-600 rounded-lg sm:rounded-xl md:rounded-2xl flex items-center justify-center mb-3 sm:mb-4 md:mb-6 shadow-[0_20px_25px_-5px_rgba(59,130,246,0.4)] hover:shadow-[0_25px_35px_-5px_rgba(59,130,246,0.5)] transition-all duration-300">
+                        <TrendingUp className="w-6 h-6 sm:w-8 sm:h-8 md:w-9 md:h-9 lg:w-10 lg:h-10 text-white" />
                       </div>
 
                       {/* Content */}
-                      <div className="space-y-3 sm:space-y-4 flex-1 flex flex-col justify-between">
-                        <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-white">Measurable Business Impact</h3>
-                        <p className="text-sm sm:text-base text-white/80 leading-relaxed">
+                      <div className="space-y-2 sm:space-y-3 md:space-y-4 flex-1 flex flex-col justify-between">
+                        <h3 className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-white leading-tight">Measurable Business Impact</h3>
+                        <p className="text-xs sm:text-sm md:text-base text-white/80 leading-relaxed">
                           Transform workplace culture with data-driven wellness initiatives. Companies using StaffPulse report 40% higher employee satisfaction and 25% improved retention rates.
                         </p>
 
                         {/* Feature Points */}
-                        <div className="space-y-2">
+                        <div className="space-y-1.5 sm:space-y-2">
                           <div className="flex items-center space-x-2">
                             <Award className="w-3 h-3 sm:w-4 sm:h-4 text-blue-400 flex-shrink-0" />
                             <span className="text-white/90 text-xs sm:text-sm">40% boost in satisfaction</span>
@@ -380,9 +380,9 @@ const Index = () => {
                   </CarouselItem>
                 </CarouselContent>
 
-                {/* Custom Navigation - Hidden by default, visible on hover */}
-                <CarouselPrevious className="left-4 bg-white/10 border-white/20 text-white hover:bg-white/20 backdrop-blur-sm invisible group-hover:visible transition-all duration-300" />
-                <CarouselNext className="right-4 bg-white/10 border-white/20 text-white hover:bg-white/20 backdrop-blur-sm invisible group-hover:visible transition-all duration-300" />
+                {/* Custom Navigation - Mobile Optimized */}
+                <CarouselPrevious className="left-2 sm:left-4 bg-white/10 border-white/20 text-white hover:bg-white/20 backdrop-blur-sm visible sm:invisible sm:group-hover:visible transition-all duration-300 w-8 h-8 sm:w-10 sm:h-10 touch-manipulation" />
+                <CarouselNext className="right-2 sm:right-4 bg-white/10 border-white/20 text-white hover:bg-white/20 backdrop-blur-sm visible sm:invisible sm:group-hover:visible transition-all duration-300 w-8 h-8 sm:w-10 sm:h-10 touch-manipulation" />
               </Carousel>
             </div>
           </div>
