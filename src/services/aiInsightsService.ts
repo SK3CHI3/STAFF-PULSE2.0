@@ -466,6 +466,133 @@ Format your response in clear sections with bullet points for easy reading.
     return insights
   }
 
+  private parsePollAIResponse(aiResponse: string, pollsData: any[]): AIInsight[] {
+    const insights: AIInsight[] = []
+
+    // Create main poll analysis insight
+    insights.push({
+      type: 'summary',
+      title: 'Poll Analysis Summary',
+      content: aiResponse,
+      priority: 'medium',
+      confidence: 0.85,
+      scope: 'organization'
+    })
+
+    // Add specific insights based on poll data patterns
+    const totalPolls = pollsData.length
+    const activePolls = pollsData.filter(p => p.is_active).length
+    const totalResponses = pollsData.reduce((sum, p) => sum + (p.poll_responses?.length || 0), 0)
+    const avgResponsesPerPoll = totalPolls > 0 ? totalResponses / totalPolls : 0
+
+    if (avgResponsesPerPoll < 3) {
+      insights.push({
+        type: 'recommendation',
+        title: 'Low Poll Engagement',
+        content: `Average of ${avgResponsesPerPoll.toFixed(1)} responses per poll indicates low engagement. Consider improving poll design, timing, or incentives to increase participation.`,
+        priority: 'high',
+        confidence: 0.90,
+        scope: 'organization'
+      })
+    }
+
+    if (activePolls === 0 && totalPolls > 0) {
+      insights.push({
+        type: 'recommendation',
+        title: 'No Active Polls',
+        content: `All ${totalPolls} polls are inactive. Consider creating new polls to maintain employee engagement and gather fresh feedback.`,
+        priority: 'medium',
+        confidence: 0.95,
+        scope: 'organization'
+      })
+    }
+
+    // Check for polls with no responses
+    const pollsWithoutResponses = pollsData.filter(p => !p.poll_responses || p.poll_responses.length === 0)
+    if (pollsWithoutResponses.length > 0) {
+      insights.push({
+        type: 'trend_analysis',
+        title: 'Unresponsive Polls Detected',
+        content: `${pollsWithoutResponses.length} polls have received no responses. Review poll topics, timing, and distribution methods to improve engagement.`,
+        priority: 'medium',
+        confidence: 0.85,
+        scope: 'organization'
+      })
+    }
+
+    return insights
+  }
+
+  private parseEngagementAIResponse(aiResponse: string, data: any): AIInsight[] {
+    const insights: AIInsight[] = []
+    const { checkIns, polls, announcements } = data
+
+    // Create main engagement analysis insight
+    insights.push({
+      type: 'summary',
+      title: 'Employee Engagement Analysis',
+      content: aiResponse,
+      priority: 'medium',
+      confidence: 0.85,
+      scope: 'organization'
+    })
+
+    // Calculate engagement metrics
+    const totalCheckIns = checkIns?.length || 0
+    const totalPollResponses = polls?.reduce((sum: number, p: any) => sum + (p.poll_responses?.length || 0), 0) || 0
+    const totalAnnouncements = announcements?.length || 0
+    const totalAcknowledgments = announcements?.reduce((sum: number, a: any) => sum + (a.announcement_reads?.length || 0), 0) || 0
+
+    // Add specific insights based on engagement patterns
+    if (totalCheckIns === 0 && totalPollResponses === 0) {
+      insights.push({
+        type: 'risk_alert',
+        title: 'Critical: No Employee Engagement',
+        content: `No check-ins or poll responses detected. This indicates a complete lack of employee engagement. Immediate action required to establish communication channels.`,
+        priority: 'critical',
+        confidence: 0.95,
+        scope: 'organization'
+      })
+    }
+
+    if (totalCheckIns > 0 && totalPollResponses === 0) {
+      insights.push({
+        type: 'recommendation',
+        title: 'Expand Engagement Channels',
+        content: `Strong check-in participation (${totalCheckIns} responses) but no poll engagement. Consider creating polls to gather more structured feedback from employees.`,
+        priority: 'medium',
+        confidence: 0.85,
+        scope: 'organization'
+      })
+    }
+
+    if (totalAnnouncements > 0 && totalAcknowledgments === 0) {
+      insights.push({
+        type: 'trend_analysis',
+        title: 'Low Announcement Engagement',
+        content: `${totalAnnouncements} announcements sent but no acknowledgments received. Review announcement content and delivery methods to improve engagement.`,
+        priority: 'high',
+        confidence: 0.90,
+        scope: 'organization'
+      })
+    }
+
+    // Calculate overall engagement score
+    const engagementScore = (totalCheckIns * 0.4) + (totalPollResponses * 0.4) + (totalAcknowledgments * 0.2)
+    if (engagementScore < 10) {
+      insights.push({
+        type: 'recommendation',
+        title: 'Low Overall Engagement Score',
+        content: `Engagement score of ${engagementScore.toFixed(1)} indicates room for improvement. Focus on increasing participation across all channels through better communication and incentives.`,
+        priority: 'high',
+        confidence: 0.85,
+        scope: 'organization'
+      })
+    }
+
+    return insights
+  }
+
   private determinePriority(avgMood: number): 'low' | 'medium' | 'high' | 'critical' {
     if (avgMood < 4) return 'critical'
     if (avgMood < 6) return 'high'
@@ -582,6 +709,167 @@ Format your response in clear sections with bullet points for easy reading.
       console.error('❌ Failed to get employees with insights:', error)
       return []
     }
+  }
+
+  async generatePollInsights(organizationId: string): Promise<AIInsight[]> {
+    try {
+      // Fetch poll data from database
+      const response = await fetch(`${supabaseConfig.url}/rest/v1/rpc/get_poll_insights_data`, {
+        method: 'POST',
+        headers: {
+          'apikey': supabaseConfig.anonKey,
+          'Authorization': `Bearer ${supabaseConfig.anonKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          org_id: organizationId,
+          days_back: 30
+        })
+      })
+
+      if (!response.ok) {
+        // If RPC doesn't exist, fetch poll data directly
+        const pollsResponse = await fetch(`${supabaseConfig.url}/rest/v1/polls?organization_id=eq.${organizationId}&select=*,poll_responses(*)`, {
+          headers: {
+            'apikey': supabaseConfig.anonKey,
+            'Authorization': `Bearer ${supabaseConfig.anonKey}`
+          }
+        })
+
+        if (!pollsResponse.ok) {
+          throw new Error(`Failed to fetch poll data: ${pollsResponse.status}`)
+        }
+
+        const pollsData = await pollsResponse.json()
+        return await this.generatePollInsightsFromData(organizationId, pollsData)
+      }
+
+      const data = await response.json()
+      return await this.generatePollInsightsFromData(organizationId, data)
+    } catch (error) {
+      console.error('Failed to generate poll insights:', error)
+      throw error
+    }
+  }
+
+  async generateEngagementInsights(organizationId: string): Promise<AIInsight[]> {
+    try {
+      // Fetch comprehensive engagement data
+      const [checksResponse, pollsResponse, announcementsResponse] = await Promise.all([
+        fetch(`${supabaseConfig.url}/rest/v1/check_ins?organization_id=eq.${organizationId}&select=*`, {
+          headers: {
+            'apikey': supabaseConfig.anonKey,
+            'Authorization': `Bearer ${supabaseConfig.anonKey}`
+          }
+        }),
+        fetch(`${supabaseConfig.url}/rest/v1/polls?organization_id=eq.${organizationId}&select=*,poll_responses(*)`, {
+          headers: {
+            'apikey': supabaseConfig.anonKey,
+            'Authorization': `Bearer ${supabaseConfig.anonKey}`
+          }
+        }),
+        fetch(`${supabaseConfig.url}/rest/v1/announcements?organization_id=eq.${organizationId}&select=*,announcement_reads(*)`, {
+          headers: {
+            'apikey': supabaseConfig.anonKey,
+            'Authorization': `Bearer ${supabaseConfig.anonKey}`
+          }
+        })
+      ])
+
+      const [checksData, pollsData, announcementsData] = await Promise.all([
+        checksResponse.json(),
+        pollsResponse.json(),
+        announcementsResponse.json()
+      ])
+
+      return await this.generateEngagementInsightsFromData(organizationId, {
+        checkIns: checksData,
+        polls: pollsData,
+        announcements: announcementsData
+      })
+    } catch (error) {
+      console.error('Failed to generate engagement insights:', error)
+      throw error
+    }
+  }
+
+  private async generatePollInsightsFromData(organizationId: string, pollsData: any[]): Promise<AIInsight[]> {
+    const prompt = this.createPollAnalysisPrompt(pollsData)
+    const aiResponse = await this.callOpenRouterAPI(prompt)
+
+    // Parse AI response into structured insights (same as wellness insights)
+    const insights = this.parsePollAIResponse(aiResponse, pollsData)
+
+    // Store insights
+    await this.storeInsights(organizationId, insights)
+    return insights
+  }
+
+  private async generateEngagementInsightsFromData(organizationId: string, data: any): Promise<AIInsight[]> {
+    const prompt = this.createEngagementAnalysisPrompt(data)
+    const aiResponse = await this.callOpenRouterAPI(prompt)
+
+    // Parse AI response into structured insights (same as wellness insights)
+    const insights = this.parseEngagementAIResponse(aiResponse, data)
+
+    // Store insights
+    await this.storeInsights(organizationId, insights)
+    return insights
+  }
+
+  private createPollAnalysisPrompt(pollsData: any[]): string {
+    return `
+Analyze the following poll and survey data to provide insights on employee feedback patterns:
+
+POLLS OVERVIEW:
+- Total Polls: ${pollsData.length}
+- Active Polls: ${pollsData.filter(p => p.is_active).length}
+
+POLL DETAILS:
+${pollsData.map(poll => `
+- "${poll.title}" (${poll.poll_type})
+  Question: ${poll.question}
+  Responses: ${poll.poll_responses?.length || 0}
+  ${poll.poll_responses?.map((r: any) => `  • ${r.response_text || r.response_choice || r.response_rating}`).join('\n') || '  No responses yet'}
+`).join('\n')}
+
+Please provide:
+1. Overall poll engagement assessment (2-3 sentences)
+2. Key themes and patterns from responses (3-4 bullet points)
+3. Recommendations for improving poll effectiveness (3-4 bullet points)
+4. Insights about employee sentiment from poll responses
+
+Format your response in clear sections with bullet points for easy reading.
+`
+  }
+
+  private createEngagementAnalysisPrompt(data: any): string {
+    const { checkIns, polls, announcements } = data
+
+    return `
+Analyze the following comprehensive employee engagement data:
+
+CHECK-INS DATA:
+- Total Check-ins: ${checkIns?.length || 0}
+- Average Mood: ${checkIns?.length ? (checkIns.reduce((sum: number, c: any) => sum + (c.mood_score || 0), 0) / checkIns.length).toFixed(1) : 'N/A'}
+
+POLLS DATA:
+- Total Polls: ${polls?.length || 0}
+- Total Poll Responses: ${polls?.reduce((sum: number, p: any) => sum + (p.poll_responses?.length || 0), 0) || 0}
+
+ANNOUNCEMENTS DATA:
+- Total Announcements: ${announcements?.length || 0}
+- Total Acknowledgments: ${announcements?.reduce((sum: number, a: any) => sum + (a.announcement_reads?.length || 0), 0) || 0}
+
+Please provide:
+1. Overall employee engagement assessment (2-3 sentences)
+2. Cross-platform engagement patterns (3-4 bullet points)
+3. Recommendations for improving overall engagement (4-5 bullet points)
+4. Potential areas of concern or opportunity
+
+Focus on how different engagement channels (check-ins, polls, announcements) work together.
+Format your response in clear sections with bullet points for easy reading.
+`
   }
 
   async getStoredInsights(organizationId: string): Promise<any[]> {

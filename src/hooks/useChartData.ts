@@ -776,6 +776,46 @@ export const useAIInsights = () => {
     }
   }
 
+  const generatePollInsights = async () => {
+    if (!profile?.organization_id) return
+
+    setState(prev => ({ ...prev, generating: true, error: null }))
+
+    try {
+      const { aiInsightsService } = await import('../services/aiInsightsService')
+      await aiInsightsService.generatePollInsights(profile.organization_id)
+
+      // Fetch updated insights
+      await fetchInsights()
+    } catch (error) {
+      setState(prev => ({
+        ...prev,
+        generating: false,
+        error: error instanceof Error ? error.message : 'Failed to generate poll insights'
+      }))
+    }
+  }
+
+  const generateEngagementInsights = async () => {
+    if (!profile?.organization_id) return
+
+    setState(prev => ({ ...prev, generating: true, error: null }))
+
+    try {
+      const { aiInsightsService } = await import('../services/aiInsightsService')
+      await aiInsightsService.generateEngagementInsights(profile.organization_id)
+
+      // Fetch updated insights
+      await fetchInsights()
+    } catch (error) {
+      setState(prev => ({
+        ...prev,
+        generating: false,
+        error: error instanceof Error ? error.message : 'Failed to generate engagement insights'
+      }))
+    }
+  }
+
   const fetchInsights = async (scope?: 'organization' | 'individual', employeeId?: string) => {
     if (!profile?.organization_id) return
 
@@ -850,6 +890,8 @@ export const useAIInsights = () => {
   return {
     ...state,
     generateNewInsights,
+    generatePollInsights,
+    generateEngagementInsights,
     refreshInsights: fetchInsights,
     setScope,
     setSelectedEmployee,

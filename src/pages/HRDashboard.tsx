@@ -3483,11 +3483,11 @@ const HRDashboard = () => {
         wellnessInsights={aiInsights.insights}
         onGenerateWellnessInsights={() => aiInsights.generateNewInsights()}
         wellnessLoading={aiInsights.generating}
-        pollInsights={aiInsights.insights.filter(i => i.type === 'poll_analysis')}
-        onGeneratePollInsights={() => aiInsights.generateNewInsights()}
+        pollInsights={aiInsights.insights.filter(i => i.title.toLowerCase().includes('poll'))}
+        onGeneratePollInsights={() => aiInsights.generatePollInsights()}
         pollLoading={aiInsights.generating}
-        engagementInsights={aiInsights.insights.filter(i => i.type === 'engagement_analysis')}
-        onGenerateEngagementInsights={() => aiInsights.generateNewInsights()}
+        engagementInsights={aiInsights.insights.filter(i => i.title.toLowerCase().includes('engagement'))}
+        onGenerateEngagementInsights={() => aiInsights.generateEngagementInsights()}
         engagementLoading={aiInsights.generating}
         customQuestions={[]}
         onAskCustomQuestion={(question) => aiInsights.generateNewInsights()}
