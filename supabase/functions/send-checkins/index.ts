@@ -115,7 +115,7 @@ serve(async (req) => {
 
         if (twilioResponse.ok) {
           const twilioData = await twilioResponse.json()
-          
+
           // Update check-in status to sent
           const { error: updateError } = await supabase
             .from('check_ins')
@@ -132,6 +132,28 @@ serve(async (req) => {
           } else {
             totalSent++
             console.log(`WhatsApp check-in sent successfully: ${checkin.id} to ${whatsappTo}`)
+
+            // Track message context for response routing
+            // First, find the employee by phone number
+            const { data: employee } = await supabase
+              .from('employees')
+              .select('id')
+              .eq('phone', checkin.phone_number.replace('whatsapp:', ''))
+              .single()
+
+            if (employee) {
+              await supabase
+                .from('message_context')
+                .insert({
+                  organization_id: checkin.organization_id,
+                  employee_id: employee.id,
+                  message_type: 'checkin',
+                  reference_id: checkin.id,
+                  sent_at: new Date().toISOString(),
+                  expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 24 hours
+                  is_responded: false
+                })
+            }
           }
         } else {
           const errorText = await twilioResponse.text()

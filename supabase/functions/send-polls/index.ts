@@ -210,6 +210,19 @@ serve(async (req) => {
           const twilioData = await twilioResponse.json()
           totalSent++
           console.log(`WhatsApp poll sent successfully to ${employee.name}: ${twilioData.sid}`)
+
+          // Track message context for response routing
+          await supabase
+            .from('message_context')
+            .insert({
+              organization_id: organization_id,
+              employee_id: employee.id,
+              message_type: 'poll',
+              reference_id: poll_id,
+              sent_at: new Date().toISOString(),
+              expires_at: poll.expires_at || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days or poll expiry
+              is_responded: false
+            })
         } else {
           const errorText = await twilioResponse.text()
           console.error(`Failed to send WhatsApp to ${employee.name}:`, errorText)

@@ -363,8 +363,6 @@ export const useRecentResponses = (limit: number = 100) => {
           throw new Error(`Supabase error: ${error.message}`)
         }
 
-        console.log('Raw check-ins data from Supabase:', data)
-
         // Map the data to the expected format
         const mappedData = (data || []).map((checkIn: any) => ({
           id: checkIn.id,
@@ -377,8 +375,6 @@ export const useRecentResponses = (limit: number = 100) => {
           submitted_at: checkIn.created_at,
           time_ago: new Date(checkIn.created_at).toLocaleDateString()
         }))
-
-        console.log('Mapped check-ins data:', mappedData)
 
         setState({
           data: mappedData,

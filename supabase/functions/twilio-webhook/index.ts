@@ -7,33 +7,47 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-twilio-signature',
 }
 
-// Simplified signature validation - temporarily disable for debugging
-// We'll re-enable once we confirm the webhook is working
-function validateTwilioSignature(
-  authToken: string,
-  twilioSignature: string,
-  url: string,
-  params: Record<string, string>
-): boolean {
-  // For now, let's log the details and always return true to debug
-  console.log('🔍 Signature validation details:', {
-    authTokenLength: authToken?.length || 0,
-    signatureLength: twilioSignature?.length || 0,
-    url: url,
-    paramCount: Object.keys(params).length,
-    paramKeys: Object.keys(params).sort()
-  })
-
-  // Temporarily return true to allow all requests through
-  // This will help us debug the webhook processing
-  return true
+// Response type detection and routing
+interface MessageContext {
+  id: string
+  message_type: 'checkin' | 'poll' | 'announcement'
+  reference_id: string
+  sent_at: string
+  expires_at: string
 }
 
-// Parse check-in response from message body
-function parseCheckInResponse(messageBody: string) {
+// Intelligent response routing based on context
+async function routeResponse(
+  supabase: any,
+  employee: any,
+  messageBody: string,
+  context: MessageContext
+) {
+  const responseTime = new Date().toISOString()
+
+  switch (context.message_type) {
+    case 'checkin':
+      return await handleCheckinResponse(supabase, employee, messageBody, context, responseTime)
+    case 'poll':
+      return await handlePollResponse(supabase, employee, messageBody, context, responseTime)
+    case 'announcement':
+      return await handleAnnouncementResponse(supabase, employee, messageBody, context, responseTime)
+    default:
+      return await handleGenericResponse(supabase, employee, messageBody, responseTime)
+  }
+}
+
+// Handle check-in responses
+async function handleCheckinResponse(
+  supabase: any,
+  employee: any,
+  messageBody: string,
+  context: MessageContext,
+  responseTime: string
+) {
   const body = messageBody.toLowerCase().trim()
 
-  // Look for numeric mood score (1-10)
+  // Parse mood score (1-10)
   let mood = 5 // default
   const moodMatch = body.match(/\b([1-9]|10)\b/)
   if (moodMatch) {
@@ -46,21 +60,165 @@ function parseCheckInResponse(messageBody: string) {
     else if (body.includes('stressed') || body.includes('overwhelmed') || body.includes('anxious')) mood = 4
   }
 
-  // Look for stress indicators
-  let stress = 3 // default
-  if (body.includes('stressed') || body.includes('overwhelmed') || body.includes('pressure') || body.includes('anxious')) stress = 8
-  else if (body.includes('calm') || body.includes('relaxed') || body.includes('peaceful') || body.includes('chill')) stress = 2
+  // Store check-in response
+  await supabase
+    .from('check_ins')
+    .insert({
+      organization_id: employee.organization_id,
+      employee_id: employee.id,
+      mood_score: mood,
+      feedback: messageBody,
+      is_anonymous: false,
+      created_at: responseTime
+    })
 
-  // Look for workload indicators
-  let workload = 5 // default
-  if (body.includes('busy') || body.includes('swamped') || body.includes('overloaded') || body.includes('hectic')) workload = 8
-  else if (body.includes('light') || body.includes('manageable') || body.includes('easy') || body.includes('quiet')) workload = 3
+  // Mark context as responded
+  await supabase
+    .from('message_context')
+    .update({
+      is_responded: true,
+      responded_at: responseTime
+    })
+    .eq('id', context.id)
 
-  return {
-    mood,
-    stress,
-    workload
+  return `Thank you ${employee.name}! 🙏 We've received your check-in (mood: ${mood}/10) and appreciate you sharing how you're feeling. Your wellbeing matters to us! 💙`
+}
+
+// Handle poll responses
+async function handlePollResponse(
+  supabase: any,
+  employee: any,
+  messageBody: string,
+  context: MessageContext,
+  responseTime: string
+) {
+  const body = messageBody.toLowerCase().trim()
+
+  // Get poll details to understand response format
+  const { data: poll } = await supabase
+    .from('polls')
+    .select('*')
+    .eq('id', context.reference_id)
+    .single()
+
+  if (!poll) {
+    return `Thank you for your response! However, this poll is no longer available. 📊`
   }
+
+  let responseData: any = {
+    response_text: messageBody
+  }
+
+  // Parse response based on poll type
+  if (poll.poll_type === 'multiple_choice' && poll.options) {
+    const choiceMatch = body.match(/\b([1-9]|10)\b/)
+    if (choiceMatch) {
+      const choiceIndex = parseInt(choiceMatch[1]) - 1
+      if (choiceIndex >= 0 && choiceIndex < poll.options.length) {
+        responseData.response_choice = poll.options[choiceIndex]
+      }
+    }
+  } else if (poll.poll_type === 'yes_no') {
+    if (body.includes('yes') || body.includes('1')) {
+      responseData.response_choice = 'Yes'
+    } else if (body.includes('no') || body.includes('2')) {
+      responseData.response_choice = 'No'
+    }
+  } else if (poll.poll_type === 'rating') {
+    const ratingMatch = body.match(/\b([1-9]|10)\b/)
+    if (ratingMatch) {
+      responseData.response_rating = parseInt(ratingMatch[1])
+    }
+  }
+
+  // Store poll response
+  await supabase
+    .from('poll_responses')
+    .insert({
+      organization_id: employee.organization_id,
+      poll_id: context.reference_id,
+      employee_id: employee.id,
+      response_text: messageBody,
+      response_rating: responseData.response_rating,
+      response_choice: responseData.response_choice,
+      submitted_at: responseTime
+    })
+
+  // Mark context as responded
+  await supabase
+    .from('message_context')
+    .update({
+      is_responded: true,
+      responded_at: responseTime
+    })
+    .eq('id', context.id)
+
+  return `Thank you ${employee.name}! 📊 Your response to "${poll.title}" has been recorded. We value your input! 🙏`
+}
+
+// Handle announcement responses
+async function handleAnnouncementResponse(
+  supabase: any,
+  employee: any,
+  messageBody: string,
+  context: MessageContext,
+  responseTime: string
+) {
+  // Get announcement details
+  const { data: announcement } = await supabase
+    .from('announcements')
+    .select('*')
+    .eq('id', context.reference_id)
+    .single()
+
+  if (!announcement) {
+    return `Thank you for your response! 📢`
+  }
+
+  // Store announcement acknowledgment
+  await supabase
+    .from('announcement_reads')
+    .insert({
+      organization_id: employee.organization_id,
+      announcement_id: context.reference_id,
+      employee_id: employee.id,
+      acknowledgment_text: messageBody,
+      read_at: responseTime,
+      created_at: responseTime
+    })
+
+  // Mark context as responded
+  await supabase
+    .from('message_context')
+    .update({
+      is_responded: true,
+      responded_at: responseTime
+    })
+    .eq('id', context.id)
+
+  return `Thank you ${employee.name}! 📢 We've noted your acknowledgment of "${announcement.title}". Your engagement is appreciated! 👍`
+}
+
+// Handle generic responses when no context is found
+async function handleGenericResponse(
+  supabase: any,
+  employee: any,
+  messageBody: string,
+  responseTime: string
+) {
+  // Store as general feedback
+  await supabase
+    .from('feedback')
+    .insert({
+      organization_id: employee.organization_id,
+      employee_id: employee.id,
+      feedback_text: messageBody,
+      feedback_type: 'general',
+      submitted_at: responseTime,
+      created_at: responseTime
+    })
+
+  return `Thank you ${employee.name}! 💬 We've received your message and will review it. If you need immediate assistance, please contact your manager or HR directly.`
 }
 
 Deno.serve(async (req) => {
@@ -162,42 +320,53 @@ Deno.serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? Deno.env.get('SUPABASE_ANON_KEY')!
     const supabase = createClient(supabaseUrl, supabaseKey)
 
-    // Process the WhatsApp response manually
+    // Process the WhatsApp response with intelligent routing
     try {
       // Clean the phone number (remove whatsapp: prefix)
       const cleanNumber = from.replace('whatsapp:', '')
-      console.log('🔍 Phone number debug:', {
-        original: from,
-        cleaned: cleanNumber,
-        length: cleanNumber.length
-      })
+      console.log('🔍 Processing WhatsApp response from:', cleanNumber)
 
-      // Find employee by phone number FIRST to get organization_id
+      // Find employee by phone number
       const { data: employees, error: employeeError } = await supabase
         .from('employees')
         .select('*')
         .eq('phone', cleanNumber)
         .limit(1)
 
-      if (employeeError) {
-        console.error('Error finding employee:', employeeError)
-        return new Response('<?xml version="1.0" encoding="UTF-8"?><Response></Response>', {
-          headers: { ...corsHeaders, 'Content-Type': 'application/xml' }
-        })
-      }
-
-      if (!employees || employees.length === 0) {
+      if (employeeError || !employees || employees.length === 0) {
         console.log('❌ No employee found for phone number:', cleanNumber)
-        console.log('Available employees:', await supabase.from('employees').select('name,phone').limit(3))
         return new Response('<?xml version="1.0" encoding="UTF-8"?><Response></Response>', {
           headers: { ...corsHeaders, 'Content-Type': 'application/xml' }
         })
       }
 
       const employee = employees[0]
-      console.log('✅ Found employee:', employee.name, 'for phone:', cleanNumber)
+      console.log('✅ Found employee:', employee.name)
 
-      // Now log the incoming message with organization_id for proper isolation
+      // Find the most recent message context for this employee
+      const { data: contexts, error: contextError } = await supabase
+        .from('message_context')
+        .select('*')
+        .eq('employee_id', employee.id)
+        .eq('is_responded', false)
+        .gt('expires_at', new Date().toISOString())
+        .order('sent_at', { ascending: false })
+        .limit(1)
+
+      let responseMessage: string
+
+      if (contexts && contexts.length > 0) {
+        // Route response based on context
+        const context = contexts[0]
+        console.log(`🎯 Routing ${context.message_type} response for ${employee.name}`)
+        responseMessage = await routeResponse(supabase, employee, body, context)
+      } else {
+        // No active context - handle as generic response
+        console.log('💬 No active context - handling as generic response')
+        responseMessage = await handleGenericResponse(supabase, employee, body, new Date().toISOString())
+      }
+
+      // Log the incoming message
       try {
         const messageData = {
           message_sid: messageSid,
@@ -209,81 +378,59 @@ Deno.serve(async (req) => {
           direction: 'inbound',
           status: 'received',
           received_at: new Date().toISOString(),
-          organization_id: employee.organization_id  // Add organization_id for proper isolation
+          organization_id: employee.organization_id
         }
 
         await supabase
           .from('twilio_messages')
           .insert(messageData)
 
-        console.log('📨 Incoming message logged with org_id:', messageSid, employee.organization_id)
+        console.log('📨 Message logged:', messageSid)
       } catch (messageLogError) {
         console.error('Error logging message:', messageLogError)
       }
 
-      // Parse the response
-      const parsedResponse = parseCheckInResponse(body)
-
-      // WhatsApp responses are already stored in twilio_messages table above
-      // Dashboard function pulls from both twilio_messages and check_ins
-      // No need to duplicate in check_ins table
-      console.log('✅ WhatsApp response processed for:', employee.name)
-
-      // Send thank you message
+      // Send contextual response message
       const twilioAccountSid = Deno.env.get('TWILIO_ACCOUNT_SID')
       const twilioAuthToken = Deno.env.get('TWILIO_AUTH_TOKEN')
       const twilioPhoneNumber = Deno.env.get('TWILIO_WHATSAPP_NUMBER')
 
-      console.log('🔧 Twilio credentials check:', {
-        hasAccountSid: !!twilioAccountSid,
-        hasAuthToken: !!twilioAuthToken,
-        hasPhoneNumber: !!twilioPhoneNumber,
-        phoneNumber: twilioPhoneNumber
-      })
-
       if (twilioAccountSid && twilioAuthToken && twilioPhoneNumber) {
-          const thankYouMessage = `Thank you ${employee.name}! 🙏 We've received your check-in and appreciate you taking the time to share how you're feeling. Your wellbeing matters to us! 💙`
+        const whatsappFrom = twilioPhoneNumber.startsWith('whatsapp:')
+          ? twilioPhoneNumber
+          : `whatsapp:${twilioPhoneNumber}`
+        const whatsappTo = from
 
-          // Handle phone number format - add whatsapp: prefix if not present
-          const whatsappFrom = twilioPhoneNumber.startsWith('whatsapp:')
-            ? twilioPhoneNumber
-            : `whatsapp:${twilioPhoneNumber}`
-          const whatsappTo = from // Already in whatsapp:+number format
+        console.log('📤 Sending contextual response:', {
+          from: whatsappFrom,
+          to: whatsappTo,
+          messageLength: responseMessage.length
+        })
 
-          console.log('📤 Sending thank you message:', {
-            from: whatsappFrom,
-            to: whatsappTo,
-            messageLength: thankYouMessage.length
-          })
-
-          const twilioResponse = await fetch(
-            `https://api.twilio.com/2010-04-01/Accounts/${twilioAccountSid}/Messages.json`,
-            {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-                'Authorization': `Basic ${btoa(`${twilioAccountSid}:${twilioAuthToken}`)}`
-              },
-              body: new URLSearchParams({
-                From: whatsappFrom,
-                To: whatsappTo,
-                Body: thankYouMessage
-              })
-            }
-          )
-
-          if (twilioResponse.ok) {
-            console.log(`✅ Thank you WhatsApp sent to ${employee.name}`)
-          } else {
-            const errorText = await twilioResponse.text()
-            console.error('❌ Failed to send thank you WhatsApp:', {
-              status: twilioResponse.status,
-              statusText: twilioResponse.statusText,
-              error: errorText
+        const twilioResponse = await fetch(
+          `https://api.twilio.com/2010-04-01/Accounts/${twilioAccountSid}/Messages.json`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded',
+              'Authorization': `Basic ${btoa(`${twilioAccountSid}:${twilioAuthToken}`)}`
+            },
+            body: new URLSearchParams({
+              From: whatsappFrom,
+              To: whatsappTo,
+              Body: responseMessage
             })
           }
+        )
+
+        if (twilioResponse.ok) {
+          console.log(`✅ Contextual response sent to ${employee.name}`)
+        } else {
+          const errorText = await twilioResponse.text()
+          console.error('❌ Failed to send response:', errorText)
+        }
       } else {
-        console.error('❌ Missing Twilio credentials - cannot send thank you message')
+        console.error('❌ Missing Twilio credentials')
       }
     } catch (processingError) {
       console.error('Error processing WhatsApp response:', processingError)
