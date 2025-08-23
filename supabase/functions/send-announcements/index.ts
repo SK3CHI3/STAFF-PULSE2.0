@@ -217,19 +217,6 @@ serve(async (req) => {
           const twilioData = await twilioResponse.json()
           totalSent++
           console.log(`WhatsApp announcement sent successfully to ${employee.name}: ${twilioData.sid}`)
-
-          // Track message context for response routing
-          await supabase
-            .from('message_context')
-            .insert({
-              organization_id: organization_id,
-              employee_id: employee.id,
-              message_type: 'announcement',
-              reference_id: announcement_id,
-              sent_at: new Date().toISOString(),
-              expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 24 hours
-              is_responded: false
-            })
         } else {
           const errorText = await twilioResponse.text()
           console.error(`Failed to send WhatsApp to ${employee.name}:`, errorText)
@@ -243,15 +230,28 @@ serve(async (req) => {
       }
     }
 
-    // Update announcement to mark as sent via WhatsApp
+    // Update announcement to mark as sent via WhatsApp and set organization context
     if (totalSent > 0) {
       await supabase
         .from('announcements')
-        .update({ 
+        .update({
           send_via_whatsapp: true,
           sent_at: new Date().toISOString()
         })
         .eq('id', announcement_id)
+
+      // Set organization context to expect announcement acknowledgments
+      await supabase
+        .from('organization_context')
+        .upsert({
+          organization_id: organization_id,
+          current_context: 'announcement',
+          context_data: { announcement_id: announcement_id },
+          set_at: new Date().toISOString(),
+          expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // 24 hours
+        }, {
+          onConflict: 'organization_id'
+        })
     }
 
     console.log(`Announcement sending completed. Sent: ${totalSent}, Failed: ${totalFailed}`)

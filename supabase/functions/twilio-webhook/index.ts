@@ -7,32 +7,42 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-twilio-signature',
 }
 
-// Response type detection and routing
-interface MessageContext {
-  id: string
-  message_type: 'checkin' | 'poll' | 'announcement'
-  reference_id: string
-  sent_at: string
-  expires_at: string
-}
-
-// Intelligent response routing based on context
-async function routeResponse(
+// Simple context-based response routing
+async function handleResponse(
   supabase: any,
   employee: any,
-  messageBody: string,
-  context: MessageContext
+  messageBody: string
 ) {
   const responseTime = new Date().toISOString()
 
-  switch (context.message_type) {
+  console.log(`🔍 Looking for context for organization: ${employee.organization_id}`)
+
+  // Get organization's current context
+  const { data: context, error: contextError } = await supabase
+    .from('organization_context')
+    .select('*')
+    .eq('organization_id', employee.organization_id)
+    .single()
+
+  console.log('📋 Context query result:', { context, contextError })
+
+  if (contextError || !context || context.current_context === 'none') {
+    console.log('❌ No valid context found, handling as generic response')
+    return await handleGenericResponse(supabase, employee, messageBody, responseTime)
+  }
+
+  console.log(`🎯 Routing to ${context.current_context} handler`)
+
+  // Route based on organization's current context
+  switch (context.current_context) {
     case 'checkin':
-      return await handleCheckinResponse(supabase, employee, messageBody, context, responseTime)
+      return await handleCheckinResponse(supabase, employee, messageBody, responseTime)
     case 'poll':
       return await handlePollResponse(supabase, employee, messageBody, context, responseTime)
     case 'announcement':
       return await handleAnnouncementResponse(supabase, employee, messageBody, context, responseTime)
     default:
+      console.log(`⚠️ Unknown context: ${context.current_context}`)
       return await handleGenericResponse(supabase, employee, messageBody, responseTime)
   }
 }
@@ -42,7 +52,6 @@ async function handleCheckinResponse(
   supabase: any,
   employee: any,
   messageBody: string,
-  context: MessageContext,
   responseTime: string
 ) {
   const body = messageBody.toLowerCase().trim()
@@ -72,15 +81,6 @@ async function handleCheckinResponse(
       created_at: responseTime
     })
 
-  // Mark context as responded
-  await supabase
-    .from('message_context')
-    .update({
-      is_responded: true,
-      responded_at: responseTime
-    })
-    .eq('id', context.id)
-
   return `Thank you ${employee.name}! 🙏 We've received your check-in (mood: ${mood}/10) and appreciate you sharing how you're feeling. Your wellbeing matters to us! 💙`
 }
 
@@ -89,19 +89,33 @@ async function handlePollResponse(
   supabase: any,
   employee: any,
   messageBody: string,
-  context: MessageContext,
+  context: any,
   responseTime: string
 ) {
+  console.log('📊 Handling poll response:', { employee: employee.name, messageBody, context })
+
   const body = messageBody.toLowerCase().trim()
 
-  // Get poll details to understand response format
-  const { data: poll } = await supabase
+  // Get the current poll from context
+  const pollId = context.context_data?.poll_id
+  console.log('🔍 Poll ID from context:', pollId)
+
+  if (!pollId) {
+    console.log('❌ No poll ID found in context')
+    return `Thank you for your response! However, no active poll found. 📊`
+  }
+
+  // Get poll details
+  const { data: poll, error: pollError } = await supabase
     .from('polls')
     .select('*')
-    .eq('id', context.reference_id)
+    .eq('id', pollId)
     .single()
 
-  if (!poll) {
+  console.log('📋 Poll query result:', { poll, pollError })
+
+  if (pollError || !poll) {
+    console.log('❌ Poll not found or error:', pollError)
     return `Thank you for your response! However, this poll is no longer available. 📊`
   }
 
@@ -132,27 +146,34 @@ async function handlePollResponse(
   }
 
   // Store poll response
-  await supabase
+  console.log('💾 Storing poll response:', {
+    organization_id: employee.organization_id,
+    poll_id: pollId,
+    employee_id: employee.id,
+    response_text: messageBody,
+    response_rating: responseData.response_rating,
+    response_choice: responseData.response_choice
+  })
+
+  const { data: insertResult, error: insertError } = await supabase
     .from('poll_responses')
     .insert({
       organization_id: employee.organization_id,
-      poll_id: context.reference_id,
+      poll_id: pollId,
       employee_id: employee.id,
+      response_data: responseData, // Include the response_data JSONB field
       response_text: messageBody,
       response_rating: responseData.response_rating,
       response_choice: responseData.response_choice,
       submitted_at: responseTime
     })
 
-  // Mark context as responded
-  await supabase
-    .from('message_context')
-    .update({
-      is_responded: true,
-      responded_at: responseTime
-    })
-    .eq('id', context.id)
+  if (insertError) {
+    console.error('❌ Error storing poll response:', insertError)
+    return `Thank you for your response! However, there was an issue recording it. Please try again. 📊`
+  }
 
+  console.log('✅ Poll response stored successfully:', insertResult)
   return `Thank you ${employee.name}! 📊 Your response to "${poll.title}" has been recorded. We value your input! 🙏`
 }
 
@@ -161,14 +182,20 @@ async function handleAnnouncementResponse(
   supabase: any,
   employee: any,
   messageBody: string,
-  context: MessageContext,
+  context: any,
   responseTime: string
 ) {
+  // Get the current announcement from context
+  const announcementId = context.context_data?.announcement_id
+  if (!announcementId) {
+    return `Thank you for your response! 📢`
+  }
+
   // Get announcement details
   const { data: announcement } = await supabase
     .from('announcements')
     .select('*')
-    .eq('id', context.reference_id)
+    .eq('id', announcementId)
     .single()
 
   if (!announcement) {
@@ -180,21 +207,12 @@ async function handleAnnouncementResponse(
     .from('announcement_reads')
     .insert({
       organization_id: employee.organization_id,
-      announcement_id: context.reference_id,
+      announcement_id: announcementId,
       employee_id: employee.id,
       acknowledgment_text: messageBody,
       read_at: responseTime,
       created_at: responseTime
     })
-
-  // Mark context as responded
-  await supabase
-    .from('message_context')
-    .update({
-      is_responded: true,
-      responded_at: responseTime
-    })
-    .eq('id', context.id)
 
   return `Thank you ${employee.name}! 📢 We've noted your acknowledgment of "${announcement.title}". Your engagement is appreciated! 👍`
 }
@@ -211,10 +229,12 @@ async function handleGenericResponse(
     .from('feedback')
     .insert({
       organization_id: employee.organization_id,
-      employee_id: employee.id,
-      feedback_text: messageBody,
-      feedback_type: 'general',
-      submitted_at: responseTime,
+      user_id: employee.id,
+      type: 'general',
+      priority: 'medium',
+      status: 'open',
+      subject: 'WhatsApp Message',
+      message: messageBody,
       created_at: responseTime
     })
 
@@ -343,28 +363,8 @@ Deno.serve(async (req) => {
       const employee = employees[0]
       console.log('✅ Found employee:', employee.name)
 
-      // Find the most recent message context for this employee
-      const { data: contexts, error: contextError } = await supabase
-        .from('message_context')
-        .select('*')
-        .eq('employee_id', employee.id)
-        .eq('is_responded', false)
-        .gt('expires_at', new Date().toISOString())
-        .order('sent_at', { ascending: false })
-        .limit(1)
-
-      let responseMessage: string
-
-      if (contexts && contexts.length > 0) {
-        // Route response based on context
-        const context = contexts[0]
-        console.log(`🎯 Routing ${context.message_type} response for ${employee.name}`)
-        responseMessage = await routeResponse(supabase, employee, body, context)
-      } else {
-        // No active context - handle as generic response
-        console.log('💬 No active context - handling as generic response')
-        responseMessage = await handleGenericResponse(supabase, employee, body, new Date().toISOString())
-      }
+      // Handle response using simple context system
+      const responseMessage = await handleResponse(supabase, employee, body)
 
       // Log the incoming message
       try {

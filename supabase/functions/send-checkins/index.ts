@@ -133,27 +133,18 @@ serve(async (req) => {
             totalSent++
             console.log(`WhatsApp check-in sent successfully: ${checkin.id} to ${whatsappTo}`)
 
-            // Track message context for response routing
-            // First, find the employee by phone number
-            const { data: employee } = await supabase
-              .from('employees')
-              .select('id')
-              .eq('phone', checkin.phone_number.replace('whatsapp:', ''))
-              .single()
-
-            if (employee) {
-              await supabase
-                .from('message_context')
-                .insert({
-                  organization_id: checkin.organization_id,
-                  employee_id: employee.id,
-                  message_type: 'checkin',
-                  reference_id: checkin.id,
-                  sent_at: new Date().toISOString(),
-                  expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 24 hours
-                  is_responded: false
-                })
-            }
+            // Set organization context to expect check-in responses
+            await supabase
+              .from('organization_context')
+              .upsert({
+                organization_id: checkin.organization_id,
+                current_context: 'checkin',
+                context_data: { checkin_batch: new Date().toISOString() },
+                set_at: new Date().toISOString(),
+                expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // 24 hours
+              }, {
+                onConflict: 'organization_id'
+              })
           }
         } else {
           const errorText = await twilioResponse.text()
