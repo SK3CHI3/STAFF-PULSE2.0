@@ -302,14 +302,11 @@ export const usePlatformFeedback = (limit: number = 10) => {
       setState(prev => ({ ...prev, loading: true, error: null }))
 
       try {
-        const response = await fetch(`${supabaseConfig.url}/rest/v1/rpc/get_platform_feedback`, {
-          method: 'POST',
+        const response = await fetch('/api/feedback', {
+          method: 'GET',
           headers: {
-            'apikey': supabaseConfig.anonKey,
-            'Authorization': `Bearer ${supabaseConfig.anonKey}`,
             'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ limit_count: limit })
+          }
         })
 
         if (!response.ok) {
@@ -317,7 +314,7 @@ export const usePlatformFeedback = (limit: number = 10) => {
         }
 
         const data = await response.json()
-        setState({ data: data || [], loading: false, error: null })
+        setState({ data: data.feedback || [], loading: false, error: null })
       } catch (error) {
         setState(prev => ({
           ...prev,

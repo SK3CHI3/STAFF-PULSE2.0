@@ -37,6 +37,41 @@ interface CheckInResponse {
   }>
 }
 
+interface SendPollParams {
+  pollId: string
+  employees: Array<{
+    id: string
+    name: string
+    phone: string
+    department?: string
+  }>
+  poll: {
+    title: string
+    question: string
+    poll_type: string
+    options?: string[]
+    rating_scale?: number
+  }
+  organizationId: string
+}
+
+interface SendAnnouncementParams {
+  announcementId: string
+  employees: Array<{
+    id: string
+    name: string
+    phone: string
+    department?: string
+  }>
+  announcement: {
+    title: string
+    content: string
+    announcement_type: string
+    priority: string
+  }
+  organizationId: string
+}
+
 interface TwilioMessageResponse {
   sid: string
   status: string
@@ -279,6 +314,182 @@ export class TwilioService {
     }
   }
 
+  /**
+   * Send poll to employees via WhatsApp
+   */
+  async sendPoll(params: SendPollParams): Promise<CheckInResponse> {
+    if (!this.isConfigured()) {
+      throw new Error('Twilio is not properly configured')
+    }
+
+    const results: CheckInResponse = {
+      success: false,
+      totalSent: 0,
+      failed: 0,
+      errors: [],
+      details: []
+    }
+
+    try {
+      // Generate poll message
+      const pollMessage = this.generatePollMessage(params.poll)
+
+      // Send to each employee
+      for (const employee of params.employees) {
+        try {
+          const formattedPhone = this.validateAndFormatPhone(employee.phone)
+          if (!formattedPhone.isValid) {
+            results.failed++
+            results.errors.push(`Invalid phone number for ${employee.name}: ${formattedPhone.error}`)
+            results.details?.push({
+              employeeId: employee.id,
+              employeeName: employee.name,
+              phone: employee.phone,
+              status: 'failed',
+              error: formattedPhone.error
+            })
+            continue
+          }
+
+          const personalizedMessage = pollMessage.replace('{name}', employee.name)
+
+          const response = await this.sendWhatsAppMessage(
+            formattedPhone.formatted,
+            personalizedMessage
+          )
+
+          if (response.success && response.messageSid) {
+            results.totalSent++
+            results.details?.push({
+              employeeId: employee.id,
+              employeeName: employee.name,
+              phone: employee.phone,
+              status: 'sent',
+              messageSid: response.messageSid
+            })
+          } else {
+            results.failed++
+            results.errors.push(`Failed to send to ${employee.name}: ${response.error}`)
+            results.details?.push({
+              employeeId: employee.id,
+              employeeName: employee.name,
+              phone: employee.phone,
+              status: 'failed',
+              error: response.error
+            })
+          }
+        } catch (error) {
+          results.failed++
+          const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+          results.errors.push(`Error sending to ${employee.name}: ${errorMessage}`)
+          results.details?.push({
+            employeeId: employee.id,
+            employeeName: employee.name,
+            phone: employee.phone,
+            status: 'failed',
+            error: errorMessage
+          })
+        }
+      }
+
+      results.success = results.totalSent > 0
+      return results
+
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred'
+      results.errors.push(errorMessage)
+      throw new Error(`Failed to send poll: ${errorMessage}`)
+    }
+  }
+
+  /**
+   * Send announcement to employees via WhatsApp
+   */
+  async sendAnnouncement(params: SendAnnouncementParams): Promise<CheckInResponse> {
+    if (!this.isConfigured()) {
+      throw new Error('Twilio is not properly configured')
+    }
+
+    const results: CheckInResponse = {
+      success: false,
+      totalSent: 0,
+      failed: 0,
+      errors: [],
+      details: []
+    }
+
+    try {
+      // Generate announcement message
+      const announcementMessage = this.generateAnnouncementMessage(params.announcement)
+
+      // Send to each employee
+      for (const employee of params.employees) {
+        try {
+          const formattedPhone = this.validateAndFormatPhone(employee.phone)
+          if (!formattedPhone.isValid) {
+            results.failed++
+            results.errors.push(`Invalid phone number for ${employee.name}: ${formattedPhone.error}`)
+            results.details?.push({
+              employeeId: employee.id,
+              employeeName: employee.name,
+              phone: employee.phone,
+              status: 'failed',
+              error: formattedPhone.error
+            })
+            continue
+          }
+
+          const personalizedMessage = announcementMessage.replace('{name}', employee.name)
+
+          const response = await this.sendWhatsAppMessage(
+            formattedPhone.formatted,
+            personalizedMessage
+          )
+
+          if (response.success && response.messageSid) {
+            results.totalSent++
+            results.details?.push({
+              employeeId: employee.id,
+              employeeName: employee.name,
+              phone: employee.phone,
+              status: 'sent',
+              messageSid: response.messageSid
+            })
+          } else {
+            results.failed++
+            results.errors.push(`Failed to send to ${employee.name}: ${response.error}`)
+            results.details?.push({
+              employeeId: employee.id,
+              employeeName: employee.name,
+              phone: employee.phone,
+              status: 'failed',
+              error: response.error
+            })
+          }
+        } catch (error) {
+          results.failed++
+          const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+          results.errors.push(`Error sending to ${employee.name}: ${errorMessage}`)
+          results.details?.push({
+            employeeId: employee.id,
+            employeeName: employee.name,
+            phone: employee.phone,
+            status: 'failed',
+            error: errorMessage
+          })
+        }
+      }
+
+      results.success = results.totalSent > 0
+      return results
+
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred'
+      results.errors.push(errorMessage)
+      throw new Error(`Failed to send announcement: ${errorMessage}`)
+    }
+  }
+
   async sendCheckInCampaign(params: SendCheckInParams): Promise<CheckInResponse> {
     const { campaignId, employees, message } = params
 
@@ -482,6 +693,72 @@ export class TwilioService {
         error: result.error
       }
     })
+  }
+
+  // Check if Twilio is properly configured
+  private isConfigured(): boolean {
+    return !!(TWILIO_ACCOUNT_SID && TWILIO_AUTH_TOKEN && TWILIO_WHATSAPP_NUMBER)
+  }
+
+  // Generate poll message for WhatsApp
+  private generatePollMessage(poll: { title: string; question: string; poll_type: string; options?: string[]; rating_scale?: number }): string {
+    let message = `📊 *${poll.title}*\n\n${poll.question}\n\n`
+
+    switch (poll.poll_type) {
+      case 'multiple_choice':
+        if (poll.options) {
+          poll.options.forEach((option, index) => {
+            message += `${index + 1}️⃣ ${option}\n`
+          })
+          message += `\nReply with the number of your choice (1-${poll.options.length})`
+        }
+        break
+
+      case 'yes_no':
+        message += `1️⃣ Yes\n2️⃣ No\n\nReply with 1 for Yes or 2 for No`
+        break
+
+      case 'rating':
+        const scale = poll.rating_scale || 10
+        message += `Please rate from 1 to ${scale}\n\nReply with your rating (1-${scale})`
+        break
+
+      case 'open_text':
+        message += `Please share your thoughts in your reply.`
+        break
+    }
+
+    message += `\n\nHi {name}, your participation helps us improve! 🙏`
+    return message
+  }
+
+  // Generate announcement message for WhatsApp
+  private generateAnnouncementMessage(announcement: { title: string; content: string; announcement_type: string; priority: string }): string {
+    let emoji = '📢'
+
+    switch (announcement.announcement_type) {
+      case 'urgent':
+        emoji = '🚨'
+        break
+      case 'celebration':
+        emoji = '🎉'
+        break
+      case 'policy':
+        emoji = '📋'
+        break
+      case 'event':
+        emoji = '📅'
+        break
+    }
+
+    let priorityPrefix = ''
+    if (announcement.priority === 'urgent') {
+      priorityPrefix = '🚨 *URGENT* 🚨\n\n'
+    } else if (announcement.priority === 'high') {
+      priorityPrefix = '⚠️ *IMPORTANT* ⚠️\n\n'
+    }
+
+    return `${priorityPrefix}${emoji} *${announcement.title}*\n\n${announcement.content}\n\nHi {name}, this message is from your organization.`
   }
 
   // Get message templates - Only the two types we support

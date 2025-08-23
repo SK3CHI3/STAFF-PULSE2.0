@@ -243,6 +243,16 @@ export const hrDashboardItems: SidebarItem[] = [
     icon: MessageSquare,
   },
   {
+    id: "polls",
+    label: "Polls & Surveys",
+    icon: BarChart3,
+  },
+  {
+    id: "announcements",
+    label: "Announcements",
+    icon: Bell,
+  },
+  {
     id: "reports",
     label: "Team Reports",
     icon: FileText,

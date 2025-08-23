@@ -324,8 +324,8 @@ export const useDashboardStats = () => {
   return state
 }
 
-// Hook for recent responses
-export const useRecentResponses = (limit: number = 10) => {
+// Hook for recent responses - fetch directly from check_ins table
+export const useRecentResponses = (limit: number = 100) => {
   const { profile } = useAuth()
   const [state, setState] = useState<{
     data: any[]
@@ -344,31 +344,49 @@ export const useRecentResponses = (limit: number = 10) => {
       setState(prev => ({ ...prev, loading: true, error: null }))
 
       try {
-        const response = await fetch(`${supabaseConfig.url}/rest/v1/rpc/get_recent_responses`, {
-          method: 'POST',
-          headers: {
-            'apikey': supabaseConfig.anonKey,
-            'Authorization': `Bearer ${supabaseConfig.anonKey}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            org_id: profile.organization_id,
-            limit_count: limit
-          })
-        })
+        // Fetch check-ins directly from the database with employee information using Supabase client
+        const { data, error } = await supabase
+          .from('check_ins')
+          .select(`
+            *,
+            employees (
+              name,
+              department,
+              position
+            )
+          `)
+          .eq('organization_id', profile.organization_id)
+          .order('created_at', { ascending: false })
+          .limit(limit)
 
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`)
+        if (error) {
+          throw new Error(`Supabase error: ${error.message}`)
         }
 
-        const data = await response.json()
+        console.log('Raw check-ins data from Supabase:', data)
+
+        // Map the data to the expected format
+        const mappedData = (data || []).map((checkIn: any) => ({
+          id: checkIn.id,
+          employee_name: checkIn.employees?.name || 'Anonymous',
+          department: checkIn.employees?.department || 'Unknown',
+          role: checkIn.employees?.position || 'Unknown',
+          mood_score: checkIn.mood_score,
+          feedback: checkIn.feedback,
+          created_at: checkIn.created_at,
+          submitted_at: checkIn.created_at,
+          time_ago: new Date(checkIn.created_at).toLocaleDateString()
+        }))
+
+        console.log('Mapped check-ins data:', mappedData)
 
         setState({
-          data: data || [],
+          data: mappedData,
           loading: false,
           error: null
         })
       } catch (error) {
+        console.error('Error fetching check-ins:', error)
         setState(prev => ({
           ...prev,
           loading: false,

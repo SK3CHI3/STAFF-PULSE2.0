@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -78,12 +79,85 @@ const AdminDashboard = () => {
   const [selectedOrg, setSelectedOrg] = useState<any>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  // Feedback response state
+  const [selectedFeedback, setSelectedFeedback] = useState<any>(null);
+  const [showResponseModal, setShowResponseModal] = useState(false);
+  const [responseForm, setResponseForm] = useState({
+    admin_response: '',
+    status: 'in_progress'
+  });
+  const [responseLoading, setResponseLoading] = useState(false);
+
   const { toast } = useToast();
 
   // Handle section change and mark as viewed
   const handleSectionChange = (sectionId: string) => {
     setActiveSection(sectionId);
     setViewedSections(prev => new Set([...prev, sectionId]));
+  };
+
+  // Handle feedback response
+  const handleRespondToFeedback = (feedback: any) => {
+    setSelectedFeedback(feedback);
+    setResponseForm({
+      admin_response: feedback.admin_response || '',
+      status: feedback.status || 'in_progress'
+    });
+    setShowResponseModal(true);
+  };
+
+  // Submit feedback response
+  const handleSubmitResponse = async () => {
+    if (!selectedFeedback || !responseForm.admin_response.trim()) {
+      toast({
+        title: "Error",
+        description: "Please provide a response message",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setResponseLoading(true);
+
+    try {
+      const response = await fetch(`/api/feedback/${selectedFeedback.id}/respond`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          admin_response: responseForm.admin_response,
+          status: responseForm.status,
+          responded_by: 'admin-user-id' // This should be the actual admin user ID
+        })
+      });
+
+      if (response.ok) {
+        toast({
+          title: "Success",
+          description: "Response sent successfully",
+        });
+
+        setShowResponseModal(false);
+        setSelectedFeedback(null);
+        setResponseForm({ admin_response: '', status: 'in_progress' });
+
+        // Refresh feedback data
+        window.location.reload(); // Simple refresh for now
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to send response');
+      }
+    } catch (error) {
+      console.error('Error sending response:', error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to send response",
+        variant: "destructive"
+      });
+    } finally {
+      setResponseLoading(false);
+    }
   };
 
   // Handle view organization
@@ -1127,53 +1201,86 @@ const AdminDashboard = () => {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            {platformFeedback.map((feedback) => (
-              <div key={feedback.id} className="p-4 border border-border rounded-lg bg-background/50 space-y-3">
-                <div className="flex items-start justify-between">
-                  <div className="space-y-1">
-                    <div className="flex items-center space-x-3">
-                      <h4 className="font-semibold">{feedback.subject}</h4>
-                      <Badge variant={
-                        feedback.priority === 'high' ? 'destructive' :
-                        feedback.priority === 'medium' ? 'default' : 'secondary'
-                      }>
-                        {feedback.priority}
-                      </Badge>
-                      <Badge variant={
-                        feedback.status === 'resolved' ? 'default' :
-                        feedback.status === 'in_progress' ? 'secondary' : 'outline'
-                      }>
-                        {feedback.status.replace('_', ' ')}
-                      </Badge>
+          {platformFeedback.length === 0 ? (
+            <div className="text-center py-8">
+              <MessageSquare className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-lg font-semibold mb-2">No feedback yet</h3>
+              <p className="text-muted-foreground">
+                Feedback from organizations will appear here
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {platformFeedback.map((feedback) => (
+                <div key={feedback.id} className="p-4 border border-border rounded-lg bg-background/50 space-y-3">
+                  <div className="flex items-start justify-between">
+                    <div className="space-y-1">
+                      <div className="flex items-center space-x-3">
+                        <h4 className="font-semibold">{feedback.subject}</h4>
+                        <Badge variant={
+                          feedback.priority === 'high' ? 'destructive' :
+                          feedback.priority === 'medium' ? 'default' : 'secondary'
+                        }>
+                          {feedback.priority}
+                        </Badge>
+                        <Badge variant={
+                          feedback.status === 'resolved' ? 'default' :
+                          feedback.status === 'in_progress' ? 'secondary' :
+                          feedback.status === 'closed' ? 'outline' : 'destructive'
+                        }>
+                          {feedback.status.replace('_', ' ').toUpperCase()}
+                        </Badge>
+                        <Badge variant="outline" className="text-xs">
+                          {feedback.type?.replace('_', ' ').toUpperCase()}
+                        </Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        From: {feedback.user_profiles?.name || 'Unknown'} ({feedback.user_profiles?.email || 'No email'})
+                      </p>
+                      <p className="text-sm">
+                        {feedback.message.length > 150 ? feedback.message.substring(0, 150) + '...' : feedback.message}
+                      </p>
+                      {feedback.admin_response && (
+                        <div className="mt-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded border border-blue-200 dark:border-blue-800">
+                          <p className="text-xs font-medium text-blue-800 dark:text-blue-200 mb-1">Admin Response:</p>
+                          <p className="text-xs text-blue-700 dark:text-blue-300">{feedback.admin_response}</p>
+                        </div>
+                      )}
                     </div>
-                    <p className="text-sm text-muted-foreground">
-                      From: {feedback.sender} at {feedback.organization}
-                    </p>
-                    <p className="text-sm">{feedback.message}</p>
+                    <div className="flex items-center space-x-2 text-xs text-muted-foreground">
+                      <span>{new Date(feedback.created_at).toLocaleDateString()}</span>
+                    </div>
                   </div>
-                  <div className="flex items-center space-x-2 text-xs text-muted-foreground">
-                    <span>{feedback.timestamp}</span>
-                  </div>
-                </div>
-                <div className="flex space-x-2">
-                  <Button variant="outline" size="sm">
-                    <Eye className="w-4 h-4 mr-2" />
-                    View Details
-                  </Button>
-                  <Button variant="outline" size="sm">
-                    <MessageSquare className="w-4 h-4 mr-2" />
-                    Reply
-                  </Button>
-                  {feedback.status === 'open' && (
-                    <Button variant="default" size="sm">
-                      Mark as Resolved
+                  <div className="flex space-x-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleRespondToFeedback(feedback)}
+                    >
+                      <MessageSquare className="w-4 h-4 mr-2" />
+                      {feedback.admin_response ? 'Update Response' : 'Respond'}
                     </Button>
-                  )}
+                    {feedback.status === 'open' && (
+                      <Button
+                        variant="default"
+                        size="sm"
+                        onClick={() => {
+                          setSelectedFeedback(feedback);
+                          setResponseForm({
+                            admin_response: 'Issue resolved. Thank you for your feedback!',
+                            status: 'resolved'
+                          });
+                          setShowResponseModal(true);
+                        }}
+                      >
+                        Mark as Resolved
+                      </Button>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
@@ -1526,6 +1633,74 @@ const AdminDashboard = () => {
               disabled={isDeleting}
             >
               {isDeleting ? "Deleting..." : "Delete Organization"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Feedback Response Modal */}
+      <Dialog open={showResponseModal} onOpenChange={setShowResponseModal}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Respond to Feedback</DialogTitle>
+            <DialogDescription>
+              {selectedFeedback && (
+                <div className="space-y-2">
+                  <p><strong>From:</strong> {selectedFeedback.user_profiles?.name || 'Unknown'}</p>
+                  <p><strong>Type:</strong> {selectedFeedback.type?.replace('_', ' ').toUpperCase()}</p>
+                  <p><strong>Subject:</strong> {selectedFeedback.subject}</p>
+                  <div className="p-3 bg-muted rounded-lg mt-2">
+                    <p className="text-sm">{selectedFeedback.message}</p>
+                  </div>
+                </div>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="status">Status</Label>
+              <Select
+                value={responseForm.status}
+                onValueChange={(value) => setResponseForm({...responseForm, status: value})}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="open">Open</SelectItem>
+                  <SelectItem value="in_progress">In Progress</SelectItem>
+                  <SelectItem value="resolved">Resolved</SelectItem>
+                  <SelectItem value="closed">Closed</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="admin_response">Response</Label>
+              <textarea
+                id="admin_response"
+                className="w-full min-h-[120px] px-3 py-2 border border-border rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                placeholder="Write your response to the user..."
+                value={responseForm.admin_response}
+                onChange={(e) => setResponseForm({...responseForm, admin_response: e.target.value})}
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowResponseModal(false)}
+              disabled={responseLoading}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSubmitResponse}
+              disabled={responseLoading || !responseForm.admin_response.trim()}
+            >
+              {responseLoading ? "Sending..." : "Send Response"}
             </Button>
           </DialogFooter>
         </DialogContent>

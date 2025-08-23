@@ -1,6 +1,6 @@
 import { supabase } from '../lib/supabase'
 
-export type FeatureType = 'check_in_sent' | 'employee_added' | 'ai_insight_generated' | 'report_generated' | 'api_call'
+export type FeatureType = 'check_in_sent' | 'employee_added' | 'ai_insight_generated' | 'report_generated' | 'api_call' | 'poll_created' | 'poll_sent' | 'announcement_sent'
 
 export interface UsageRecord {
   id: string

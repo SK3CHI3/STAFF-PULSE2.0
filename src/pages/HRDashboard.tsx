@@ -46,6 +46,14 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ModernSidebar, hrDashboardItems } from "@/components/layout/ModernSidebar";
+import { PollCreator } from "@/components/polls/PollCreator";
+import { PollResults } from "@/components/polls/PollResults";
+import { PollList } from "@/components/polls/PollList";
+import { PollReport } from "@/components/polls/PollReport";
+import { ReportsHub } from "@/components/reports/ReportsHub";
+import { AIInsightsHub } from "@/components/ai/AIInsightsHub";
+import { AnnouncementCreator } from "@/components/announcements/AnnouncementCreator";
+import { AnnouncementList } from "@/components/announcements/AnnouncementList";
 
 import {
   Users,
@@ -101,6 +109,27 @@ const HRDashboard = () => {
   const [hasActiveSubscription, setHasActiveSubscription] = useState(true);
   const [checkingSubscription, setCheckingSubscription] = useState(true);
 
+  // Polls & Surveys state
+  const [showCreatePoll, setShowCreatePoll] = useState(false);
+  const [selectedPoll, setSelectedPoll] = useState(null);
+  const [showPollResults, setShowPollResults] = useState(false);
+  const [showPollReport, setShowPollReport] = useState(false);
+
+  // Announcements state
+  const [showCreateAnnouncement, setShowCreateAnnouncement] = useState(false);
+  const [selectedAnnouncement, setSelectedAnnouncement] = useState(null);
+  const [showAnnouncementDetails, setShowAnnouncementDetails] = useState(false);
+
+  // Feedback state
+  const [feedbackForm, setFeedbackForm] = useState({
+    type: '',
+    priority: 'medium',
+    subject: '',
+    message: ''
+  });
+  const [feedbackLoading, setFeedbackLoading] = useState(false);
+  const [userFeedback, setUserFeedback] = useState([]);
+
   // Handle section changes and mark reports as viewed
   const handleSectionChange = (sectionId: string) => {
     setActiveSection(sectionId);
@@ -120,6 +149,78 @@ const HRDashboard = () => {
       setTimeout(() => {
         reinitializeIntaSend();
       }, 100);
+    }
+
+    // Load feedback when feedback section is opened
+    if (sectionId === "feedback") {
+      loadUserFeedback();
+    }
+  };
+
+  // Load user's feedback
+  const loadUserFeedback = async () => {
+    if (!user?.id) return;
+
+    try {
+      const response = await fetch(`/api/feedback?user_id=${user.id}`);
+      if (response.ok) {
+        const data = await response.json();
+        setUserFeedback(data.feedback || []);
+      }
+    } catch (error) {
+      console.error('Error loading feedback:', error);
+    }
+  };
+
+  // Submit feedback
+  const handleSubmitFeedback = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!feedbackForm.type || !feedbackForm.subject || !feedbackForm.message) {
+      alert('Please fill in all required fields');
+      return;
+    }
+
+    setFeedbackLoading(true);
+
+    try {
+      const response = await fetch('/api/feedback', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          organization_id: profile?.organization_id,
+          user_id: user?.id,
+          type: feedbackForm.type,
+          priority: feedbackForm.priority,
+          subject: feedbackForm.subject,
+          message: feedbackForm.message
+        })
+      });
+
+      if (response.ok) {
+        alert('Feedback submitted successfully! We\'ll get back to you soon.');
+
+        // Reset form
+        setFeedbackForm({
+          type: '',
+          priority: 'medium',
+          subject: '',
+          message: ''
+        });
+
+        // Reload feedback list
+        loadUserFeedback();
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to submit feedback');
+      }
+    } catch (error) {
+      console.error('Error submitting feedback:', error);
+      alert(error instanceof Error ? error.message : "Failed to submit feedback");
+    } finally {
+      setFeedbackLoading(false);
     }
   };
   const [currentPage, setCurrentPage] = useState(1);
@@ -1016,15 +1117,18 @@ const HRDashboard = () => {
   // Get real employee responses from database and map to expected format
   const allEmployeeResponses = (recentResponses.data || []).map((response: any) => ({
     id: response.id,
-    employeeName: response.employee_name,
-    department: response.department,
     mood: response.mood_score,
-    comment: response.feedback || 'No feedback provided',
-    timestamp: new Date(response.created_at).toLocaleString(),
-    timeAgo: response.time_ago,
-    phoneNumber: 'N/A', // Phone number not available from check-ins
-    source: 'Database'
+    feedback: response.feedback || 'No feedback provided',
+    submitted_at: response.created_at,
+    employees: {
+      name: response.employee_name,
+      department: response.department,
+      role: response.role
+    }
   }));
+
+  console.log('Recent responses raw data:', recentResponses.data)
+  console.log('All employee responses mapped:', allEmployeeResponses)
 
 
 
@@ -1362,6 +1466,10 @@ const HRDashboard = () => {
         return renderReportsContent();
       case "checkins":
         return renderCheckinsContent();
+      case "polls":
+        return renderPollsContent();
+      case "announcements":
+        return renderAnnouncementsContent();
       case "ai-insights":
         return renderAIInsightsContent();
       case "billing":
@@ -1802,291 +1910,18 @@ const HRDashboard = () => {
   );
 
   const renderReportsContent = () => (
-    <div className="space-y-6">
-      <div className="bg-gradient-to-r from-background to-background/95 dark:from-slate-900 dark:to-slate-800 rounded-2xl border border-border/50 shadow-lg p-6">
-        <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl flex items-center justify-center">
-            <MessageSquare className="w-5 h-5 text-white" />
-          </div>
-          <div>
-            <h2 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 dark:from-purple-400 dark:to-pink-400 bg-clip-text text-transparent">
-              Team Reports
-            </h2>
-            <p className="text-sm text-muted-foreground">Employee feedback and engagement reports</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Clickable Response Stats Filters */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card
-          className={`bg-gradient-card border-0 shadow-soft cursor-pointer transition-all duration-300 hover:shadow-lg hover:scale-105 ${
-            selectedMoodFilter === "all" ? "ring-2 ring-blue-500 bg-blue-50 dark:bg-blue-900/20" : ""
-          }`}
-          onClick={() => {
-            console.log("Clicked Total Responses - setting filter to 'all'");
-            setSelectedMoodFilter("all");
-            setCurrentPage(1);
-          }}
-        >
-          <CardContent className="p-6">
-            <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-blue-500/20 rounded-lg flex items-center justify-center">
-                <MessageSquare className="w-4 h-4 text-blue-500" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Total Responses</p>
-                <p className="text-xl font-bold">{allEmployeeResponses.length}</p>
-              </div>
-            </div>
-            {selectedMoodFilter === "all" && (
-              <div className="mt-2">
-                <Badge variant="default" className="text-xs">Active Filter</Badge>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card
-          className={`bg-gradient-card border-0 shadow-soft cursor-pointer transition-all duration-300 hover:shadow-lg hover:scale-105 ${
-            selectedMoodFilter === "positive" ? "ring-2 ring-green-500 bg-green-50 dark:bg-green-900/20" : ""
-          }`}
-          onClick={() => {
-            console.log("Clicked Positive - setting filter to 'positive'");
-            setSelectedMoodFilter("positive");
-            setCurrentPage(1);
-          }}
-        >
-          <CardContent className="p-6">
-            <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-green-500/20 rounded-lg flex items-center justify-center">
-                <Smile className="w-4 h-4 text-green-500" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Positive (7-10)</p>
-                <p className="text-xl font-bold">{allEmployeeResponses.filter(r => r.mood >= 7).length}</p>
-              </div>
-            </div>
-            {selectedMoodFilter === "positive" && (
-              <div className="mt-2">
-                <Badge variant="default" className="text-xs bg-green-100 text-green-700">Active Filter</Badge>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card
-          className={`bg-gradient-card border-0 shadow-soft cursor-pointer transition-all duration-300 hover:shadow-lg hover:scale-105 ${
-            selectedMoodFilter === "neutral" ? "ring-2 ring-orange-500 bg-orange-50 dark:bg-orange-900/20" : ""
-          }`}
-          onClick={() => {
-            console.log("Clicked Neutral - setting filter to 'neutral'");
-            setSelectedMoodFilter("neutral");
-            setCurrentPage(1);
-          }}
-        >
-          <CardContent className="p-6">
-            <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-orange-500/20 rounded-lg flex items-center justify-center">
-                <Meh className="w-4 h-4 text-orange-500" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Neutral (5-6)</p>
-                <p className="text-xl font-bold">{allEmployeeResponses.filter(r => r.mood >= 5 && r.mood < 7).length}</p>
-              </div>
-            </div>
-            {selectedMoodFilter === "neutral" && (
-              <div className="mt-2">
-                <Badge variant="default" className="text-xs bg-orange-100 text-orange-700">Active Filter</Badge>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card
-          className={`bg-gradient-card border-0 shadow-soft cursor-pointer transition-all duration-300 hover:shadow-lg hover:scale-105 ${
-            selectedMoodFilter === "attention" ? "ring-2 ring-red-500 bg-red-50 dark:bg-red-900/20" : ""
-          }`}
-          onClick={() => {
-            console.log("Clicked Need Attention - setting filter to 'attention'");
-            setSelectedMoodFilter("attention");
-            setCurrentPage(1);
-          }}
-        >
-          <CardContent className="p-6">
-            <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-red-500/20 rounded-lg flex items-center justify-center">
-                <Frown className="w-4 h-4 text-red-500" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Need Attention (1-4)</p>
-                <p className="text-xl font-bold">{allEmployeeResponses.filter(r => r.mood < 5).length}</p>
-              </div>
-            </div>
-            {selectedMoodFilter === "attention" && (
-              <div className="mt-2">
-                <Badge variant="destructive" className="text-xs">Active Filter</Badge>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-
-      <Card className="bg-gradient-card border-0 shadow-soft">
-        <CardHeader className="pb-6">
-          <div className="flex items-center justify-between">
-            <div className="space-y-2">
-              <CardTitle className="text-xl">Employee Responses</CardTitle>
-              <CardDescription className="text-base">
-                Showing {startIndex + 1}-{Math.min(endIndex, totalResponses)} of {totalResponses} responses
-              </CardDescription>
-            </div>
-            <div className="flex gap-2">
-              <Select value={selectedDepartment} onValueChange={(value) => {
-                setSelectedDepartment(value);
-                setCurrentPage(1); // Reset to first page when filtering
-              }}>
-                <SelectTrigger className="w-40">
-                  <SelectValue placeholder="Filter by department" />
-                </SelectTrigger>
-                <SelectContent>
-                  {departments.map((dept) => (
-                    <SelectItem key={dept} value={dept}>
-                      {dept === "all" ? "All Departments" : dept}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Button variant="outline" size="sm">
-                <Download className="w-4 h-4 mr-2" />
-                Export
-              </Button>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {currentResponses.map((response) => (
-              <Card key={response.id} className="bg-gradient-card border-0 shadow-soft">
-                <CardContent className="p-6 space-y-4">
-                  {/* Employee Info Header */}
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full flex items-center justify-center text-white text-sm font-bold">
-                        {response.employeeName.split(' ').map((n: string) => n[0]).join('')}
-                      </div>
-                      <div>
-                        <h4 className="font-semibold text-foreground">{response.employeeName}</h4>
-                        <p className="text-sm text-muted-foreground">{response.department}</p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <span className="text-xs text-muted-foreground">{response.timeAgo}</span>
-                    </div>
-                  </div>
-
-                  {/* Mood Score & Badges */}
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      {getMoodIcon(response.mood)}
-                      <span className="font-bold text-2xl">{response.mood}/10</span>
-                    </div>
-                    <div className="flex space-x-2">
-                      <Badge variant="outline" className="bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300">
-                        {response.source}
-                      </Badge>
-                      {response.mood <= 4 && (
-                        <Badge variant="destructive">
-                          Needs Attention
-                        </Badge>
-                      )}
-                      {response.mood >= 8 && (
-                        <Badge variant="default" className="bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-300">
-                          Great Mood
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Comment */}
-                  <div className="bg-muted/30 rounded-lg p-4">
-                    <p className="text-sm leading-relaxed text-foreground italic">
-                      "{response.comment}"
-                    </p>
-                  </div>
-
-                  {/* Contact Info */}
-                  <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-                    <span>📱 {response.phoneNumber}</span>
-                    <span>•</span>
-                    <span>via {response.source}</span>
-                  </div>
-
-                  {/* Action Buttons */}
-                  <div className="flex flex-wrap gap-2 pt-2 border-t border-border">
-                    <Button variant="outline" size="sm">
-                      <MessageSquare className="w-4 h-4 mr-2" />
-                      Reply
-                    </Button>
-                    {response.mood <= 4 && (
-                      <Button variant="default" size="sm">
-                        <Heart className="w-4 h-4 mr-2" />
-                        Follow Up
-                      </Button>
-                    )}
-                    <Button variant="outline" size="sm">
-                      <Eye className="w-4 h-4 mr-2" />
-                      Profile
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-
-          {/* Pagination */}
-          <div className="flex items-center justify-between mt-6 pt-4 border-t border-border">
-            <div className="text-sm text-muted-foreground">
-              Page {currentPage} of {totalPages}
-            </div>
-            <div className="flex space-x-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                disabled={currentPage === 1}
-              >
-                Previous
-              </Button>
-
-              {/* Page numbers */}
-              <div className="flex space-x-1">
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                  <Button
-                    key={page}
-                    variant={currentPage === page ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setCurrentPage(page)}
-                    className="w-8 h-8 p-0"
-                  >
-                    {page}
-                  </Button>
-                ))}
-              </div>
-
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-                disabled={currentPage === totalPages}
-              >
-                Next
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
+    <ReportsHub
+      checkInResponses={allEmployeeResponses}
+      selectedMoodFilter={selectedMoodFilter}
+      setSelectedMoodFilter={setSelectedMoodFilter}
+      selectedDepartment={selectedDepartment}
+      setSelectedDepartment={setSelectedDepartment}
+      departments={departments}
+      currentPage={currentPage}
+      setCurrentPage={setCurrentPage}
+      polls={[]} // TODO: Add polls data
+      announcements={[]} // TODO: Add announcements data
+    />
   );
 
   const renderFeedbackContent = () => (
@@ -2112,61 +1947,79 @@ const HRDashboard = () => {
           <CardDescription>Send feedback, feature requests, or report issues</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="feedback-type">Feedback Type</Label>
-              <Select>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select feedback type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="feature_request">Feature Request</SelectItem>
-                  <SelectItem value="bug_report">Bug Report</SelectItem>
-                  <SelectItem value="general">General Feedback</SelectItem>
-                  <SelectItem value="support">Support Request</SelectItem>
-                </SelectContent>
-              </Select>
+          <form onSubmit={handleSubmitFeedback}>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+              <div className="space-y-2">
+                <Label htmlFor="feedback-type">Feedback Type *</Label>
+                <Select
+                  value={feedbackForm.type}
+                  onValueChange={(value) => setFeedbackForm({...feedbackForm, type: value})}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select feedback type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="feature_request">Feature Request</SelectItem>
+                    <SelectItem value="bug_report">Bug Report</SelectItem>
+                    <SelectItem value="general">General Feedback</SelectItem>
+                    <SelectItem value="support">Support Request</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="priority">Priority</Label>
+                <Select
+                  value={feedbackForm.priority}
+                  onValueChange={(value) => setFeedbackForm({...feedbackForm, priority: value})}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select priority" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="low">Low</SelectItem>
+                    <SelectItem value="medium">Medium</SelectItem>
+                    <SelectItem value="high">High</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="priority">Priority</Label>
-              <Select>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select priority" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="low">Low</SelectItem>
-                  <SelectItem value="medium">Medium</SelectItem>
-                  <SelectItem value="high">High</SelectItem>
-                </SelectContent>
-              </Select>
+            <div className="space-y-2 mb-6">
+              <Label htmlFor="subject">Subject *</Label>
+              <Input
+                id="subject"
+                placeholder="Brief description of your feedback"
+                value={feedbackForm.subject}
+                onChange={(e) => setFeedbackForm({...feedbackForm, subject: e.target.value})}
+                required
+              />
             </div>
-          </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="subject">Subject</Label>
-            <Input id="subject" placeholder="Brief description of your feedback" />
-          </div>
+            <div className="space-y-2 mb-6">
+              <Label htmlFor="message">Message *</Label>
+              <Textarea
+                id="message"
+                className="min-h-[120px]"
+                placeholder="Describe your feedback, feature request, or issue in detail..."
+                value={feedbackForm.message}
+                onChange={(e) => setFeedbackForm({...feedbackForm, message: e.target.value})}
+                required
+              />
+            </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="message">Message</Label>
-            <textarea
-              id="message"
-              className="w-full min-h-[120px] px-3 py-2 border border-border rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-              placeholder="Describe your feedback, feature request, or issue in detail..."
-            />
-          </div>
-
-          <div className="flex space-x-3">
-            <Button variant="hero" className="group">
-              <Send className="w-4 h-4 mr-2 group-hover:rotate-12 transition-transform" />
-              Send Feedback
-            </Button>
-            <Button variant="outline">
-              <MessageSquare className="w-4 h-4 mr-2" />
-              Save as Draft
-            </Button>
-          </div>
+            <div className="flex space-x-3">
+              <Button
+                type="submit"
+                variant="hero"
+                className="group"
+                disabled={feedbackLoading}
+              >
+                <Send className="w-4 h-4 mr-2 group-hover:rotate-12 transition-transform" />
+                {feedbackLoading ? 'Sending...' : 'Send Feedback'}
+              </Button>
+            </div>
+          </form>
         </CardContent>
       </Card>
 
@@ -2177,37 +2030,267 @@ const HRDashboard = () => {
           <CardDescription>Track the status of your submitted feedback</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            <div className="p-4 border border-border rounded-lg bg-background/50">
-              <div className="flex items-center justify-between mb-2">
-                <h4 className="font-semibold">Feature Request: Advanced Analytics</h4>
-                <Badge variant="secondary">In Progress</Badge>
-              </div>
-              <p className="text-sm text-muted-foreground mb-2">
-                Submitted 3 days ago • Response expected within 5 business days
-              </p>
-              <p className="text-sm">
-                Request for more detailed analytics on team mood patterns...
+          {userFeedback.length === 0 ? (
+            <div className="text-center py-8">
+              <MessageSquare className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-lg font-semibold mb-2">No feedback submitted yet</h3>
+              <p className="text-muted-foreground">
+                Your submitted feedback will appear here with status updates
               </p>
             </div>
-
-            <div className="p-4 border border-border rounded-lg bg-background/50">
-              <div className="flex items-center justify-between mb-2">
-                <h4 className="font-semibold">Bug Report: WhatsApp Integration</h4>
-                <Badge variant="default">Resolved</Badge>
-              </div>
-              <p className="text-sm text-muted-foreground mb-2">
-                Submitted 1 week ago • Resolved 2 days ago
-              </p>
-              <p className="text-sm">
-                Issue with WhatsApp check-ins not being delivered...
-              </p>
+          ) : (
+            <div className="space-y-4">
+              {userFeedback.map((feedback: any) => (
+                <div key={feedback.id} className="p-4 border border-border rounded-lg bg-background/50">
+                  <div className="flex items-center justify-between mb-2">
+                    <h4 className="font-semibold">
+                      {feedback.type.replace('_', ' ').replace(/\b\w/g, (l: string) => l.toUpperCase())}: {feedback.subject}
+                    </h4>
+                    <Badge
+                      variant={
+                        feedback.status === 'resolved' ? 'default' :
+                        feedback.status === 'in_progress' ? 'secondary' :
+                        feedback.status === 'closed' ? 'outline' : 'destructive'
+                      }
+                    >
+                      {feedback.status.replace('_', ' ').replace(/\b\w/g, (l: string) => l.toUpperCase())}
+                    </Badge>
+                  </div>
+                  <p className="text-sm text-muted-foreground mb-2">
+                    Submitted {new Date(feedback.created_at).toLocaleDateString()} • Priority: {feedback.priority}
+                    {feedback.responded_at && ` • Responded ${new Date(feedback.responded_at).toLocaleDateString()}`}
+                  </p>
+                  <p className="text-sm mb-2">
+                    {feedback.message.length > 100 ? feedback.message.substring(0, 100) + '...' : feedback.message}
+                  </p>
+                  {feedback.admin_response && (
+                    <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                      <p className="text-sm font-medium text-blue-800 dark:text-blue-200 mb-1">
+                        Response from StaffPulse Team:
+                      </p>
+                      <p className="text-sm text-blue-700 dark:text-blue-300">
+                        {feedback.admin_response}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              ))}
             </div>
-          </div>
+          )}
         </CardContent>
       </Card>
     </div>
   );
+
+  const renderPollsContent = () => {
+    if (showCreatePoll) {
+      return (
+        <div className="space-y-6">
+          <div className="bg-gradient-to-r from-background to-background/95 dark:from-slate-900 dark:to-slate-800 rounded-2xl border border-border/50 shadow-lg p-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl flex items-center justify-center">
+                  <BarChart3 className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 bg-clip-text text-transparent">
+                    Create New Poll
+                  </h2>
+                  <p className="text-sm text-muted-foreground">Create engaging polls to boost employee participation</p>
+                </div>
+              </div>
+              <Button variant="outline" onClick={() => setShowCreatePoll(false)}>
+                <ChevronLeft className="w-4 h-4 mr-2" />
+                Back to Polls
+              </Button>
+            </div>
+          </div>
+
+          <PollCreator
+            onPollCreated={(poll) => {
+              setShowCreatePoll(false);
+              // Refresh polls list here if needed
+            }}
+            onCancel={() => setShowCreatePoll(false)}
+          />
+        </div>
+      );
+    }
+
+    if (showPollResults && selectedPoll) {
+      return (
+        <div className="space-y-6">
+          <div className="bg-gradient-to-r from-background to-background/95 dark:from-slate-900 dark:to-slate-800 rounded-2xl border border-border/50 shadow-lg p-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl flex items-center justify-center">
+                  <BarChart3 className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 bg-clip-text text-transparent">
+                    Poll Results
+                  </h2>
+                  <p className="text-sm text-muted-foreground">View detailed poll results and analytics</p>
+                </div>
+              </div>
+              <Button variant="outline" onClick={() => {
+                setShowPollResults(false);
+                setSelectedPoll(null);
+              }}>
+                <ChevronLeft className="w-4 h-4 mr-2" />
+                Back to Polls
+              </Button>
+            </div>
+          </div>
+
+          <PollResults
+            poll={selectedPoll}
+            onClose={() => {
+              setShowPollResults(false);
+              setSelectedPoll(null);
+            }}
+          />
+        </div>
+      );
+    }
+
+    if (showPollReport && selectedPoll) {
+      return (
+        <div className="space-y-6">
+          <div className="bg-gradient-to-r from-background to-background/95 dark:from-slate-900 dark:to-slate-800 rounded-2xl border border-border/50 shadow-lg p-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl flex items-center justify-center">
+                  <Brain className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 bg-clip-text text-transparent">
+                    AI Poll Report
+                  </h2>
+                  <p className="text-sm text-muted-foreground">AI-powered insights and analysis</p>
+                </div>
+              </div>
+              <Button variant="outline" onClick={() => {
+                setShowPollReport(false);
+                setSelectedPoll(null);
+              }}>
+                <ChevronLeft className="w-4 h-4 mr-2" />
+                Back to Polls
+              </Button>
+            </div>
+          </div>
+
+          <PollReport
+            pollId={selectedPoll.id}
+            onClose={() => {
+              setShowPollReport(false);
+              setSelectedPoll(null);
+            }}
+          />
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-6">
+        <div className="bg-gradient-to-r from-background to-background/95 dark:from-slate-900 dark:to-slate-800 rounded-2xl border border-border/50 shadow-lg p-6">
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl flex items-center justify-center">
+              <BarChart3 className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 bg-clip-text text-transparent">
+                Polls & Surveys
+              </h2>
+              <p className="text-sm text-muted-foreground">Create and manage employee polls to boost engagement</p>
+            </div>
+          </div>
+        </div>
+
+        <PollList
+          onCreatePoll={() => setShowCreatePoll(true)}
+          onViewResults={(poll) => {
+            setSelectedPoll(poll);
+            setShowPollResults(true);
+          }}
+          onViewReport={(poll) => {
+            setSelectedPoll(poll);
+            setShowPollReport(true);
+          }}
+          onEditPoll={(poll) => {
+            setSelectedPoll(poll);
+            setShowCreatePoll(true);
+          }}
+        />
+      </div>
+    );
+  };
+
+  const renderAnnouncementsContent = () => {
+    if (showCreateAnnouncement) {
+      return (
+        <div className="space-y-6">
+          <div className="bg-gradient-to-r from-background to-background/95 dark:from-slate-900 dark:to-slate-800 rounded-2xl border border-border/50 shadow-lg p-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 bg-gradient-to-r from-orange-500 to-red-500 rounded-xl flex items-center justify-center">
+                  <Bell className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold bg-gradient-to-r from-orange-600 to-red-600 dark:from-orange-400 dark:to-red-400 bg-clip-text text-transparent">
+                    Create Announcement
+                  </h2>
+                  <p className="text-sm text-muted-foreground">Share important updates and news with your team</p>
+                </div>
+              </div>
+              <Button variant="outline" onClick={() => setShowCreateAnnouncement(false)}>
+                <ChevronLeft className="w-4 h-4 mr-2" />
+                Back to Announcements
+              </Button>
+            </div>
+          </div>
+
+          <AnnouncementCreator
+            onAnnouncementCreated={(announcement) => {
+              setShowCreateAnnouncement(false);
+              // Refresh announcements list here if needed
+            }}
+            onCancel={() => setShowCreateAnnouncement(false)}
+          />
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-6">
+        <div className="bg-gradient-to-r from-background to-background/95 dark:from-slate-900 dark:to-slate-800 rounded-2xl border border-border/50 shadow-lg p-6">
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 bg-gradient-to-r from-orange-500 to-red-500 rounded-xl flex items-center justify-center">
+              <Bell className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <h2 className="text-2xl font-bold bg-gradient-to-r from-orange-600 to-red-600 dark:from-orange-400 dark:to-red-400 bg-clip-text text-transparent">
+                Announcements
+              </h2>
+              <p className="text-sm text-muted-foreground">Share important updates and news with your team</p>
+            </div>
+          </div>
+        </div>
+
+        <AnnouncementList
+          onCreateAnnouncement={() => setShowCreateAnnouncement(true)}
+          onViewAnnouncement={(announcement) => {
+            setSelectedAnnouncement(announcement);
+            setShowAnnouncementDetails(true);
+          }}
+          onEditAnnouncement={(announcement) => {
+            setSelectedAnnouncement(announcement);
+            setShowCreateAnnouncement(true);
+          }}
+        />
+      </div>
+    );
+  };
 
   const renderCheckinsContent = () => {
 
@@ -3396,495 +3479,25 @@ const HRDashboard = () => {
     }
 
     return (
-    <div className="space-y-6">
-      {/* AI Insights Header - Consistent with other sections */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center space-x-3">
-          <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
-            <Brain className="w-4 h-4 text-purple-600" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">AI Insights</h1>
-            <p className="text-sm text-muted-foreground">AI-powered team engagement analysis</p>
-          </div>
-        </div>
-        <div className="flex space-x-2">
-          <Button
-            onClick={() => {
-              // Check if trying to generate team insights without permission
-              if (!canUseFeature('aiInsights')) {
-                showUpgradeNotice({
-                  featureName: 'Team AI Insights',
-                  currentPlan: currentPlan?.name || 'Current',
-                  requiredPlan: 'Business',
-                  description: 'Get AI-powered insights about your team\'s engagement, participation trends, and actionable recommendations to improve employee satisfaction.'
-                })
-                return
-              }
-
-              // If we're here, user has at least Business plan for team insights
-              // Employee insights scope is already locked at the button level
-              aiInsights.generateNewInsights(aiInsights.selectedEmployee || undefined)
-            }}
-            disabled={aiInsights.generating}
-            className="bg-purple-600 hover:bg-purple-700 text-white"
-          >
-            {aiInsights.generating ? (
-              <>
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                Analyzing...
-              </>
-            ) : (
-              <>
-                <Brain className="w-4 h-4 mr-2" />
-                Generate Insights
-              </>
-            )}
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => aiInsights.refreshInsights()}
-            disabled={aiInsights.loading}
-          >
-            <Activity className="w-4 h-4 mr-2" />
-            Refresh
-          </Button>
-          {aiInsights.insights.length > 0 && (
-            <Button
-              variant="outline"
-              onClick={() => {
-                import('../utils/exportUtils').then(({ exportAllInsights }) => {
-                  exportAllInsights(aiInsights.insights, 'csv')
-                })
-              }}
-            >
-              <Download className="w-4 h-4 mr-2" />
-              Export
-            </Button>
-          )}
-        </div>
-      </div>
-
-      {/* Insights Filters and Controls - Improved */}
-      <Card className="bg-white border border-gray-200">
-        <CardContent className="p-6">
-          <div className="space-y-4">
-            {/* Top Row - Scope Selection */}
-            <div className="flex flex-wrap items-center gap-6">
-              <div className="flex items-center space-x-3">
-                <Label className="text-sm font-medium text-gray-700">Analysis Scope:</Label>
-                <div className="flex space-x-1 bg-gray-100 rounded-lg p-1">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => aiInsights.setScope('organization')}
-                    className={`${
-                      aiInsights.scope === 'organization'
-                        ? 'bg-white shadow-sm text-gray-900 font-medium'
-                        : 'text-gray-600 hover:bg-gray-200 hover:text-gray-900'
-                    }`}
-                  >
-                    <Building className="w-4 h-4 mr-1" />
-                    Team Insights
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      if (!canUseFeature('employeeInsights')) {
-                        showUpgradeNotice({
-                          featureName: 'Employee AI Insights',
-                          currentPlan: currentPlan?.name || 'Current',
-                          requiredPlan: 'Enterprise',
-                          description: 'Get personalized AI insights for individual employees including engagement trends, performance indicators, and personalized recommendations.'
-                        })
-                        return
-                      }
-                      aiInsights.setScope('individual')
-                    }}
-                    className={`${
-                      aiInsights.scope === 'individual'
-                        ? 'bg-white shadow-sm text-gray-900 font-medium'
-                        : canUseFeature('employeeInsights')
-                        ? 'text-gray-600 hover:bg-gray-200 hover:text-gray-900'
-                        : 'text-gray-400 hover:bg-gray-200 cursor-pointer'
-                    } relative`}
-                  >
-                    <User className="w-4 h-4 mr-1" />
-                    Employee Insights
-                    {!canUseFeature('employeeInsights') && (
-                      <Lock className="w-3 h-3 ml-1 text-gray-400" />
-                    )}
-                  </Button>
-                </div>
-              </div>
-
-              {/* Employee Selector - Only show for Employee Insights with Enterprise access */}
-              {aiInsights.scope === 'individual' && canUseFeature('employeeInsights') && (
-                <div className="flex items-center space-x-3">
-                  <Label className="text-sm font-medium text-gray-700">Employee:</Label>
-                  <select
-                    value={aiInsights.selectedEmployee || ''}
-                    onChange={(e) => aiInsights.setSelectedEmployee(e.target.value || null)}
-                    className="px-3 py-2 border border-gray-300 rounded-md bg-white text-gray-900 text-sm min-w-[200px] focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                  >
-                    <option value="">All Employees</option>
-                    {aiInsights.employees.map((emp: any) => (
-                      <option key={emp.employee_id} value={emp.employee_id}>
-                        {emp.employee_name} ({emp.department})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
-            </div>
-
-            {/* Bottom Row - Stats and Info */}
-            <div className="flex items-center justify-between pt-2 border-t border-gray-100">
-              <div className="flex items-center space-x-4 text-sm text-gray-600">
-                <span className="flex items-center">
-                  <div className="w-2 h-2 bg-purple-500 rounded-full mr-2"></div>
-                  {aiInsights.insights.length} insights generated
-                </span>
-                {aiInsights.scope === 'individual' && aiInsights.selectedEmployee && (
-                  <span className="flex items-center">
-                    <User className="w-3 h-3 mr-1" />
-                    {aiInsights.employees.find((e: any) => e.employee_id === aiInsights.selectedEmployee)?.employee_name}
-                  </span>
-                )}
-                {aiInsights.scope === 'organization' && (
-                  <span className="flex items-center">
-                    <Building className="w-3 h-3 mr-1" />
-                    Team-level insights
-                  </span>
-                )}
-              </div>
-              <div className="text-xs text-gray-500">
-                Last updated: {new Date().toLocaleDateString()}
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* AI Insights Status */}
-      {aiInsights.error && (
-        <Card className="border-destructive bg-destructive/5">
-          <CardContent className="p-4">
-            <div className="flex items-center space-x-2 text-destructive">
-              <AlertTriangle className="w-4 h-4" />
-              <span className="text-sm font-medium">Error: {aiInsights.error}</span>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* AI Insights List */}
-      {aiInsights.loading ? (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {[1, 2, 3, 4].map((i) => (
-            <Card key={i} className="bg-gradient-card border-0 shadow-soft">
-              <CardContent className="p-6">
-                <div className="animate-pulse space-y-3">
-                  <div className="h-4 bg-muted rounded w-3/4"></div>
-                  <div className="h-3 bg-muted rounded w-1/2"></div>
-                  <div className="space-y-2">
-                    <div className="h-3 bg-muted rounded"></div>
-                    <div className="h-3 bg-muted rounded w-5/6"></div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      ) : aiInsights.insights.length === 0 ? (
-        <Card className="bg-gradient-card border-0 shadow-soft">
-          <CardContent className="p-8 text-center">
-            <Brain className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-semibold mb-2">No AI Insights Available</h3>
-            <p className="text-muted-foreground mb-4">
-              Generate your first AI insights to get personalized recommendations for your team's engagement.
-            </p>
-            <Button
-              onClick={() => aiInsights.generateNewInsights(aiInsights.selectedEmployee || undefined)}
-              disabled={aiInsights.generating}
-              className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
-            >
-              {aiInsights.generating ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                  Analyzing...
-                </>
-              ) : (
-                <>
-                  <Brain className="w-4 h-4 mr-2" />
-                  Generate {aiInsights.selectedEmployee ? 'Personal' : 'Team'} Insights
-                </>
-              )}
-            </Button>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="space-y-6">
-          {/* Insights Summary - Professional Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <Card className="bg-white border border-gray-200 hover:shadow-md transition-shadow">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="text-2xl font-bold text-gray-900">
-                      {aiInsights.insights.filter((i: any) => i.insight_type === 'summary' || i.insight_type === 'personal_insight').length}
-                    </div>
-                    <div className="text-sm text-gray-600 font-medium">Assessments</div>
-                  </div>
-                  <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                    <Brain className="w-5 h-5 text-purple-600" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            <Card className="bg-white border border-gray-200 hover:shadow-md transition-shadow">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="text-2xl font-bold text-gray-900">
-                      {aiInsights.insights.filter((i: any) => i.insight_type === 'recommendation').length}
-                    </div>
-                    <div className="text-sm text-gray-600 font-medium">Recommendations</div>
-                  </div>
-                  <div className="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center">
-                    <Zap className="w-5 h-5 text-yellow-600" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            <Card className="bg-white border border-gray-200 hover:shadow-md transition-shadow">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="text-2xl font-bold text-gray-900">
-                      {aiInsights.insights.filter((i: any) => i.insight_type === 'risk_alert').length}
-                    </div>
-                    <div className="text-sm text-gray-600 font-medium">Risk Alerts</div>
-                  </div>
-                  <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
-                    <AlertTriangle className="w-5 h-5 text-red-600" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            <Card className="bg-white border border-gray-200 hover:shadow-md transition-shadow">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="text-2xl font-bold text-gray-900">
-                      {aiInsights.insights.filter((i: any) => i.insight_type === 'trend_analysis').length}
-                    </div>
-                    <div className="text-sm text-gray-600 font-medium">Trend Analysis</div>
-                  </div>
-                  <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                    <TrendingUp className="w-5 h-5 text-blue-600" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* AI Insights - Professional Paginated View */}
-          {(() => {
-            const currentInsight = aiInsights.insights[currentInsightPage];
-            const totalInsights = aiInsights.insights.length;
-
-            if (totalInsights === 0) return null;
-
-            return (
-              <div className="space-y-6">
-                {/* Report Header */}
-                <div className="bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 rounded-xl p-6 border border-purple-100 dark:border-purple-800">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-4">
-                      <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-blue-500 rounded-xl flex items-center justify-center">
-                        <Brain className="w-6 h-6 text-white" />
-                      </div>
-                      <div>
-                        <h3 className="text-xl font-bold text-gray-800 dark:text-gray-200">
-                          AI Engagement Report
-                        </h3>
-                        <div className="flex items-center space-x-4 text-sm text-gray-600 dark:text-gray-400">
-                          <div className="flex items-center space-x-1">
-                            <Calendar className="w-4 h-4" />
-                            <span>{new Date(currentInsight.created_at).toLocaleDateString('en-US', {
-                              weekday: 'long',
-                              year: 'numeric',
-                              month: 'long',
-                              day: 'numeric'
-                            })}</span>
-                          </div>
-                          <div className="flex items-center space-x-1">
-                            <Clock className="w-4 h-4" />
-                            <span>{new Date(currentInsight.created_at).toLocaleTimeString('en-US', {
-                              hour: '2-digit',
-                              minute: '2-digit'
-                            })}</span>
-                          </div>
-                          <div className="flex items-center space-x-1">
-                            <TrendingUp className="w-4 h-4" />
-                            <span>{Math.round(currentInsight.confidence_score * 100)}% Confidence</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Page Navigation */}
-                    <div className="flex items-center space-x-4">
-                      <div className="text-sm text-gray-600 dark:text-gray-400">
-                        Report {currentInsightPage + 1} of {totalInsights}
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setCurrentInsightPage(Math.max(0, currentInsightPage - 1))}
-                          disabled={currentInsightPage === 0}
-                          className="h-8 w-8 p-0"
-                        >
-                          <ChevronLeft className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setCurrentInsightPage(Math.min(totalInsights - 1, currentInsightPage + 1))}
-                          disabled={currentInsightPage === totalInsights - 1}
-                          className="h-8 w-8 p-0"
-                        >
-                          <ChevronRight className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Report Content */}
-                <Card className="bg-white dark:bg-gray-900 border-0 shadow-lg">
-                  <CardContent className="p-8">
-                    {/* Report Type Badge */}
-                    <div className="flex items-center justify-between mb-6">
-                      <Badge
-                        variant={
-                          currentInsight.priority === 'critical' ? 'destructive' :
-                          currentInsight.priority === 'high' ? 'default' :
-                          currentInsight.priority === 'medium' ? 'secondary' : 'outline'
-                        }
-                        className="text-sm px-3 py-1"
-                      >
-                        {currentInsight.priority} Priority
-                      </Badge>
-
-                      {currentInsight.scope === 'individual' && (
-                        <Badge variant="outline" className="text-sm">
-                          <User className="w-3 h-3 mr-1" />
-                          Individual Analysis
-                        </Badge>
-                      )}
-                    </div>
-
-                    {/* Report Content */}
-                    <div className="prose dark:prose-invert max-w-none">
-                      <div className="text-base leading-relaxed space-y-6">
-                        {currentInsight.content
-                          // Remove all markdown headers and numbers
-                          .replace(/### \d+\. /g, '')
-                          .replace(/### /g, '')
-                          .replace(/\*\*(.*?)\*\*/g, '$1') // Remove ** bold formatting
-                          .replace(/---[\s\S]*$/g, '') // Remove everything after ---
-
-                          // Split into sections and clean up
-                          .split('\n')
-                          .filter(line => line.trim() !== '' && !line.includes('---'))
-                          .map((line, index) => {
-                            const trimmedLine = line.trim();
-
-                            // Skip empty lines
-                            if (!trimmedLine) return null;
-
-                            // Section headers (like "Overall Engagement Assessment")
-                            if (trimmedLine.match(/^[A-Z][a-zA-Z\s]+:?$/) && !trimmedLine.includes('-')) {
-                              return (
-                                <div key={index} className="font-bold text-lg text-gray-800 dark:text-gray-200 mt-8 mb-4 pb-3 border-b-2 border-blue-200 dark:border-blue-700">
-                                  {trimmedLine.replace(':', '')}
-                                </div>
-                              );
-                            }
-
-                            // Bullet points
-                            if (trimmedLine.startsWith('-')) {
-                              return (
-                                <div key={index} className="flex items-start space-x-4 mb-4 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                                  <span className="text-blue-500 font-bold mt-1 text-lg">•</span>
-                                  <span className="flex-1 text-gray-700 dark:text-gray-300 leading-relaxed">
-                                    {trimmedLine.substring(1).trim()}
-                                  </span>
-                                </div>
-                              );
-                            }
-
-                            // Regular paragraphs
-                            return (
-                              <p key={index} className="text-gray-700 dark:text-gray-300 mb-4 leading-relaxed text-base">
-                                {trimmedLine}
-                              </p>
-                            );
-                          })
-                          .filter(Boolean)
-                        }
-                      </div>
-                    </div>
-
-                    {/* Report Footer */}
-                    <div className="mt-8 pt-6 border-t-2 border-gray-200 dark:border-gray-700">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-6 text-sm text-gray-600 dark:text-gray-400">
-                          <div className="flex items-center space-x-2">
-                            <Clock className="w-4 h-4" />
-                            <span>
-                              {currentInsight.data_period_start && currentInsight.data_period_end
-                                ? `Data Period: ${new Date(currentInsight.data_period_start).toLocaleDateString()} - ${new Date(currentInsight.data_period_end).toLocaleDateString()}`
-                                : 'Recent data analysis'
-                              }
-                            </span>
-                          </div>
-                          {currentInsight.employee_name && (
-                            <div className="flex items-center space-x-2">
-                              <User className="w-4 h-4" />
-                              <span>{currentInsight.employee_name} ({currentInsight.department})</span>
-                            </div>
-                          )}
-                        </div>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="hover:bg-blue-50 hover:border-blue-300"
-                          onClick={() => {
-                            import('../utils/exportUtils').then(({ exportSingleInsight }) => {
-                              exportSingleInsight(currentInsight)
-                            })
-                          }}
-                        >
-                          <Download className="w-4 h-4 mr-2" />
-                          Export Report
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            );
-          })()}
-        </div>
-      )}
-    </div>
-    )
+      <AIInsightsHub
+        wellnessInsights={aiInsights.insights}
+        onGenerateWellnessInsights={() => aiInsights.generateNewInsights()}
+        wellnessLoading={aiInsights.generating}
+        pollInsights={[]} // TODO: Add poll insights
+        onGeneratePollInsights={() => {}} // TODO: Implement poll insights generation
+        pollLoading={false}
+        engagementInsights={[]} // TODO: Add engagement insights
+        onGenerateEngagementInsights={() => {}} // TODO: Implement engagement insights generation
+        engagementLoading={false}
+        customQuestions={[]} // TODO: Add custom questions
+        onAskCustomQuestion={(question) => {}} // TODO: Implement custom questions
+        customLoading={false}
+      />
+    );
   };
+
+
+
 
 
 
@@ -4687,6 +4300,18 @@ const HRDashboard = () => {
         label: "Send Check-ins",
         icon: MessageSquare,
         active: activeSection === "checkins"
+      },
+      {
+        id: "polls",
+        label: "Polls & Surveys",
+        icon: BarChart3,
+        active: activeSection === "polls"
+      },
+      {
+        id: "announcements",
+        label: "Announcements",
+        icon: Bell,
+        active: activeSection === "announcements"
       },
       {
         id: "reports",

@@ -261,7 +261,7 @@ export type Database = {
         Row: {
           id: string
           organization_id: string
-          feature_type: 'check_in_sent' | 'employee_added' | 'ai_insight_generated' | 'report_generated' | 'api_call'
+          feature_type: 'check_in_sent' | 'employee_added' | 'ai_insight_generated' | 'report_generated' | 'api_call' | 'poll_created' | 'poll_sent' | 'announcement_sent'
           quantity: number
           metadata: any | null
           billing_period: string
@@ -270,7 +270,7 @@ export type Database = {
         Insert: {
           id?: string
           organization_id: string
-          feature_type: 'check_in_sent' | 'employee_added' | 'ai_insight_generated' | 'report_generated' | 'api_call'
+          feature_type: 'check_in_sent' | 'employee_added' | 'ai_insight_generated' | 'report_generated' | 'api_call' | 'poll_created' | 'poll_sent' | 'announcement_sent'
           quantity?: number
           metadata?: any | null
           billing_period?: string
@@ -279,10 +279,176 @@ export type Database = {
         Update: {
           id?: string
           organization_id?: string
-          feature_type?: 'check_in_sent' | 'employee_added' | 'ai_insight_generated' | 'report_generated' | 'api_call'
+          feature_type?: 'check_in_sent' | 'employee_added' | 'ai_insight_generated' | 'report_generated' | 'api_call' | 'poll_created' | 'poll_sent' | 'announcement_sent'
           quantity?: number
           metadata?: any | null
           billing_period?: string
+        }
+      }
+      polls: {
+        Row: {
+          id: string
+          organization_id: string
+          title: string
+          description: string | null
+          question: string
+          poll_type: 'multiple_choice' | 'yes_no' | 'rating' | 'open_text'
+          options: any | null
+          rating_scale: number | null
+          is_anonymous: boolean
+          is_active: boolean
+          expires_at: string | null
+          target_type: 'all' | 'department' | 'specific'
+          target_departments: string[] | null
+          target_employees: string[] | null
+          send_via_whatsapp: boolean
+          created_by: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          title: string
+          description?: string | null
+          question: string
+          poll_type: 'multiple_choice' | 'yes_no' | 'rating' | 'open_text'
+          options?: any | null
+          rating_scale?: number | null
+          is_anonymous?: boolean
+          is_active?: boolean
+          expires_at?: string | null
+          target_type?: 'all' | 'department' | 'specific'
+          target_departments?: string[] | null
+          target_employees?: string[] | null
+          send_via_whatsapp?: boolean
+          created_by: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          organization_id?: string
+          title?: string
+          description?: string | null
+          question?: string
+          poll_type?: 'multiple_choice' | 'yes_no' | 'rating' | 'open_text'
+          options?: any | null
+          rating_scale?: number | null
+          is_anonymous?: boolean
+          is_active?: boolean
+          expires_at?: string | null
+          target_type?: 'all' | 'department' | 'specific'
+          target_departments?: string[] | null
+          target_employees?: string[] | null
+          send_via_whatsapp?: boolean
+          created_by?: string
+          updated_at?: string
+        }
+      }
+      poll_responses: {
+        Row: {
+          id: string
+          poll_id: string
+          employee_id: string
+          response_data: any
+          response_text: string | null
+          response_rating: number | null
+          response_choice: string | null
+          submitted_at: string
+        }
+        Insert: {
+          id?: string
+          poll_id: string
+          employee_id: string
+          response_data: any
+          response_text?: string | null
+          response_rating?: number | null
+          response_choice?: string | null
+          submitted_at?: string
+        }
+        Update: {
+          id?: string
+          poll_id?: string
+          employee_id?: string
+          response_data?: any
+          response_text?: string | null
+          response_rating?: number | null
+          response_choice?: string | null
+        }
+      }
+      announcements: {
+        Row: {
+          id: string
+          organization_id: string
+          title: string
+          content: string
+          announcement_type: 'general' | 'urgent' | 'celebration' | 'policy' | 'event'
+          priority: 'low' | 'normal' | 'high' | 'urgent'
+          target_type: 'all' | 'department' | 'specific'
+          target_departments: string[] | null
+          target_employees: string[] | null
+          send_via_whatsapp: boolean
+          is_published: boolean
+          published_at: string | null
+          expires_at: string | null
+          created_by: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          title: string
+          content: string
+          announcement_type?: 'general' | 'urgent' | 'celebration' | 'policy' | 'event'
+          priority?: 'low' | 'normal' | 'high' | 'urgent'
+          target_type?: 'all' | 'department' | 'specific'
+          target_departments?: string[] | null
+          target_employees?: string[] | null
+          send_via_whatsapp?: boolean
+          is_published?: boolean
+          published_at?: string | null
+          expires_at?: string | null
+          created_by: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          organization_id?: string
+          title?: string
+          content?: string
+          announcement_type?: 'general' | 'urgent' | 'celebration' | 'policy' | 'event'
+          priority?: 'low' | 'normal' | 'high' | 'urgent'
+          target_type?: 'all' | 'department' | 'specific'
+          target_departments?: string[] | null
+          target_employees?: string[] | null
+          send_via_whatsapp?: boolean
+          is_published?: boolean
+          published_at?: string | null
+          expires_at?: string | null
+          created_by?: string
+          updated_at?: string
+        }
+      }
+      announcement_reads: {
+        Row: {
+          id: string
+          announcement_id: string
+          employee_id: string
+          read_at: string
+        }
+        Insert: {
+          id?: string
+          announcement_id: string
+          employee_id: string
+          read_at?: string
+        }
+        Update: {
+          id?: string
+          announcement_id?: string
+          employee_id?: string
         }
       }
     }
@@ -330,3 +496,7 @@ export type Subscription = Database['public']['Tables']['subscriptions']['Row']
 export type Payment = Database['public']['Tables']['payments']['Row']
 export type SubscriptionEvent = Database['public']['Tables']['subscription_events']['Row']
 export type UsageTracking = Database['public']['Tables']['usage_tracking']['Row']
+export type Poll = Database['public']['Tables']['polls']['Row']
+export type PollResponse = Database['public']['Tables']['poll_responses']['Row']
+export type Announcement = Database['public']['Tables']['announcements']['Row']
+export type AnnouncementRead = Database['public']['Tables']['announcement_reads']['Row']
