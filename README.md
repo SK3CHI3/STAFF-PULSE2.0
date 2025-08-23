@@ -10,7 +10,7 @@ A comprehensive employee engagement and participation platform built with React,
 - **Role-based Access** - Secure access control for different user types   
    
 ### 📱 **Communication & Check-ins**
-- **WhatsApp/SMS Integration** - Send check-in messages via Twilio
+- **WhatsApp/SMS Integration** - Send check-in messages via Twilio 
 - **Automated Campaigns** - Schedule and automate engagement check-ins 
 - **Multi-channel Support** - WhatsApp and SMS messaging options
 
