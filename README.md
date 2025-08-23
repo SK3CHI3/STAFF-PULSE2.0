@@ -8,7 +8,7 @@ A comprehensive employee engagement and participation platform built with React,
 - **Employee Directory** - Manage employee profiles, departments, and contact information 
 - **Department Management** - Create and organize departments with employee counts  
 - **Role-based Access** - Secure access control for different user types   
-  
+   
 ### 📱 **Communication & Check-ins**
 - **WhatsApp/SMS Integration** - Send check-in messages via Twilio
 - **Automated Campaigns** - Schedule and automate engagement check-ins 
