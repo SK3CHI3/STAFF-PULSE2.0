@@ -3,23 +3,23 @@
 A comprehensive employee engagement and participation platform built with React, TypeScript, and Vite. Staff Pulse helps organizations monitor employee engagement, conduct check-ins, and gain insights into team performance.
 
 ## ✨ Features
-
+ 
 ### 🏢 **Organization Management**
 - **Employee Directory** - Manage employee profiles, departments, and contact information
 - **Department Management** - Create and organize departments with employee counts
 - **Role-based Access** - Secure access control for different user types
-
+    
 ### 📱 **Communication & Check-ins**
-- **WhatsApp/SMS Integration** - Send check-in messages via Twilio
-- **Automated Campaigns** - Schedule and automate engagement check-ins
+- **WhatsApp/SMS Integration** - Send check-in messages via Twilio 
+- **Automated Campaigns** - Schedule and automate engagement check-ins 
 - **Multi-channel Support** - WhatsApp and SMS messaging options
 
-### 📊 **Analytics & Insights**
-- **Real-time Dashboard** - Monitor employee engagement and participation metrics
-- **Engagement Tracking** - Track team engagement trends over time
+### 📊 **Analytics & Insights** 
+- **Real-time Dashboard** - Monitor employee engagement and participation metrics 
+- **Engagement Tracking** - Track team engagement trends over time  
 - **AI-powered Insights** - Get intelligent recommendations using OpenRouter AI
 - **Response Analytics** - Analyze check-in responses and feedback
-
+ 
 ### 💳 **Subscription Management**
 - **Tiered Plans** - Startup, Business, and Enterprise plans
 - **Payment Integration** - Secure payments via IntaSend
