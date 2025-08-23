@@ -19,7 +19,7 @@ A comprehensive employee engagement and participation platform built with React,
 - **Engagement Tracking** - Track team engagement trends over time
 - **AI-powered Insights** - Get intelligent recommendations using OpenRouter AI
 - **Response Analytics** - Analyze check-in responses and feedback
-
+ 
 ### 💳 **Subscription Management**
 - **Tiered Plans** - Startup, Business, and Enterprise plans
 - **Payment Integration** - Secure payments via IntaSend
