@@ -17,7 +17,7 @@ A comprehensive employee engagement and participation platform built with React,
 ### 📊 **Analytics & Insights** 
 - **Real-time Dashboard** - Monitor employee engagement and participation metrics 
 - **Engagement Tracking** - Track team engagement trends over time  
-- **AI-powered Insights** - Get intelligent recommendations using OpenRouter AI
+- **AI-powered Insights** - Get intelligent recommendations using OpenRouter AI.
 - **Response Analytics** - Analyze check-in responses and feedback
  
 ### 💳 **Subscription Management**
