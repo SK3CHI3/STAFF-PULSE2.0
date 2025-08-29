@@ -113,5 +113,5 @@ This project is optimized for Netlify deployment. See [DEPLOYMENT.md](./DEPLOYME
 ## 📄 **License**
 
 This project is licensed under the MIT License.
-
+ 
 Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
