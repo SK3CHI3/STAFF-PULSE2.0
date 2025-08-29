@@ -12,7 +12,7 @@ A comprehensive employee engagement and participation platform built with React,
 ### 📱 **Communication & Check-ins**
 - **WhatsApp/SMS Integration** - Send check-in messages via Twilio 
 - **Automated Campaigns** - Schedule and automate engagement check-ins.
-- **Multi-channel Support** - WhatsApp and SMS messaging options
+- **Multi-channel Support** - WhatsApp and SMS messaging options.
 
 ### 📊 **Analytics & Insights** 
 - **Real-time Dashboard** - Monitor employee engagement and participation metrics 
