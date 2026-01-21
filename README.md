@@ -2,7 +2,7 @@
 
 A comprehensive employee engagement and participation platform built with React, TypeScript, and Vite. Staff Pulse helps organizations monitor employee engagement, conduct check-ins, and gain insights into team performance.
 
-## ✨ Features.
+## ✨ Features. 
  
 ### 🏢 **Organization Management**
 - **Employee Directory** - Manage employee profiles, departments, and contact information
